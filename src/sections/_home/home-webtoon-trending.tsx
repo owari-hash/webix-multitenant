@@ -68,8 +68,8 @@ export default function HomeWebtoonTrending({ title, data, type }: Props) {
               </Typography>
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 {type === 'trending'
-                  ? 'Most popular webtoons this week'
-                  : 'Latest releases and new series'}
+                  ? 'Энэ долоо хоногийн хамгийн алдартай веб комикууд'
+                  : 'Хамгийн сүүлийн үеийн гарсан болон шинэ цуврал'}
               </Typography>
             </Box>
             <Button
@@ -77,7 +77,7 @@ export default function HomeWebtoonTrending({ title, data, type }: Props) {
               endIcon={<Iconify icon="carbon:chevron-right" />}
               sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
-              View All
+              Бүгдийг үзэх
             </Button>
           </Stack>
         </m.div>

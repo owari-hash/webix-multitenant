@@ -15,37 +15,37 @@ import { varFade, MotionViewport } from 'src/components/animate';
 
 const STATS = [
   {
-    label: 'Total Webtoons',
+    label: 'Нийт Веб Комик',
     value: _webtoonStats.totalWebtoons,
     icon: 'carbon:book',
     color: '#ff6b6b',
   },
   {
-    label: 'Total Views',
+    label: 'Нийт Үзэлт',
     value: _webtoonStats.totalViews.toLocaleString(),
     icon: 'carbon:view',
     color: '#4ecdc4',
   },
   {
-    label: 'Total Likes',
+    label: 'Нийт Лайк',
     value: _webtoonStats.totalLikes.toLocaleString(),
     icon: 'carbon:favorite',
     color: '#45b7d1',
   },
   {
-    label: 'Total Chapters',
+    label: 'Нийт Бүлэг',
     value: _webtoonStats.totalChapters.toLocaleString(),
     icon: 'carbon:page-break',
     color: '#96ceb4',
   },
   {
-    label: 'Average Rating',
+    label: 'Дундаж Үнэлгээ',
     value: _webtoonStats.averageRating,
     icon: 'carbon:star',
     color: '#feca57',
   },
   {
-    label: 'Active Readers',
+    label: 'Идэвхтэй Уншигчид',
     value: '12.5K',
     icon: 'carbon:user-multiple',
     color: '#ff9ff3',
@@ -69,7 +69,7 @@ export default function HomeWebtoonStats() {
         <Stack spacing={5}>
           <m.div variants={varFade().inUp}>
             <Typography variant="h2" sx={{ textAlign: 'center', mb: 2 }}>
-              Platform Statistics
+              Платформын Статистик
             </Typography>
             <Typography
               variant="body1"
@@ -80,7 +80,8 @@ export default function HomeWebtoonStats() {
                 mx: 'auto',
               }}
             >
-              Join thousands of readers who have discovered amazing stories on our platform
+              Манай платформ дээр гайхамшигтай түүхүүдийг олж мэдсэн олон мянган уншигчидтай
+              нэгдээрэй
             </Typography>
           </m.div>
 

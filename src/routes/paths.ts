@@ -1,6 +1,47 @@
 // ----------------------------------------------------------------------
 
 export const paths = {
+  // Webtoon
+  webtoon: {
+    root: '/webtoon',
+    browse: '/webtoon/browse',
+    categories: '/webtoon/categories',
+    category: (slug: string) => `/webtoon/category/${slug}`,
+    comic: (id: string) => `/webtoon/comic/${id}`,
+    chapter: (comicId: string, chapterId: string) =>
+      `/webtoon/comic/${comicId}/chapter/${chapterId}`,
+    favorites: '/webtoon/favorites',
+    history: '/webtoon/history',
+    trending: '/webtoon/trending',
+    new: '/webtoon/new',
+    completed: '/webtoon/completed',
+    search: '/webtoon/search',
+    author: (id: string) => `/webtoon/author/${id}`,
+    // CMS Routes
+    cms: {
+      root: '/cms',
+      dashboard: '/cms/dashboard',
+      comics: '/cms/comics',
+      createComic: '/cms/comics/create',
+      editComic: (id: string) => `/cms/comics/${id}/edit`,
+      chapters: (comicId: string) => `/cms/comics/${comicId}/chapters`,
+      createChapter: (comicId: string) => `/cms/comics/${comicId}/chapters/create`,
+      editChapter: (comicId: string, chapterId: string) =>
+        `/cms/comics/${comicId}/chapters/${chapterId}/edit`,
+      users: '/cms/users',
+      analytics: '/cms/analytics',
+      settings: '/cms/settings',
+    },
+  },
+  // User Profile
+  profile: {
+    root: '/profile',
+    settings: '/profile/settings',
+    library: '/profile/library',
+    favorites: '/profile/favorites',
+    history: '/profile/history',
+    subscriptions: '/profile/subscriptions',
+  },
   // Marketing
   marketing: {
     root: '/marketing',

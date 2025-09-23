@@ -56,7 +56,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
       <Stack spacing={5}>
         <m.div variants={varFade().inUp}>
           <Typography variant="h2" sx={{ textAlign: 'center', mb: 2 }}>
-            Featured Webtoons
+            Онцлох Веб Комикууд
           </Typography>
           <Typography
             variant="body1"
@@ -67,7 +67,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
               mx: 'auto',
             }}
           >
-            Discover the most popular and trending webtoons that everyone is talking about
+            Хүн бүрийн ярьж байгаа хамгийн алдартай болон тренд веб комикуудыг олж мэдээрэй
           </Typography>
         </m.div>
 

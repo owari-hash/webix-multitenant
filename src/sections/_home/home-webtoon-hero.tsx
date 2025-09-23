@@ -135,7 +135,7 @@ export default function HomeWebtoonHero() {
                   mb: 2,
                 }}
               >
-                Discover Amazing
+                Гайхамшигтай
                 <Box
                   component="span"
                   sx={{
@@ -149,8 +149,9 @@ export default function HomeWebtoonHero() {
                     WebkitTextFillColor: 'transparent',
                   }}
                 >
-                  Webtoons
+                  Веб Комикуудыг
                 </Box>
+                Олоорой
               </Typography>
 
               <Typography
@@ -162,8 +163,8 @@ export default function HomeWebtoonHero() {
                   lineHeight: 1.6,
                 }}
               >
-                Immerse yourself in captivating stories with stunning artwork. Read the latest
-                webtoons from talented creators around the world.
+                Гүн гүнзгий түүхүүд болон гоёмсог зургийн урлагт дүүрэн орчинд өөрийгөө шингээж,
+                дэлхийн авъяаслаг зохиолчдын хамгийн сүүлийн үеийн веб комикуудыг уншаарай.
               </Typography>
             </Box>
 
@@ -194,7 +195,7 @@ export default function HomeWebtoonHero() {
                   transition: 'all 0.3s ease',
                 }}
               >
-                Start Reading Now
+                Одоо унших эхлэх
               </Button>
 
               <Button
@@ -220,7 +221,7 @@ export default function HomeWebtoonHero() {
                   transition: 'all 0.3s ease',
                 }}
               >
-                Browse Library
+                Номын сангаас үзэх
               </Button>
             </Stack>
 

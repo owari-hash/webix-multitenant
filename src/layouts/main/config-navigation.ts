@@ -5,6 +5,44 @@ import { paths } from 'src/routes/paths';
 export const pageLinks = [
   {
     order: '1',
+    subheader: 'Веб Комикууд',
+    cover: '/assets/images/menu/menu_marketing.jpg',
+    items: [
+      { title: 'Нүүр хуудас', path: '/' },
+      { title: 'Жагсаалт ', path: paths.webtoon.browse },
+      { title: 'Ангиллууд', path: paths.webtoon.categories },
+      { title: 'Тренд', path: paths.webtoon.trending },
+      { title: 'Шинэ', path: paths.webtoon.new },
+      { title: 'Дууссан', path: paths.webtoon.completed },
+      { title: 'Хайх', path: paths.webtoon.search },
+    ],
+  },
+  {
+    order: '2',
+    subheader: 'Хувийн кабинет',
+    cover: '/assets/images/menu/menu_career.jpg',
+    items: [
+      { title: 'Миний профайл', path: paths.profile.root },
+      { title: 'Номын сан', path: paths.profile.library },
+      { title: 'Дуртай', path: paths.profile.favorites },
+      { title: 'Түүх', path: paths.profile.history },
+      { title: 'Тохиргоо', path: paths.profile.settings },
+    ],
+  },
+  {
+    order: '3',
+    subheader: 'CMS Удирдлага',
+    cover: '/assets/images/menu/menu_travel.jpg',
+    items: [
+      { title: 'Хяналтын самбар', path: paths.webtoon.cms.dashboard },
+      { title: 'Комикууд', path: paths.webtoon.cms.comics },
+      { title: 'Хэрэглэгчид', path: paths.webtoon.cms.users },
+      { title: 'Статистик', path: paths.webtoon.cms.analytics },
+      { title: 'Тохиргоо', path: paths.webtoon.cms.settings },
+    ],
+  },
+  {
+    order: '4',
     subheader: 'Marketing',
     cover: '/assets/images/menu/menu_marketing.jpg',
     items: [
@@ -108,12 +146,9 @@ export const pageLinks = [
 ];
 
 export const navConfig = [
-  { title: 'Home', path: '/' },
-  { title: 'Components', path: paths.components.root },
-  {
-    title: 'Pages',
-    path: paths.pages,
-    children: [pageLinks[0], pageLinks[1], pageLinks[2], pageLinks[3], pageLinks[4], pageLinks[5]],
-  },
-  { title: 'Docs', path: paths.docs },
+  { title: 'Нүүр', path: '/' },
+  { title: 'Комикууд', path: paths.webtoon.browse },
+  { title: 'Ангиллууд', path: paths.webtoon.categories },
+  { title: 'Тренд', path: paths.webtoon.trending },
+  { title: 'Шинэ', path: paths.webtoon.new },
 ];

@@ -1,5 +1,5 @@
-import { m } from 'framer-motion';
 import { useState } from 'react';
+import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -7,10 +7,10 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
-import Iconify from 'src/components/iconify';
 import { bgGradient } from 'src/theme/css';
+import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
@@ -45,7 +45,7 @@ export default function HomeWebtoonNewsletter() {
       <Container>
         <m.div variants={varFade().inUp}>
           <Typography variant="h2" sx={{ mb: 3, color: 'common.white' }}>
-            Stay Updated
+            Мэдээлэл Авах
           </Typography>
         </m.div>
 
@@ -59,7 +59,7 @@ export default function HomeWebtoonNewsletter() {
               mx: 'auto',
             }}
           >
-            Get notified about new webtoons, updates, and exclusive content
+            Шинэ веб комик, шинэчлэлт болон онцгой контентын талаар мэдэгдэл аваарай
           </Typography>
         </m.div>
 
@@ -77,7 +77,7 @@ export default function HomeWebtoonNewsletter() {
           >
             <TextField
               fullWidth
-              placeholder="Enter your email address"
+              placeholder="Имэйл хаягаа оруулна уу"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               sx={{
@@ -116,7 +116,7 @@ export default function HomeWebtoonNewsletter() {
                 },
               }}
             >
-              Subscribe
+              Бүртгүүлэх
             </Button>
           </Box>
         </m.div>
@@ -126,19 +126,19 @@ export default function HomeWebtoonNewsletter() {
             <Stack direction="row" alignItems="center" spacing={1}>
               <Iconify icon="carbon:checkmark" sx={{ color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'grey.300' }}>
-                No spam, ever
+                Спам байхгүй
               </Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Iconify icon="carbon:checkmark" sx={{ color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'grey.300' }}>
-                Unsubscribe anytime
+                Хүссэн үедээ цуцлах
               </Typography>
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1}>
               <Iconify icon="carbon:checkmark" sx={{ color: 'success.main' }} />
               <Typography variant="body2" sx={{ color: 'grey.300' }}>
-                Weekly updates
+                Долоо хоног тутмын мэдээлэл
               </Typography>
             </Stack>
           </Stack>

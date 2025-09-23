@@ -4,18 +4,8 @@
     "browser": true,
     "es2021": true
   },
-  "plugins": [
-    "perfectionist",
-    "unused-imports",
-    "@typescript-eslint",
-    "prettier"
-  ],
-  "extends": [
-    "airbnb",
-    "airbnb-typescript",
-    "airbnb/hooks",
-    "prettier"
-  ],
+  "plugins": ["perfectionist", "unused-imports", "@typescript-eslint", "prettier"],
+  "extends": ["airbnb", "airbnb-typescript", "airbnb/hooks", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -94,35 +84,7 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "perfectionist/sort-imports": [
-      2,
-      {
-        "type": "line-length",
-        "order": "asc",
-        "newlines-between": "always",
-        "groups": [
-          [
-            "builtin",
-            "external"
-          ],
-          "mui",
-          "internal",
-          "parent",
-          "sibling",
-          "object",
-          "unknown"
-        ],
-        "custom-groups": {
-          "value": {
-            "mui": "@mui/**",
-            "internal": "src/**",
-            "parent": "../**",
-            "sibling": "./**"
-          }
-        },
-        "read-tsconfig": true
-      }
-    ],
+    "perfectionist/sort-imports": 0,
     "perfectionist/sort-named-imports": [
       2,
       {

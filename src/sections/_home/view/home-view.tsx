@@ -31,13 +31,17 @@ export default function HomeView() {
       <HomeWebtoonStats />
 
       {/* Trending Webtoons */}
-      <HomeWebtoonTrending title="Trending This Week" data={_popularWebtoons} type="trending" />
+      <HomeWebtoonTrending
+        title="Энэ долоо хоногийн тренд"
+        data={_popularWebtoons}
+        type="trending"
+      />
 
       {/* Categories */}
       <HomeWebtoonCategories />
 
       {/* New Releases */}
-      <HomeWebtoonTrending title="New Releases" data={_newWebtoons} type="new" />
+      <HomeWebtoonTrending title="Шинэ гарсан" data={_newWebtoons} type="new" />
 
       {/* Newsletter */}
       <HomeWebtoonNewsletter />

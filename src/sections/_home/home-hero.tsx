@@ -16,7 +16,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
-import { _mock } from 'src/_mock';
+// import { _mock } from 'src/_mock';
 import Image from 'src/components/image';
 import { bgGradient } from 'src/theme/css';
 import Iconify from 'src/components/iconify';
@@ -25,18 +25,18 @@ import { HEADER } from 'src/layouts/config-layout';
 import { useResponsive } from 'src/hooks/use-responsive';
 import { useBoundingClientRect } from 'src/hooks/use-bounding-client-rect';
 
-
 // ----------------------------------------------------------------------
 
 export default function HomeHero() {
   const theme = useTheme();
 
-  const _carouselsExample = [...Array(20)].map((_, index) => ({
-  id: _mock.id(index),
-  title: _mock.postTitle(index),
-  coverUrl: _mock.image.cover(index),
-  description: _mock.description(index),
-}));
+  // Mock data for potential future use
+  // const _carouselsExample = [...Array(20)].map((_, index) => ({
+  //   id: _mock.id(index),
+  //   title: _mock.postTitle(index),
+  //   coverUrl: _mock.image.cover(index),
+  //   description: _mock.description(index),
+  // }));
   const containerRef = useRef<HTMLDivElement>(null);
 
   const mdUp = useResponsive('up', 'md');
@@ -51,7 +51,7 @@ export default function HomeHero() {
   const modalKhaaya = () => setOpen(false);
 
   // Form state
-  const [form, setForm] = useState({ name: '', phoneNumber : '',email: '', message: '' });
+  const [form, setForm] = useState({ name: '', phoneNumber: '', email: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
 
   // Snackbar state
@@ -68,7 +68,7 @@ export default function HomeHero() {
     setTimeout(() => {
       setSubmitting(false);
       setSnackbarOpen(true); // Show toast
-      handleDialogClose();   // Close dialog
+      handleDialogClose(); // Close dialog
     }, 1000);
   };
 
@@ -77,10 +77,7 @@ export default function HomeHero() {
     modalKhaaya();
   };
 
-  const handleSnackbarClose = (
-    event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
+  const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
@@ -119,7 +116,8 @@ export default function HomeHero() {
               </Typography>
 
               <Typography sx={{ color: 'text.secondary' }}>
-                Энэхүү системийн гол давуу тал нь Монголын нөхцөлд анх удаа multitenant архитектурт тулгуурласан зурагт номын цахим платформ
+                Энэхүү системийн гол давуу тал нь Монголын нөхцөлд анх удаа multitenant архитектурт
+                тулгуурласан зурагт номын цахим платформ
               </Typography>
 
               <Button
@@ -145,7 +143,6 @@ export default function HomeHero() {
                 </Stack>
               </Stack>
             </Stack>
-
           </Grid>
 
           <Grid xs={12} md={7}>
@@ -154,7 +151,7 @@ export default function HomeHero() {
         </Grid>
       </Container>
 
-      <Dialog className='box' open={open} onClose={handleDialogClose}>
+      <Dialog className="box" open={open} onClose={handleDialogClose}>
         <DialogTitle>Холбогдох</DialogTitle>
         <DialogContent>
           <FormControl required fullWidth sx={{ mt: 3 }}>

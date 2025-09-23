@@ -6,8 +6,9 @@ import { usePathname } from 'src/routes/hooks';
 
 import { HEADER } from '../config-layout';
 
-import Header from './header';
 import Footer from './footer';
+import Header from './header';
+import HeaderWebtoon from './header-webtoon';
 
 // ----------------------------------------------------------------------
 
@@ -31,9 +32,20 @@ export default function MainLayout({ children }: Props) {
 
   const actionPage = (arr: string[]) => arr.some((path) => pathname === path);
 
+  // Use webtoon header for webtoon-related pages
+  const isWebtoonPage =
+    pathname.startsWith('/webtoon') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/cms') ||
+    pathname === '/';
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 1 }}>
-      <Header headerOnDark={actionPage(pathsOnDark)} />
+      {isWebtoonPage ? (
+        <HeaderWebtoon headerOnDark={actionPage(pathsOnDark)} />
+      ) : (
+        <Header headerOnDark={actionPage(pathsOnDark)} />
+      )}
 
       <Box
         component="main"

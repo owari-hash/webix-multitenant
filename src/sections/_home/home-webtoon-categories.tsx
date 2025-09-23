@@ -1,13 +1,13 @@
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
+import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
@@ -17,8 +17,6 @@ import { varFade, MotionViewport } from 'src/components/animate';
 // ----------------------------------------------------------------------
 
 export default function HomeWebtoonCategories() {
-  const theme = useTheme();
-
   const getWebtoonsByCategory = (categorySlug: string) =>
     _webtoons.filter((webtoon) => webtoon.genre === categorySlug).slice(0, 3);
 
@@ -53,77 +51,34 @@ export default function HomeWebtoonCategories() {
   return (
     <Box
       sx={{
-        position: 'relative',
-        bgcolor: 'grey.50',
-        py: { xs: 10, md: 15 },
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `linear-gradient(135deg, ${alpha(
-            theme.palette.primary.main,
-            0.05
-          )} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
-          zIndex: 0,
-        },
+        bgcolor: 'background.neutral',
+        py: { xs: 8, md: 12 },
       }}
     >
-      <Container component={MotionViewport} maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Stack spacing={8}>
+      <Container component={MotionViewport} maxWidth="lg">
+        <Stack spacing={6}>
           {/* Header Section */}
-          <Stack spacing={3} sx={{ textAlign: 'center' }}>
-            <m.div variants={varFade().inUp}>
-              <Typography
-                variant="overline"
-                sx={{
-                  color: 'primary.main',
-                  fontWeight: 700,
-                  letterSpacing: 1.5,
-                }}
-              >
-                Ангилал
-              </Typography>
-            </m.div>
-
-            <m.div variants={varFade().inUp}>
-              <Typography
-                variant="h2"
-                sx={{
-                  fontWeight: 800,
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 2,
-                }}
-              >
-                Ангиллаар судлах
-              </Typography>
-            </m.div>
-
-            <m.div variants={varFade().inUp}>
-              <Typography
-                variant="h5"
-                sx={{
-                  color: 'text.secondary',
-                  maxWidth: 640,
-                  mx: 'auto',
-                  fontWeight: 400,
-                  lineHeight: 1.6,
-                }}
-              >
-                Дуртай төрлөө олоод гайхамшигтай веб комикуудыг нээж үзээрэй
-              </Typography>
-            </m.div>
-          </Stack>
+          <m.div variants={varFade().inUp}>
+            <Typography variant="h2" sx={{ textAlign: 'center', mb: 2 }}>
+              Ангиллаар судлах
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                textAlign: 'center',
+                color: 'text.secondary',
+                maxWidth: 600,
+                mx: 'auto',
+                fontWeight: 400,
+              }}
+            >
+              Дуртай төрлөө олоод гайхамшигтай веб комикуудыг нээж үзээрэй
+            </Typography>
+          </m.div>
 
           {/* Categories Grid */}
-          <Box sx={{ px: { xs: 0, sm: 2 } }}>
-            <Grid container spacing={4}>
+          <Box>
+            <Grid container spacing={3}>
               {_webtoonCategories.slice(0, 8).map((category, index) => {
                 const categoryWebtoons = getWebtoonsByCategory(category.slug);
                 const translatedName = translateCategoryName(category.name);
@@ -131,23 +86,27 @@ export default function HomeWebtoonCategories() {
 
                 return (
                   <Grid key={category.id} xs={12} sm={6} md={4} lg={3}>
-                    <m.div variants={varFade().inUp} style={{ height: '100%' }}>
+                    <m.div variants={varFade().inUp}>
                       <Card
                         sx={{
-                          p: 3,
-                          height: '100%',
+                          p: 2.5,
+                          height: 320,
                           cursor: 'pointer',
-                          position: 'relative',
-                          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          borderRadius: 2,
                           border: '1px solid',
-                          borderColor: 'transparent',
-                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+                          borderColor: 'grey.200',
+                          bgcolor: 'background.paper',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          transition: 'all 0.3s ease-in-out',
                           '&:hover': {
-                            transform: 'translateY(-8px) scale(1.02)',
-                            boxShadow: `0 20px 40px ${alpha(category.color, 0.15)}`,
-                            borderColor: alpha(category.color, 0.3),
+                            transform: 'translateY(-4px)',
+                            boxShadow: `0 8px 24px ${alpha(category.color, 0.12)}`,
+                            borderColor: alpha(category.color, 0.4),
                             '& .category-icon': {
-                              transform: 'scale(1.1) rotate(5deg)',
+                              transform: 'scale(1.05)',
+                              bgcolor: alpha(category.color, 0.15),
                             },
                             '& .category-name': {
                               color: category.color,
@@ -155,53 +114,51 @@ export default function HomeWebtoonCategories() {
                           },
                         }}
                       >
-                        <Stack spacing={3} sx={{ height: '100%' }}>
+                        <Stack spacing={2.5} sx={{ height: '100%' }}>
                           {/* Category Header */}
-                          <Stack direction="row" alignItems="center" spacing={2.5}>
+                          <Stack direction="row" alignItems="center" spacing={2}>
                             <Box
                               className="category-icon"
                               sx={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 2,
-                                background: `linear-gradient(135deg, ${alpha(
-                                  category.color,
-                                  0.1
-                                )} 0%, ${alpha(category.color, 0.2)} 100%)`,
+                                width: 48,
+                                height: 48,
+                                borderRadius: 1.5,
+                                bgcolor: alpha(category.color, 0.1),
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transition: 'all 0.3s ease',
-                                border: `2px solid ${alpha(category.color, 0.1)}`,
+                                border: `1px solid ${alpha(category.color, 0.2)}`,
                               }}
                             >
                               <Iconify
                                 icon={categoryIcon}
                                 sx={{
                                   color: category.color,
-                                  fontSize: 28,
-                                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                                  fontSize: 24,
                                 }}
                               />
                             </Box>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography
                                 className="category-name"
-                                variant="h6"
+                                variant="subtitle1"
                                 sx={{
-                                  fontWeight: 700,
-                                  mb: 0.5,
+                                  fontWeight: 600,
+                                  mb: 0.25,
                                   transition: 'color 0.3s ease',
-                                  fontSize: '1.1rem',
+                                  fontSize: '1rem',
+                                  lineHeight: 1.3,
                                 }}
                               >
                                 {translatedName}
                               </Typography>
                               <Typography
-                                variant="body2"
+                                variant="caption"
                                 sx={{
                                   color: 'text.secondary',
                                   fontWeight: 500,
+                                  fontSize: '0.75rem',
                                 }}
                               >
                                 {categoryWebtoons.length} веб комик
@@ -210,16 +167,16 @@ export default function HomeWebtoonCategories() {
                           </Stack>
 
                           {/* Webtoon Previews */}
-                          <Stack spacing={2} sx={{ flex: 1 }}>
+                          <Stack spacing={1.5} sx={{ flex: 1, minHeight: 140 }}>
                             {categoryWebtoons.map((webtoon, idx) => (
                               <Stack
                                 key={webtoon.id}
                                 direction="row"
-                                spacing={2}
+                                spacing={1.5}
                                 alignItems="center"
                                 sx={{
                                   p: 1,
-                                  borderRadius: 1.5,
+                                  borderRadius: 1,
                                   transition: 'all 0.2s ease',
                                   '&:hover': {
                                     bgcolor: alpha(category.color, 0.04),
@@ -230,47 +187,43 @@ export default function HomeWebtoonCategories() {
                                   sx={{
                                     position: 'relative',
                                     overflow: 'hidden',
-                                    borderRadius: 1.5,
+                                    borderRadius: 1,
+                                    flexShrink: 0,
                                   }}
                                 >
                                   <Image
                                     alt={webtoon.title}
                                     src={webtoon.coverUrl}
                                     sx={{
-                                      width: 44,
-                                      height: 44,
+                                      width: 36,
+                                      height: 36,
                                       objectFit: 'cover',
                                     }}
                                   />
                                   <Box
                                     sx={{
                                       position: 'absolute',
-                                      top: 0,
-                                      right: 0,
-                                      width: 16,
-                                      height: 16,
+                                      top: -2,
+                                      right: -2,
+                                      width: 14,
+                                      height: 14,
                                       bgcolor: category.color,
-                                      borderRadius: '0 6px 0 6px',
+                                      borderRadius: '50%',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
+                                      fontSize: '0.6rem',
+                                      color: 'white',
+                                      fontWeight: 700,
+                                      border: '1px solid white',
                                     }}
                                   >
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        color: 'white',
-                                        fontSize: '0.6rem',
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      {idx + 1}
-                                    </Typography>
+                                    {idx + 1}
                                   </Box>
                                 </Box>
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                   <Typography
-                                    variant="subtitle2"
+                                    variant="body2"
                                     sx={{
                                       fontWeight: 600,
                                       overflow: 'hidden',
@@ -278,7 +231,8 @@ export default function HomeWebtoonCategories() {
                                       whiteSpace: 'nowrap',
                                       display: 'block',
                                       mb: 0.25,
-                                      fontSize: '0.85rem',
+                                      fontSize: '0.8rem',
+                                      lineHeight: 1.2,
                                     }}
                                   >
                                     {webtoon.title}
@@ -291,7 +245,8 @@ export default function HomeWebtoonCategories() {
                                       textOverflow: 'ellipsis',
                                       whiteSpace: 'nowrap',
                                       display: 'block',
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.7rem',
+                                      lineHeight: 1.2,
                                     }}
                                   >
                                     {webtoon.author}-ын бүтээл
@@ -304,22 +259,22 @@ export default function HomeWebtoonCategories() {
                           {/* Action Button */}
                           <Button
                             variant="outlined"
-                            size="medium"
+                            size="small"
                             fullWidth
                             endIcon={<Iconify icon="carbon:arrow-right" />}
                             sx={{
-                              borderColor: alpha(category.color, 0.3),
+                              borderColor: alpha(category.color, 0.4),
                               color: category.color,
-                              fontWeight: 600,
-                              py: 1.2,
-                              borderRadius: 2,
+                              fontWeight: 500,
+                              py: 0.75,
+                              borderRadius: 1.5,
                               textTransform: 'none',
-                              fontSize: '0.9rem',
-                              transition: 'all 0.3s ease',
+                              fontSize: '0.8rem',
+                              mt: 'auto',
+                              transition: 'all 0.2s ease',
                               '&:hover': {
                                 borderColor: category.color,
-                                bgcolor: alpha(category.color, 0.08),
-                                transform: 'scale(1.02)',
+                                bgcolor: alpha(category.color, 0.06),
                               },
                             }}
                           >
@@ -336,40 +291,16 @@ export default function HomeWebtoonCategories() {
 
           {/* Call to Action */}
           <m.div variants={varFade().inUp}>
-            <Stack alignItems="center" spacing={3}>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'text.secondary',
-                  textAlign: 'center',
-                  maxWidth: 480,
-                }}
-              >
-                Бүх ангиллыг судлаж, өөрийн дуртай веб комикуудыг олоорой
-              </Typography>
+            <Box sx={{ textAlign: 'center' }}>
               <Button
                 variant="contained"
                 size="large"
-                endIcon={<Iconify icon="carbon:grid-view" />}
-                sx={{
-                  px: 6,
-                  py: 2,
-                  borderRadius: 3,
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  },
-                }}
+                endIcon={<Iconify icon="carbon:view" />}
+                sx={{ px: 6, py: 2 }}
               >
                 Бүх ангиллыг үзэх
               </Button>
-            </Stack>
+            </Box>
           </m.div>
         </Stack>
       </Container>
