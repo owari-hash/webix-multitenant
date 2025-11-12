@@ -147,7 +147,7 @@ export default function DataBrowserPage() {
       if (searchField) params.append('field', searchField);
 
       const response = await fetch(
-        `/api2/api/collection/${collectionName}/search?${params.toString()}`
+        `/api2/collection/${collectionName}/search?${params.toString()}`
       );
       const result = await response.json();
 
