@@ -25,6 +25,8 @@ export default function TestPage() {
   const { subdomain, databaseName } = useTenantInfo();
   const [tests, setTests] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<any>(null);
 
   const runTests = useCallback(async () => {
     setRunning(true);
@@ -85,7 +87,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api/backend/api/health');
+      const response = await fetch('/api2/api/health');
       const data = await response.json();
       if (data.success) {
         testResults[2] = {
@@ -118,7 +120,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api/backend/api/welcome');
+      const response = await fetch('/api2/api/welcome');
       const data = await response.json();
       if (data.success && data.welcome) {
         testResults[3] = {
@@ -151,7 +153,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api/backend/api/db-stats');
+      const response = await fetch('/api2/api/db-stats');
       const data = await response.json();
       if (data.success) {
         const collectionCount = Object.keys(data.collections || {}).length;
@@ -176,6 +178,44 @@ export default function TestPage() {
     }
     setTests([...testResults]);
 
+    // Test 6: Test Database Separation
+    testResults.push({
+      name: 'Database Separation Test',
+      status: 'pending',
+      message: 'Testing...',
+    });
+    setTests([...testResults]);
+
+    try {
+      const response = await fetch('/api2/api/test-separation');
+      const data = await response.json();
+      if (data.success) {
+        const verification = data.verification || {};
+        const allValid =
+          verification.allDocumentsHaveSubdomain && verification.allDocumentsHaveDatabase;
+        testResults[5] = {
+          name: 'Database Separation Test',
+          status: allValid ? 'success' : 'error',
+          message: allValid
+            ? 'Database separation verified'
+            : 'Some documents may not be properly isolated',
+        };
+      } else {
+        testResults[5] = {
+          name: 'Database Separation Test',
+          status: 'error',
+          message: data.error || 'Failed to test separation',
+        };
+      }
+    } catch (error) {
+      testResults[5] = {
+        name: 'Database Separation Test',
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Network error',
+      };
+    }
+    setTests([...testResults]);
+
     setRunning(false);
   }, [subdomain, databaseName]);
 
@@ -183,6 +223,34 @@ export default function TestPage() {
     // Auto-run tests on mount
     runTests();
   }, [runTests]);
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    setSeedResult(null);
+    try {
+      const response = await fetch('/api2/api/seed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setSeedResult(data);
+      if (data.success) {
+        // Reload tests after seeding
+        setTimeout(() => {
+          runTests();
+        }, 1000);
+      }
+    } catch (error) {
+      setSeedResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+      });
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const successCount = tests.filter((t) => t.status === 'success').length;
   const errorCount = tests.filter((t) => t.status === 'error').length;
@@ -217,10 +285,31 @@ export default function TestPage() {
                 }}
               >
                 <Typography variant="h6">Test Results</Typography>
-                <Button variant="contained" onClick={runTests} disabled={running}>
-                  {running ? <CircularProgress size={20} /> : 'Run Tests'}
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleSeed}
+                    disabled={seeding}
+                    color="secondary"
+                  >
+                    {seeding ? <CircularProgress size={20} /> : 'Seed Test Data'}
+                  </Button>
+                  <Button variant="contained" onClick={runTests} disabled={running}>
+                    {running ? <CircularProgress size={20} /> : 'Run Tests'}
+                  </Button>
+                </Box>
               </Box>
+              {seedResult && (
+                <Alert
+                  severity={seedResult.success ? 'success' : 'error'}
+                  sx={{ mb: 2 }}
+                  onClose={() => setSeedResult(null)}
+                >
+                  {seedResult.success
+                    ? `Seeded ${seedResult.totalInserted || 0} documents successfully`
+                    : seedResult.error || 'Failed to seed data'}
+                </Alert>
+              )}
               {totalTests > 0 && (
                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                   <Chip label={`Total: ${totalTests}`} variant="outlined" />

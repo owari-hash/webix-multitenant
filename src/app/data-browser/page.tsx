@@ -41,6 +41,12 @@ export default function DataBrowserPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dbStats, setDbStats] = useState<any>(null);
+  const [inserting, setInserting] = useState(false);
+  const [insertData, setInsertData] = useState('');
+  const [insertResult, setInsertResult] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchField, setSearchField] = useState('');
+  const [searching, setSearching] = useState(false);
 
   // Load database stats on mount
   useEffect(() => {
@@ -49,7 +55,7 @@ export default function DataBrowserPage() {
 
   const loadDbStats = async () => {
     try {
-      const response = await fetch('/api/backend/api/db-stats');
+      const response = await fetch('/api2/api/db-stats');
       const stats = await response.json();
       if (stats.success) {
         setDbStats(stats);
@@ -66,7 +72,7 @@ export default function DataBrowserPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/backend/api/collection/${collectionName}`);
+      const response = await fetch(`/api2/api/collection/${collectionName}`);
       const result = await response.json();
 
       if (result.success) {
@@ -84,6 +90,76 @@ export default function DataBrowserPage() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       loadCollection();
+    }
+  };
+
+  const handleInsert = async () => {
+    if (!collectionName.trim() || !insertData.trim()) return;
+
+    setInserting(true);
+    setInsertResult(null);
+    setError(null);
+
+    try {
+      let dataToInsert;
+      try {
+        dataToInsert = JSON.parse(insertData);
+      } catch {
+        // If not valid JSON, treat as single object
+        dataToInsert = { value: insertData };
+      }
+
+      const response = await fetch(`/api2/api/collection/${collectionName}/insert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: dataToInsert }),
+      });
+
+      const result = await response.json();
+      setInsertResult(result);
+
+      if (result.success) {
+        setInsertData('');
+        // Reload collection and stats
+        loadCollection();
+        loadDbStats();
+      } else {
+        setError(result.error || 'Failed to insert data');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setInserting(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!collectionName.trim()) return;
+
+    setSearching(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('q', searchQuery);
+      if (searchField) params.append('field', searchField);
+
+      const response = await fetch(
+        `/api2/api/collection/${collectionName}/search?${params.toString()}`
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        setData(result);
+      } else {
+        setError(result.error || 'Search failed');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -161,6 +237,86 @@ export default function DataBrowserPage() {
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Search */}
+        {collectionName && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Search in {collectionName}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <TextField
+                    label="Search Query"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Enter search term"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Field (optional)"
+                    value={searchField}
+                    onChange={(e) => setSearchField(e.target.value)}
+                    placeholder="e.g., name, email, title"
+                    sx={{ minWidth: 200 }}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleSearch}
+                    disabled={searching || !searchQuery.trim()}
+                    color="primary"
+                    sx={{ minWidth: 120 }}
+                  >
+                    {searching ? <CircularProgress size={20} /> : 'Search'}
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Insert Data */}
+        {collectionName && (
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Insert Data into {collectionName}
+                </Typography>
+                <TextField
+                  label="JSON Data"
+                  value={insertData}
+                  onChange={(e) => setInsertData(e.target.value)}
+                  placeholder='{"name": "Test", "value": "Data"} or array of objects'
+                  multiline
+                  rows={4}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleInsert}
+                  disabled={inserting || !insertData.trim()}
+                  color="secondary"
+                >
+                  {inserting ? <CircularProgress size={20} /> : 'Insert Data'}
+                </Button>
+                {insertResult && (
+                  <Alert
+                    severity={insertResult.success ? 'success' : 'error'}
+                    sx={{ mt: 2 }}
+                    onClose={() => setInsertResult(null)}
+                  >
+                    {insertResult.success
+                      ? `Inserted ${insertResult.insertedCount || 0} document(s)`
+                      : insertResult.error || 'Failed to insert data'}
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Error Display */}
         {error && (

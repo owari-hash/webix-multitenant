@@ -28,7 +28,7 @@ export default function WelcomePage() {
 
       try {
         // Get welcome message from backend
-        const response = await fetch('/api/backend/api/welcome');
+        const response = await fetch('/api2/api/welcome');
         const data = await response.json();
 
         if (data.success) {

@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:300
 
 /**
  * Proxy API route to forward requests to the Express backend
- * Usage: /api/backend/your-endpoint -> http://localhost:3001/your-endpoint
+ * Usage: /api2/your-endpoint -> http://localhost:3001/your-endpoint
  */
 export async function GET(
   request: NextRequest,
