@@ -8,6 +8,7 @@ import { LocalizationProvider } from 'src/locales';
 import ProgressBar from 'src/components/progress-bar';
 import MotionLazy from 'src/components/animate/motion-lazy';
 import { SettingsDrawer, SettingsProvider } from 'src/components/settings';
+import { TenantProvider } from 'src/contexts/tenant-context';
 
 // ----------------------------------------------------------------------
 
@@ -51,23 +52,25 @@ export default function RootLayout({ children }: Props) {
   return (
     <html lang="en" className={primaryFont.className}>
       <body>
-        <LocalizationProvider>
-          <SettingsProvider
-            defaultSettings={{
-              themeMode: 'light', // 'light' | 'dark'
-              themeDirection: 'ltr', //  'rtl' | 'ltr'
-              themeColorPresets: 'default', // 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red'
-            }}
-          >
-            <ThemeProvider>
-              <MotionLazy>
-                <ProgressBar />
-                <SettingsDrawer />
-                {children}
-              </MotionLazy>
-            </ThemeProvider>
-          </SettingsProvider>
-        </LocalizationProvider>
+        <TenantProvider>
+          <LocalizationProvider>
+            <SettingsProvider
+              defaultSettings={{
+                themeMode: 'light', // 'light' | 'dark'
+                themeDirection: 'ltr', //  'rtl' | 'ltr'
+                themeColorPresets: 'default', // 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red'
+              }}
+            >
+              <ThemeProvider>
+                <MotionLazy>
+                  <ProgressBar />
+                  <SettingsDrawer />
+                  {children}
+                </MotionLazy>
+              </ThemeProvider>
+            </SettingsProvider>
+          </LocalizationProvider>
+        </TenantProvider>
       </body>
     </html>
   );
