@@ -55,7 +55,7 @@ export default function DataBrowserPage() {
 
   const loadDbStats = async () => {
     try {
-      const response = await fetch('/api2/api/db-stats');
+      const response = await fetch('/api2/db-stats');
       const stats = await response.json();
       if (stats.success) {
         setDbStats(stats);
@@ -72,7 +72,7 @@ export default function DataBrowserPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api2/api/collection/${collectionName}`);
+      const response = await fetch(`/api2/collection/${collectionName}`);
       const result = await response.json();
 
       if (result.success) {
@@ -109,7 +109,7 @@ export default function DataBrowserPage() {
         dataToInsert = { value: insertData };
       }
 
-      const response = await fetch(`/api2/api/collection/${collectionName}/insert`, {
+      const response = await fetch(`/api2/collection/${collectionName}/insert`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:300
 
 /**
  * Proxy API route to forward requests to the Express backend
- * Usage: /api2/your-endpoint -> http://localhost:3001/your-endpoint
+ * Usage: /api2/your-endpoint -> http://localhost:3001/api/your-endpoint
  */
 export async function GET(
   request: NextRequest,
@@ -54,7 +54,8 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }, me
   try {
     // Backend will detect subdomain from Host header
     const path = params.path.join('/');
-    const backendUrl = `${BACKEND_URL}/${path}`;
+    // Prepend /api to forward to backend API routes
+    const backendUrl = `${BACKEND_URL}/api/${path}`;
 
     // Get query parameters
     const { searchParams } = request.nextUrl;

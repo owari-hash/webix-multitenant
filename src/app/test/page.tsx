@@ -87,7 +87,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api2/api/health');
+      const response = await fetch('/api2/health');
       const data = await response.json();
       if (data.success) {
         testResults[2] = {
@@ -120,7 +120,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api2/api/welcome');
+      const response = await fetch('/api2/welcome');
       const data = await response.json();
       if (data.success && data.welcome) {
         testResults[3] = {
@@ -153,7 +153,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api2/api/db-stats');
+      const response = await fetch('/api2/db-stats');
       const data = await response.json();
       if (data.success) {
         const collectionCount = Object.keys(data.collections || {}).length;
@@ -187,7 +187,7 @@ export default function TestPage() {
     setTests([...testResults]);
 
     try {
-      const response = await fetch('/api2/api/test-separation');
+      const response = await fetch('/api2/test-separation');
       const data = await response.json();
       if (data.success) {
         const verification = data.verification || {};
@@ -228,7 +228,7 @@ export default function TestPage() {
     setSeeding(true);
     setSeedResult(null);
     try {
-      const response = await fetch('/api2/api/seed', {
+      const response = await fetch('/api2/seed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
