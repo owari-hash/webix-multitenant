@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -15,34 +15,27 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 
 import { _webtoons } from 'src/_mock';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
+import { getUser, getCurrentUser, isAuthenticated } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
-// Mock user data
-const mockUser = {
-  id: '1',
-  name: 'Батбаяр',
-  email: 'batbayar@example.com',
-  avatar: '/assets/images/avatar/avatar_1.jpg',
-  role: 'user',
-  joinDate: '2023-01-15',
-  stats: {
-    readComics: 45,
-    favoriteComics: 12,
-    readingHours: 156,
-    chaptersRead: 342,
-  },
-  badges: [
-    { id: '1', name: 'Шинэ уншигч', icon: 'carbon:star', color: 'primary' },
-    { id: '2', name: 'Комик дуртай', icon: 'carbon:favorite', color: 'error' },
-    { id: '3', name: 'Идэвхтэй уншигч', icon: 'carbon:fire', color: 'warning' },
-  ],
-};
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  subdomain?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  avatar?: string;
+}
 
 const mockReadingHistory = _webtoons.slice(0, 8).map((webtoon, index) => ({
   ...webtoon,
@@ -77,9 +70,90 @@ function TabPanel(props: TabPanelProps) {
 
 export default function ProfileView() {
   const [currentTab, setCurrentTab] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check if user is authenticated
+        if (!isAuthenticated()) {
+          // Redirect to login if not authenticated
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+          return;
+        }
+
+        // Try to get user from API first, fallback to localStorage
+        try {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        } catch (apiError) {
+          // If API fails, try to get from localStorage
+          const storedUser = getUser();
+          if (storedUser) {
+            setUser(storedUser);
+          } else {
+            throw new Error('No user data found');
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load user data');
+        console.error('Error loading user:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 }, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
+        <Alert severity="error">
+          {error || 'Failed to load profile. Please try again.'}
+        </Alert>
+      </Container>
+    );
+  }
+
+  // Format user data for display
+  const displayUser = {
+    id: user.id || '',
+    name: user.name || 'Батбаяр',
+    email: user.email || 'batbayar@example.com',
+    avatar: user.avatar || '/assets/images/avatar/avatar_1.jpg',
+    role: user.role || 'user',
+    joinDate: user.createdAt || new Date().toISOString(),
+    stats: {
+      readComics: 45,
+      favoriteComics: 12,
+      readingHours: 156,
+      chaptersRead: 342,
+    },
+    badges: [
+      { id: '1', name: 'Шинэ уншигч', icon: 'carbon:star', color: 'primary' },
+      { id: '2', name: 'Комик дуртай', icon: 'carbon:favorite', color: 'error' },
+      { id: '3', name: 'Идэвхтэй уншигч', icon: 'carbon:fire', color: 'warning' },
+    ],
   };
 
   return (
@@ -88,29 +162,39 @@ export default function ProfileView() {
         {/* Profile Header */}
         <Card sx={{ p: 4 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
-            <Avatar src={mockUser.avatar} alt={mockUser.name} sx={{ width: 120, height: 120 }} />
+            <Avatar src={displayUser.avatar} alt={displayUser.name} sx={{ width: 120, height: 120 }}>
+              {displayUser.name.charAt(0).toUpperCase()}
+            </Avatar>
 
             <Stack spacing={2} sx={{ flex: 1 }}>
               <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography variant="h4">{mockUser.name}</Typography>
+                <Typography variant="h4">{displayUser.name}</Typography>
                 <Chip
-                  label={mockUser.role === 'user' ? 'Уншигч' : 'Зохиолч'}
+                  label={displayUser.role === 'user' ? 'Уншигч' : displayUser.role === 'admin' ? 'Админ' : 'Зохиолч'}
                   color="primary"
                   size="small"
                 />
               </Stack>
 
               <Typography variant="body1" color="text.secondary">
-                {mockUser.email}
+                {displayUser.email}
               </Typography>
 
               <Typography variant="body2" color="text.secondary">
-                Нэгдсэн огноо: {new Date(mockUser.joinDate).toLocaleDateString('mn-MN')}
+                Нэгдсэн огноо: {new Date(displayUser.joinDate).toLocaleDateString('mn-MN')}
+                {user.subdomain && (
+                  <Chip
+                    label={`Subdomain: ${user.subdomain}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{ ml: 1 }}
+                  />
+                )}
               </Typography>
 
               {/* Badges */}
               <Stack direction="row" spacing={1} flexWrap="wrap">
-                {mockUser.badges.map((badge) => (
+                {displayUser.badges.map((badge) => (
                   <Chip
                     key={badge.id}
                     icon={<Iconify icon={badge.icon} />}
@@ -134,7 +218,7 @@ export default function ProfileView() {
           <Grid xs={12} sm={6} md={3}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Iconify icon="carbon:book" sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h4">{mockUser.stats.readComics}</Typography>
+              <Typography variant="h4">{displayUser.stats.readComics}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Уншсан комик
               </Typography>
@@ -144,7 +228,7 @@ export default function ProfileView() {
           <Grid xs={12} sm={6} md={3}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Iconify icon="carbon:favorite" sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
-              <Typography variant="h4">{mockUser.stats.favoriteComics}</Typography>
+              <Typography variant="h4">{displayUser.stats.favoriteComics}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Дуртай комик
               </Typography>
@@ -154,7 +238,7 @@ export default function ProfileView() {
           <Grid xs={12} sm={6} md={3}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Iconify icon="carbon:time" sx={{ fontSize: 48, color: 'warning.main', mb: 2 }} />
-              <Typography variant="h4">{mockUser.stats.readingHours}</Typography>
+              <Typography variant="h4">{displayUser.stats.readingHours}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Цаг унших
               </Typography>
@@ -167,7 +251,7 @@ export default function ProfileView() {
                 icon="carbon:page-break"
                 sx={{ fontSize: 48, color: 'success.main', mb: 2 }}
               />
-              <Typography variant="h4">{mockUser.stats.chaptersRead}</Typography>
+              <Typography variant="h4">{displayUser.stats.chaptersRead}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Уншсан бүлэг
               </Typography>

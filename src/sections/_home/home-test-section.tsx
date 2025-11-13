@@ -21,7 +21,7 @@ interface TestResult {
   message: string;
 }
 
-export default function TestPage() {
+export default function HomeTestSection() {
   const { subdomain, databaseName } = useTenantInfo();
   const [tests, setTests] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
@@ -388,3 +388,4 @@ export default function TestPage() {
     </Container>
   );
 }
+

@@ -1,7 +1,40 @@
 // ----------------------------------------------------------------------
 
-// Backend API client for Express server
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+/**
+ * Get backend URL dynamically based on the current subdomain
+ * Since zevtabs is a wildcard domain, we use the same hostname for backend
+ */
+function getBackendUrl(): string {
+  // For client-side, use window.location
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location;
+    const parts = hostname.split('.');
+
+    // Determine subdomain
+    let subdomain = '';
+    if (parts.length > 1) {
+      // Check if it's a subdomain (e.g., zevtabs.localhost or zevtabs.anzaidev.fun)
+      if (parts[0] !== 'www' && parts[0] !== 'localhost') {
+        subdomain = parts[0];
+      }
+    }
+
+    // Always use the main production domain
+    const mainDomain = 'anzaidev.fun';
+    const protocol = 'https';
+
+    // Construct backend URL with subdomain
+    if (subdomain) {
+      return `${protocol}://${subdomain}.${mainDomain}`;
+    }
+
+    // No subdomain, use main domain (or default from env)
+    return process.env.NEXT_PUBLIC_BACKEND_URL || `${protocol}://${mainDomain}`;
+  }
+
+  // For server-side, use environment variable or default
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'https://anzaidev.fun';
+}
 
 // ----------------------------------------------------------------------
 
@@ -33,7 +66,15 @@ export async function backendRequest<T = any>(
   subdomain?: string
 ): Promise<BackendResponse<T>> {
   try {
-    const url = `${BACKEND_URL}${endpoint}`;
+    // Get dynamic backend URL based on current hostname
+    const backendBaseUrl = getBackendUrl();
+
+    // Ensure endpoint starts with /api2 if it doesn't already
+    let apiEndpoint = endpoint;
+    if (!apiEndpoint.startsWith('/api2')) {
+      apiEndpoint = `/api2${apiEndpoint.startsWith('/') ? apiEndpoint : `/${apiEndpoint}`}`;
+    }
+    const url = `${backendBaseUrl}${apiEndpoint}`;
 
     // Prepare headers
     const headers = new Headers({
@@ -42,10 +83,12 @@ export async function backendRequest<T = any>(
     });
 
     // Forward subdomain to backend if provided
-    // The backend will detect it from the Host header
+    // The backend will detect it from the X-Original-Host header
     if (subdomain) {
-      // Set Host header so backend can detect subdomain
-      headers.set('Host', subdomain.includes('.') ? subdomain : `${subdomain}.localhost:3001`);
+      headers.set(
+        'X-Original-Host',
+        subdomain.includes('.') ? subdomain : `${subdomain}.anzaidev.fun`
+      );
     }
 
     const response = await fetch(url, {
@@ -80,21 +123,21 @@ export async function backendRequest<T = any>(
  * Get welcome message from backend
  */
 export async function getWelcome(subdomain?: string) {
-  return backendRequest('/api/welcome', {}, subdomain);
+  return backendRequest('/welcome', {}, subdomain);
 }
 
 /**
  * Get health status from backend
  */
 export async function getHealth(subdomain?: string) {
-  return backendRequest('/api/health', {}, subdomain);
+  return backendRequest('/health', {}, subdomain);
 }
 
 /**
  * Test database connection
  */
 export async function testDatabase(subdomain?: string) {
-  return backendRequest('/api/test-db', {}, subdomain);
+  return backendRequest('/test-db', {}, subdomain);
 }
 
 /**

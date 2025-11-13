@@ -50,11 +50,43 @@ export default function LoginCoverView() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      console.log('DATA', data);
+      const response = await fetch('/api2/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Store auth token if provided
+        if (result.token) {
+          localStorage.setItem('token', result.token);
+        }
+        // Store user data if provided
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+        reset();
+        // Redirect or show success message
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      } else {
+        // Show error message
+        console.error('Login failed:', result.error || result.message);
+        // You can add toast notification here
+        alert(result.error || result.message || 'Login failed');
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Login error:', error);
+      // You can add toast notification here
+      alert('Network error. Please try again.');
     }
   });
 
@@ -68,13 +100,6 @@ export default function LoginCoverView() {
     >
       <Typography variant="h3" paragraph>
         Login
-      </Typography>
-
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        {`Don’t have an account? `}
-        <Link component={RouterLink} href={paths.registerCover} variant="subtitle2" color="primary">
-          Get started
-        </Link>
       </Typography>
     </Stack>
   );

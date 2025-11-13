@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
@@ -23,6 +23,7 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
+import { getUser, isAuthenticated, logout } from 'src/utils/auth';
 
 import { HEADER } from '../config-layout';
 import Searchbar from '../common/searchbar';
@@ -39,15 +40,14 @@ type Props = {
   headerOnDark: boolean;
 };
 
-// Mock user data - in real app this would come from auth context
-const mockUser = {
-  id: '1',
-  name: 'Батбаяр',
-  email: 'batbayar@example.com',
-  avatar: '/assets/images/avatar/avatar_1.jpg',
-  role: 'user', // 'user', 'creator', 'admin'
-  isAuthenticated: true,
-};
+interface User {
+  id?: string;
+  name?: string;
+  email?: string;
+  avatar?: string;
+  role?: string;
+  subdomain?: string;
+}
 
 export default function HeaderWebtoon({ headerOnDark }: Props) {
   const theme = useTheme();
@@ -56,6 +56,40 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check authentication and load user data
+    const checkAuth = () => {
+      const isAuth = isAuthenticated();
+      setAuthenticated(isAuth);
+      
+      if (isAuth) {
+        const userData = getUser();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+    
+    // Listen for storage changes (when user logs in/out in another tab)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically in case of same-tab changes
+    const interval = setInterval(checkAuth, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -73,9 +107,17 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
     setNotificationAnchor(null);
   };
 
-  const handleLogout = () => {
-    // Handle logout logic
+  const handleLogout = async () => {
     handleProfileMenuClose();
+    await logout();
+  };
+
+  // Get user display data with fallbacks
+  const displayUser = user || {
+    name: 'Батбаяр',
+    email: 'batbayar@example.com',
+    avatar: '/assets/images/avatar/avatar_1.jpg',
+    role: 'user',
   };
 
   return (
@@ -136,7 +178,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             {/* Search */}
             <Searchbar />
 
-            {mockUser.isAuthenticated ? (
+            {authenticated ? (
               <>
                 {/* Quick Actions for authenticated users */}
                 <Stack direction="row" spacing={1} sx={{ mx: 1 }}>
@@ -188,7 +230,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                   </IconButton>
 
                   {/* CMS Access for creators/admins */}
-                  {(mockUser.role === 'creator' || mockUser.role === 'admin') && (
+                  {(displayUser.role === 'creator' || displayUser.role === 'admin') && (
                     <IconButton
                       size="medium"
                       sx={{
@@ -219,14 +261,16 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                   }}
                 >
                   <Avatar
-                    src={mockUser.avatar}
-                    alt={mockUser.name}
+                    src={displayUser.avatar}
+                    alt={displayUser.name}
                     sx={{
                       width: 36,
                       height: 36,
                       transition: 'box-shadow 0.2s ease',
                     }}
-                  />
+                  >
+                    {!displayUser.avatar && displayUser.name?.charAt(0).toUpperCase()}
+                  </Avatar>
                 </IconButton>
 
                 {/* Profile Menu */}
@@ -241,9 +285,9 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                   }}
                 >
                   <Box sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">{mockUser.name}</Typography>
+                    <Typography variant="subtitle2">{displayUser.name}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {mockUser.email}
+                      {displayUser.email}
                     </Typography>
                   </Box>
 
@@ -269,7 +313,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     Тохиргоо
                   </MenuItem>
 
-                  {(mockUser.role === 'creator' || mockUser.role === 'admin') && (
+                  {(displayUser.role === 'creator' || displayUser.role === 'admin') && (
                     <>
                       <Divider />
                       <MenuItem onClick={handleProfileMenuClose} href={paths.webtoon.cms.dashboard}>

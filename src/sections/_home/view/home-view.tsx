@@ -11,6 +11,8 @@ import HomeWebtoonFeatured from '../home-webtoon-featured';
 import HomeWebtoonTrending from '../home-webtoon-trending';
 import HomeWebtoonNewsletter from '../home-webtoon-newsletter';
 import HomeWebtoonCategories from '../home-webtoon-categories';
+import HomeAuthSection from '../home-auth-section';
+import HomeTestSection from '../home-test-section';
 
 // ----------------------------------------------------------------------
 
@@ -23,6 +25,12 @@ export default function HomeView() {
 
       {/* Hero Section */}
       <HomeWebtoonHero />
+
+      {/* Auth Section (Login/Register) */}
+      <HomeAuthSection />
+
+      {/* Test Section */}
+      <HomeTestSection />
 
       {/* Featured Webtoons */}
       <HomeWebtoonFeatured data={_featuredWebtoons} />

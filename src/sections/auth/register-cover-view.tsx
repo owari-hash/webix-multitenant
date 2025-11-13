@@ -26,10 +26,10 @@ export default function RegisterCoverView() {
   const passwordShow = useBoolean();
 
   const RegisterSchema = Yup.object().shape({
-    fullName: Yup.string()
-      .required('Full name is required')
-      .min(6, 'Mininum 6 characters')
-      .max(15, 'Maximum 15 characters'),
+    name: Yup.string()
+      .required('Name is required')
+      .min(2, 'Minimum 2 characters')
+      .max(50, 'Maximum 50 characters'),
     email: Yup.string().required('Email is required').email('That is not an email'),
     password: Yup.string()
       .required('Password is required')
@@ -40,7 +40,7 @@ export default function RegisterCoverView() {
   });
 
   const defaultValues = {
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -59,11 +59,45 @@ export default function RegisterCoverView() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      console.log('DATA', data);
+      const response = await fetch('/api2/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: 'user', // Default role
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Store auth token if provided
+        if (result.token) {
+          localStorage.setItem('token', result.token);
+        }
+        // Store user data if provided
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+        reset();
+        // Redirect or show success message
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }
+      } else {
+        // Show error message
+        console.error('Registration failed:', result.error || result.message);
+        // You can add toast notification here
+        alert(result.error || result.message || 'Registration failed');
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Registration error:', error);
+      // You can add toast notification here
+      alert('Network error. Please try again.');
     }
   });
 
@@ -77,13 +111,6 @@ export default function RegisterCoverView() {
     >
       <Typography variant="h3" paragraph>
         Get Started
-      </Typography>
-
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        {`Already have an account? `}
-        <Link component={RouterLink} href={paths.loginCover} variant="subtitle2" color="primary">
-          Login
-        </Link>
       </Typography>
     </Stack>
   );
@@ -107,7 +134,7 @@ export default function RegisterCoverView() {
   const renderForm = (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Stack spacing={2.5}>
-        <RHFTextField name="fullName" label="Full Name" />
+        <RHFTextField name="name" label="Name" />
 
         <RHFTextField name="email" label="Email address" />
 
