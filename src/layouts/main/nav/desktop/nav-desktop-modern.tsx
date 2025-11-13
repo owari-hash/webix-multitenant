@@ -12,7 +12,7 @@ const StyledNavItem = styled(Box, {
 })<{ active?: boolean }>(({ theme, active }) => ({
   ...theme.typography.subtitle2,
   padding: theme.spacing(1, 2),
-  color: theme.palette.text.secondary,
+  color: theme.palette.text.secondary, // Default color - will be overridden by header CSS
   borderRadius: theme.spacing(1),
   textDecoration: 'none',
   cursor: 'pointer',
@@ -26,7 +26,7 @@ const StyledNavItem = styled(Box, {
     backgroundColor: alpha(theme.palette.primary.main, 0.08),
   },
   ...(active && {
-    color: theme.palette.primary.main,
+    color: theme.palette.primary.main, // Default active color - will be overridden by header CSS
     backgroundColor: alpha(theme.palette.primary.main, 0.12),
     fontWeight: theme.typography.fontWeightSemiBold,
     '&:hover': {
@@ -64,7 +64,7 @@ export default function NavDesktopModern({ data, sx }: Props) {
 
           return (
             <NextLink key={link.title} href={link.path} passHref>
-              <StyledNavItem component="a" active={isActive}>
+              <StyledNavItem component="a" active={isActive} data-active={isActive}>
                 {link.title}
               </StyledNavItem>
             </NextLink>

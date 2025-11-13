@@ -257,7 +257,7 @@ export default function HomeTestSection() {
   const totalTests = tests.length;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom>
           System Test

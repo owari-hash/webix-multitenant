@@ -39,10 +39,13 @@ export default function MainLayout({ children }: Props) {
     pathname.startsWith('/cms') ||
     pathname === '/';
 
+  // Homepage has dark hero background, so header should be on dark
+  const isHomePage = pathname === '/';
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 1 }}>
       {isWebtoonPage ? (
-        <HeaderWebtoon headerOnDark={actionPage(pathsOnDark)} />
+        <HeaderWebtoon headerOnDark={isHomePage || actionPage(pathsOnDark)} />
       ) : (
         <Header headerOnDark={actionPage(pathsOnDark)} />
       )}

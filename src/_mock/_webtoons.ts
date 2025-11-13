@@ -57,7 +57,22 @@ export const _webtoons = [...Array(24)].map((_, index) => ({
   tags: _webtoonGenres.slice(0, 3).map((item) => item.label),
 }));
 
-export const _featuredWebtoons = _webtoons.slice(0, 6);
+// Featured webtoons for hero carousel - using custom images
+export const _featuredWebtoons = [
+  {
+    ..._webtoons[0],
+    coverUrl: '/assets/images/cover/webt1.jpg',
+  },
+  {
+    ..._webtoons[1],
+    coverUrl: '/assets/images/cover/webt2.jpeg',
+  },
+  {
+    ..._webtoons[2],
+    coverUrl: '/assets/images/cover/webt3.jpg',
+  },
+  ..._webtoons.slice(3, 6),
+];
 
 export const _popularWebtoons = _webtoons
   .filter((webtoon) => webtoon.isPopular)

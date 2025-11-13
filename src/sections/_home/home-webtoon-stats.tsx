@@ -58,7 +58,7 @@ export default function HomeWebtoonStats() {
   return (
     <Box
       sx={{
-        py: { xs: 5, md: 10 },
+        py: { xs: 8, md: 12 },
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
           theme.palette.secondary.main,
           0.1

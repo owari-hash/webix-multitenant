@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Container from '@mui/material/Container';
@@ -53,7 +52,7 @@ export default function HomeAuthSection() {
       <Container>
         <Box
           sx={{
-            py: 5,
+            py: { xs: 6, md: 8 },
             display: 'flex',
             justifyContent: 'center',
             gap: 2,
@@ -158,4 +157,3 @@ export default function HomeAuthSection() {
     </>
   );
 }
-

@@ -50,7 +50,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
     <Container
       component={MotionViewport}
       sx={{
-        py: { xs: 5, md: 10 },
+        py: { xs: 8, md: 12 },
       }}
     >
       <Stack spacing={5}>

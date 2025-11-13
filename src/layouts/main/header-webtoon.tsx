@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import Toolbar from '@mui/material/Toolbar';
 import MenuItem from '@mui/material/MenuItem';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -23,7 +23,7 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
-import { getUser, isAuthenticated, logout } from 'src/utils/auth';
+import { logout, getUser, isAuthenticated } from 'src/utils/auth';
 
 import { HEADER } from '../config-layout';
 import Searchbar from '../common/searchbar';
@@ -64,7 +64,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
     const checkAuth = () => {
       const isAuth = isAuthenticated();
       setAuthenticated(isAuth);
-      
+
       if (isAuth) {
         const userData = getUser();
         setUser(userData);
@@ -74,17 +74,17 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
     };
 
     checkAuth();
-    
+
     // Listen for storage changes (when user logs in/out in another tab)
     const handleStorageChange = () => {
       checkAuth();
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Also check periodically in case of same-tab changes
     const interval = setInterval(checkAuth, 1000);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
@@ -135,12 +135,78 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
           }),
           ...(headerOnDark && {
             color: 'common.white',
+            // Add text shadows for better visibility on dark backgrounds
+            '& *': {
+              textShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.8)},
+                          0 1px 3px ${alpha(theme.palette.common.black, 0.6)}`,
+            },
+            // Ensure logo and icons are visible
+            '& svg': {
+              filter: `drop-shadow(0 2px 4px ${alpha(theme.palette.common.black, 0.8)})`,
+            },
+            // Make ALL navigation text white - force override with maximum specificity
+            '& nav': {
+              '& a, & [class*="MuiBox-root"], & *': {
+                color: 'common.white !important',
+              },
+              // Active nav item - white text with white background (override primary color)
+              '& [data-active="true"], & [data-active="true"] a, & a[data-active="true"]': {
+                color: 'common.white !important',
+                backgroundColor: `${alpha(theme.palette.common.white, 0.15)} !important`,
+              },
+              // Hover state - white text with white background
+              '& a:hover, & [class*="MuiBox-root"]:hover, & a[data-active="true"]:hover': {
+                color: 'common.white !important',
+                backgroundColor: `${alpha(theme.palette.common.white, 0.1)} !important`,
+              },
+            },
+            // Additional override for any nested elements
+            '& nav *': {
+              color: 'common.white !important',
+            },
           }),
           ...(offset && {
-            ...bgBlur({ color: theme.palette.background.default }),
+            // Glassmorphism effect when scrolled
+            ...bgBlur({
+              color: theme.palette.background.default,
+              opacity: 0.8,
+              blur: 20,
+            }),
+            backgroundColor: alpha(theme.palette.background.default, 0.7),
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
             color: 'text.primary',
             height: {
               md: HEADER.H_DESKTOP - 16,
+            },
+            // Remove text shadows when scrolled
+            '& *': {
+              textShadow: 'none',
+            },
+            '& svg': {
+              filter: 'none',
+            },
+            // Reset navigation text to normal colors when scrolled
+            '& nav': {
+              '& a, & [class*="MuiBox-root"], & *': {
+                color: 'text.primary !important',
+              },
+              // Active nav item - normal colors when scrolled
+              '& [data-active="true"], & [data-active="true"] a, & a[data-active="true"]': {
+                color: 'primary.main !important',
+                backgroundColor: `${alpha(theme.palette.primary.main, 0.12)} !important`,
+              },
+              // Hover state - normal colors when scrolled
+              '& a:hover, & [class*="MuiBox-root"]:hover, & a[data-active="true"]:hover': {
+                color: 'text.primary !important',
+                backgroundColor: `${alpha(theme.palette.primary.main, 0.08)} !important`,
+              },
+            },
+            // Reset nav elements to normal colors
+            '& nav *': {
+              color: 'inherit !important',
             },
           }),
         }}
@@ -149,7 +215,26 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
           sx={{ height: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
           {/* Logo */}
-          <Box sx={{ lineHeight: 0, position: 'relative' }}>
+          <Box
+            sx={{
+              lineHeight: 0,
+              position: 'relative',
+              ...(headerOnDark && {
+                // Make logo white when on dark background
+                filter: 'brightness(0) invert(1)',
+                '& img': {
+                  filter: 'brightness(0) invert(1)',
+                },
+              }),
+              ...(offset && {
+                // Remove filter when scrolled
+                filter: 'none',
+                '& img': {
+                  filter: 'none',
+                },
+              }),
+            }}
+          >
             <Logo />
             <Link href="https://zone-docs.vercel.app/changelog" target="_blank" rel="noopener">
               <Label

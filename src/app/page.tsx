@@ -4,7 +4,7 @@ import HomeView from 'src/sections/_home/view/home-view';
 // ----------------------------------------------------------------------
 
 export const metadata = {
-  title: 'WebtoonHub - Discover Amazing Webtoons',
+  title: 'Webix - Зургаар амилна',
   description:
     'Immerse yourself in captivating stories with stunning artwork. Read the latest webtoons from talented creators around the world.',
 };

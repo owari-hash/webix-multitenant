@@ -14,10 +14,8 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import Logo from 'src/components/logo';
-import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
-import { RouterLink } from 'src/routes/components';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------

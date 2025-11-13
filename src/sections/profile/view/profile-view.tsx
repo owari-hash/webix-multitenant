@@ -156,6 +156,13 @@ export default function ProfileView() {
     ],
   };
 
+  // Get role label
+  const getRoleLabel = () => {
+    if (displayUser.role === 'user') return 'Уншигч';
+    if (displayUser.role === 'admin') return 'Админ';
+    return 'Зохиолч';
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
       <Stack spacing={5}>
@@ -170,7 +177,7 @@ export default function ProfileView() {
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="h4">{displayUser.name}</Typography>
                 <Chip
-                  label={displayUser.role === 'user' ? 'Уншигч' : displayUser.role === 'admin' ? 'Админ' : 'Зохиолч'}
+                  label={getRoleLabel()}
                   color="primary"
                   size="small"
                 />
