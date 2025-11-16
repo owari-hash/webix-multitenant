@@ -12,7 +12,6 @@ import Typography from '@mui/material/Typography';
 
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
-import { _featuredWebtoons } from 'src/_mock';
 import { useResponsive } from 'src/hooks/use-responsive';
 import { varFade, MotionViewport } from 'src/components/animate';
 import Carousel, { useCarousel, CarouselArrows } from 'src/components/carousel';
@@ -20,7 +19,7 @@ import Carousel, { useCarousel, CarouselArrows } from 'src/components/carousel';
 // ----------------------------------------------------------------------
 
 type Props = {
-  data: typeof _featuredWebtoons;
+  data: any[];
 };
 
 export default function HomeWebtoonFeatured({ data }: Props) {
@@ -73,112 +72,119 @@ export default function HomeWebtoonFeatured({ data }: Props) {
 
         <Box sx={{ position: 'relative' }}>
           <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
-            {data.map((webtoon) => (
-              <Box key={webtoon.id} sx={{ px: 1 }}>
-                <m.div variants={varFade().inUp}>
-                  <Card
-                    sx={{
-                      p: 2,
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: (t) => t.customShadows.z24,
-                      },
-                    }}
-                  >
-                    <Box sx={{ position: 'relative', mb: 2 }}>
-                      <Image
-                        alt={webtoon.title}
-                        src={webtoon.coverUrl}
-                        ratio="3/4"
-                        sx={{ borderRadius: 1 }}
-                      />
-                      {webtoon.isNew && (
-                        <Chip
-                          label="NEW"
-                          color="error"
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            fontWeight: 'bold',
-                          }}
+            {data.map((webtoon) => {
+              const isNew = webtoon.createdAt && 
+                new Date(webtoon.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
+              const isPopular = (webtoon.views || 0) > 10000;
+              const rating = webtoon.likes ? Math.min(5, (webtoon.likes / 100)) : 4.5;
+              
+              return (
+                <Box key={webtoon._id || webtoon.id} sx={{ px: 1 }}>
+                  <m.div variants={varFade().inUp}>
+                    <Card
+                      sx={{
+                        p: 2,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: (t) => t.customShadows.z24,
+                        },
+                      }}
+                    >
+                      <Box sx={{ position: 'relative', mb: 2 }}>
+                        <Image
+                          alt={webtoon.title}
+                          src={webtoon.coverImage || '/assets/placeholder.jpg'}
+                          ratio="3/4"
+                          sx={{ borderRadius: 1 }}
                         />
-                      )}
-                      {webtoon.isPopular && (
-                        <Chip
-                          label="HOT"
-                          color="warning"
-                          size="small"
+                        {isNew && (
+                          <Chip
+                            label="NEW"
+                            color="error"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              left: 8,
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                        {isPopular && (
+                          <Chip
+                            label="HOT"
+                            color="warning"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              fontWeight: 'bold',
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      <Stack spacing={1}>
+                        <Typography
+                          variant="subtitle1"
                           sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            fontWeight: 'bold',
+                            fontWeight: 600,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
                           }}
-                        />
-                      )}
-                    </Box>
-
-                    <Stack spacing={1}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {webtoon.title}
-                      </Typography>
-
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'text.secondary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {webtoon.description}
-                      </Typography>
-
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Rating value={webtoon.rating} readOnly size="small" precision={0.1} />
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          ({webtoon.rating})
+                        >
+                          {webtoon.title}
                         </Typography>
+
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'text.secondary',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {webtoon.description || 'No description available'}
+                        </Typography>
+
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Rating value={rating} readOnly size="small" precision={0.1} />
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            ({rating.toFixed(1)})
+                          </Typography>
+                        </Stack>
+
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {webtoon.chapters || 0} chapters
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {(webtoon.views || 0).toLocaleString()} views
+                          </Typography>
+                        </Stack>
+
+                        <Button
+                          variant="contained"
+                          size="small"
+                          fullWidth
+                          startIcon={<Iconify icon="carbon:play" />}
+                          sx={{ mt: 1 }}
+                        >
+                          Read Now
+                        </Button>
                       </Stack>
-
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {webtoon.chapters} chapters
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {webtoon.views.toLocaleString()} views
-                        </Typography>
-                      </Stack>
-
-                      <Button
-                        variant="contained"
-                        size="small"
-                        fullWidth
-                        startIcon={<Iconify icon="carbon:play" />}
-                        sx={{ mt: 1 }}
-                      >
-                        Read Now
-                      </Button>
-                    </Stack>
-                  </Card>
-                </m.div>
-              </Box>
-            ))}
+                    </Card>
+                  </m.div>
+                </Box>
+              );
+            })}
           </Carousel>
 
           {mdUp && (

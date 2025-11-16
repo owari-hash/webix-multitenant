@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
@@ -369,51 +369,49 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     sx: { width: 220, mt: 1 },
                   }}
                 >
-                  <Box sx={{ p: 2 }}>
-                    <Typography variant="subtitle2">{displayUser.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {displayUser.email}
-                    </Typography>
-                  </Box>
-
-                  <Divider />
-
-                  <MenuItem onClick={handleProfileMenuClose} href={paths.profile.root}>
-                    <Iconify icon="carbon:user" sx={{ mr: 2 }} />
-                    Миний профайл
-                  </MenuItem>
-
-                  <MenuItem onClick={handleProfileMenuClose} href={paths.profile.library}>
-                    <Iconify icon="carbon:book" sx={{ mr: 2 }} />
-                    Номын сан
-                  </MenuItem>
-
-                  <MenuItem onClick={handleProfileMenuClose} href={paths.profile.favorites}>
-                    <Iconify icon="carbon:favorite" sx={{ mr: 2 }} />
-                    Дуртай комикууд
-                  </MenuItem>
-
-                  <MenuItem onClick={handleProfileMenuClose} href={paths.profile.settings}>
-                    <Iconify icon="carbon:settings" sx={{ mr: 2 }} />
-                    Тохиргоо
-                  </MenuItem>
-
-                  {(displayUser.role === 'creator' || displayUser.role === 'admin') && (
-                    <>
-                      <Divider />
-                      <MenuItem onClick={handleProfileMenuClose} href={paths.webtoon.cms.dashboard}>
-                        <Iconify icon="carbon:dashboard" sx={{ mr: 2 }} />
-                        CMS Удирдлага
-                      </MenuItem>
-                    </>
-                  )}
-
-                  <Divider />
-
-                  <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                    <Iconify icon="carbon:logout" sx={{ mr: 2 }} />
-                    Гарах
-                  </MenuItem>
+                  {[
+                    <Box key="header" sx={{ p: 2 }}>
+                      <Typography variant="subtitle2">{displayUser.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {displayUser.email}
+                      </Typography>
+                    </Box>,
+                    <Divider key="divider1" />,
+                    <MenuItem key="profile" onClick={handleProfileMenuClose} href={paths.profile.root}>
+                      <Iconify icon="carbon:user" sx={{ mr: 2 }} />
+                      Миний профайл
+                    </MenuItem>,
+                    <MenuItem key="library" onClick={handleProfileMenuClose} href={paths.profile.library}>
+                      <Iconify icon="carbon:book" sx={{ mr: 2 }} />
+                      Номын сан
+                    </MenuItem>,
+                    <MenuItem key="favorites" onClick={handleProfileMenuClose} href={paths.profile.favorites}>
+                      <Iconify icon="carbon:favorite" sx={{ mr: 2 }} />
+                      Дуртай комикууд
+                    </MenuItem>,
+                    <MenuItem key="settings" onClick={handleProfileMenuClose} href={paths.profile.settings}>
+                      <Iconify icon="carbon:settings" sx={{ mr: 2 }} />
+                      Тохиргоо
+                    </MenuItem>,
+                    ...(displayUser.role === 'creator' || displayUser.role === 'admin'
+                      ? [
+                          <Divider key="divider2" />,
+                          <MenuItem
+                            key="cms"
+                            onClick={handleProfileMenuClose}
+                            href={paths.webtoon.cms.dashboard}
+                          >
+                            <Iconify icon="carbon:dashboard" sx={{ mr: 2 }} />
+                            CMS Удирдлага
+                          </MenuItem>,
+                        ]
+                      : []),
+                    <Divider key="divider3" />,
+                    <MenuItem key="logout" onClick={handleLogout} sx={{ color: 'error.main' }}>
+                      <Iconify icon="carbon:logout" sx={{ mr: 2 }} />
+                      Гарах
+                    </MenuItem>,
+                  ]}
                 </Menu>
 
                 {/* Notifications Menu */}
@@ -427,52 +425,48 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     sx: { width: 320, mt: 1 },
                   }}
                 >
-                  <Box sx={{ p: 2 }}>
-                    <Typography variant="h6">Мэдэгдэл</Typography>
-                  </Box>
-
-                  <Divider />
-
-                  <MenuItem onClick={handleNotificationClose}>
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle2">
-                        &ldquo;Миний дуртай комик&rdquo; шинэ бүлэг нэмэгдлээ
+                  {[
+                    <Box key="header" sx={{ p: 2 }}>
+                      <Typography variant="h6">Мэдэгдэл</Typography>
+                    </Box>,
+                    <Divider key="divider1" />,
+                    <MenuItem key="notif1" onClick={handleNotificationClose}>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2">
+                          &ldquo;Миний дуртай комик&rdquo; шинэ бүлэг нэмэгдлээ
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          2 цагийн өмнө
+                        </Typography>
+                      </Stack>
+                    </MenuItem>,
+                    <MenuItem key="notif2" onClick={handleNotificationClose}>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2">
+                          Таны дуртай зохиолч шинэ комик эхлүүллээ
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          1 өдрийн өмнө
+                        </Typography>
+                      </Stack>
+                    </MenuItem>,
+                    <MenuItem key="notif3" onClick={handleNotificationClose}>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2">
+                          Долоо хоногийн шилдэг комикууд гарлаа
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          3 өдрийн өмнө
+                        </Typography>
+                      </Stack>
+                    </MenuItem>,
+                    <Divider key="divider2" />,
+                    <MenuItem key="viewAll" onClick={handleNotificationClose} sx={{ justifyContent: 'center' }}>
+                      <Typography variant="body2" color="primary">
+                        Бүх мэдэгдлийг үзэх
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        2 цагийн өмнө
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-
-                  <MenuItem onClick={handleNotificationClose}>
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle2">
-                        Таны дуртай зохиолч шинэ комик эхлүүллээ
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        1 өдрийн өмнө
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-
-                  <MenuItem onClick={handleNotificationClose}>
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle2">
-                        Долоо хоногийн шилдэг комикууд гарлаа
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        3 өдрийн өмнө
-                      </Typography>
-                    </Stack>
-                  </MenuItem>
-
-                  <Divider />
-
-                  <MenuItem onClick={handleNotificationClose} sx={{ justifyContent: 'center' }}>
-                    <Typography variant="body2" color="primary">
-                      Бүх мэдэгдлийг үзэх
-                    </Typography>
-                  </MenuItem>
+                    </MenuItem>,
+                  ]}
                 </Menu>
               </>
             ) : (

@@ -7,53 +7,69 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { _webtoonStats } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
-const STATS = [
-  {
-    label: 'Нийт Веб Комик',
-    value: _webtoonStats.totalWebtoons,
-    icon: 'carbon:book',
-    color: '#ff6b6b',
-  },
-  {
-    label: 'Нийт Үзэлт',
-    value: _webtoonStats.totalViews.toLocaleString(),
-    icon: 'carbon:view',
-    color: '#4ecdc4',
-  },
-  {
-    label: 'Нийт Лайк',
-    value: _webtoonStats.totalLikes.toLocaleString(),
-    icon: 'carbon:favorite',
-    color: '#45b7d1',
-  },
-  {
-    label: 'Нийт Бүлэг',
-    value: _webtoonStats.totalChapters.toLocaleString(),
-    icon: 'carbon:page-break',
-    color: '#96ceb4',
-  },
-  {
-    label: 'Дундаж Үнэлгээ',
-    value: _webtoonStats.averageRating,
-    icon: 'carbon:star',
-    color: '#feca57',
-  },
-  {
-    label: 'Идэвхтэй Уншигчид',
-    value: '12.5K',
-    icon: 'carbon:user-multiple',
-    color: '#ff9ff3',
-  },
-];
+type Props = {
+  comics: any[];
+};
 
-export default function HomeWebtoonStats() {
+export default function HomeWebtoonStats({ comics }: Props) {
   const theme = useTheme();
+
+  // Calculate stats from real data
+  const totalComics = comics.length;
+  const totalChapters = comics.reduce((sum, comic) => sum + (comic.chapters || 0), 0);
+  const totalViews = comics.reduce((sum, comic) => sum + (comic.views || 0), 0);
+  const totalLikes = comics.reduce((sum, comic) => sum + (comic.likes || 0), 0);
+  const averageRating = totalLikes > 0 ? Math.min(5, (totalLikes / totalComics) / 20).toFixed(1) : '4.5';
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}М`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}К`;
+    return num.toString();
+  };
+
+  const STATS = [
+    {
+      label: 'Нийт Веб Комик',
+      value: totalComics.toString(),
+      icon: 'carbon:book',
+      color: '#ff6b6b',
+    },
+    {
+      label: 'Нийт Үзэлт',
+      value: formatNumber(totalViews),
+      icon: 'carbon:view',
+      color: '#4ecdc4',
+    },
+    {
+      label: 'Нийт Лайк',
+      value: formatNumber(totalLikes),
+      icon: 'carbon:favorite',
+      color: '#45b7d1',
+    },
+    {
+      label: 'Нийт Бүлэг',
+      value: formatNumber(totalChapters),
+      icon: 'carbon:page-break',
+      color: '#96ceb4',
+    },
+    {
+      label: 'Дундаж Үнэлгээ',
+      value: averageRating,
+      icon: 'carbon:star',
+      color: '#feca57',
+    },
+    {
+      label: 'Идэвхтэй Уншигчид',
+      value: formatNumber(totalViews / 100), // Estimated active readers
+      icon: 'carbon:user-multiple',
+      color: '#ff9ff3',
+    },
+  ];
 
   return (
     <Box

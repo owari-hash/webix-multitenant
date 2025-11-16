@@ -113,6 +113,8 @@ export const paths = {
   registerIllustration: '/auth/register-illustration',
   forgotPassword: '/auth/forgot-password',
   verify: '/auth/verify',
+  // Admin Auth
+  adminLogin: '/auth/admin-login',
   // Common
   maintenance: '/maintenance',
   comingsoon: '/coming-soon',

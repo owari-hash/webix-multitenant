@@ -11,7 +11,6 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import Image from 'src/components/image';
-import { _popularWebtoons } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { useResponsive } from 'src/hooks/use-responsive';
 import { varFade, MotionViewport } from 'src/components/animate';
@@ -21,7 +20,7 @@ import Carousel, { useCarousel, CarouselArrows } from 'src/components/carousel';
 
 type Props = {
   title: string;
-  data: typeof _popularWebtoons;
+  data: any[];
   type: 'trending' | 'new';
 };
 
@@ -120,272 +119,280 @@ export default function HomeWebtoonTrending({ title, data, type }: Props) {
 
         <Box sx={{ position: 'relative' }}>
           <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
-            {data.map((webtoon, index) => (
-              <Box key={webtoon.id} sx={{ px: 1 }}>
-                <m.div variants={varFade().inUp}>
-                  <Card
-                    sx={{
-                      p: { xs: 1.5, md: 2 },
-                      cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      borderRadius: 2,
-                      border: `1px solid ${alpha(theme.palette.common.black, 0.08)}`,
-                      bgcolor: 'background.paper',
-                      boxShadow: `0 4px 16px ${alpha(theme.palette.common.black, 0.08)},
-                        0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
-                      overflow: 'hidden',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 3,
-                        background:
-                          type === 'trending'
-                            ? `linear-gradient(90deg,
-                              ${theme.palette.error.main} 0%,
-                              ${alpha(theme.palette.error.main, 0.6)} 100%)`
-                            : `linear-gradient(90deg,
-                              ${theme.palette.primary.main} 0%,
-                              ${alpha(theme.palette.primary.main, 0.6)} 100%)`,
-                        opacity: 0,
-                        transition: 'opacity 0.3s ease',
-                        zIndex: 1,
-                      },
-                      '&:hover': {
-                        transform: 'translateY(-12px) scale(1.02)',
-                        boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)},
-                          0 12px 32px ${alpha(theme.palette.common.black, 0.12)},
-                          0 4px 16px ${alpha(theme.palette.common.black, 0.08)}`,
-                        borderColor: alpha(theme.palette.primary.main, 0.3),
-                        '&::before': {
-                          opacity: 1,
-                        },
-                      },
-                    }}
-                  >
-                    <Box
+            {data.map((webtoon, index) => {
+              const isNew =
+                webtoon.createdAt &&
+                new Date(webtoon.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
+              const isPopular = (webtoon.views || 0) > 10000;
+              const rating = webtoon.likes ? Math.min(5, webtoon.likes / 100) : 4.5;
+
+              return (
+                <Box key={webtoon._id || webtoon.id} sx={{ px: 1 }}>
+                  <m.div variants={varFade().inUp}>
+                    <Card
                       sx={{
+                        p: { xs: 1.5, md: 2 },
+                        cursor: 'pointer',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative',
-                        mb: 2,
-                        borderRadius: 1.5,
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(theme.palette.common.black, 0.08)}`,
+                        bgcolor: 'background.paper',
+                        boxShadow: `0 4px 16px ${alpha(theme.palette.common.black, 0.08)},
+                          0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
                         overflow: 'hidden',
-                        transition: 'transform 0.3s ease',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          background:
+                            type === 'trending'
+                              ? `linear-gradient(90deg,
+                                ${theme.palette.error.main} 0%,
+                                ${alpha(theme.palette.error.main, 0.6)} 100%)`
+                              : `linear-gradient(90deg,
+                                ${theme.palette.primary.main} 0%,
+                                ${alpha(theme.palette.primary.main, 0.6)} 100%)`,
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease',
+                          zIndex: 1,
+                        },
                         '&:hover': {
-                          transform: 'scale(1.05)',
+                          transform: 'translateY(-12px) scale(1.02)',
+                          boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)},
+                            0 12px 32px ${alpha(theme.palette.common.black, 0.12)},
+                            0 4px 16px ${alpha(theme.palette.common.black, 0.08)}`,
+                          borderColor: alpha(theme.palette.primary.main, 0.3),
+                          '&::before': {
+                            opacity: 1,
+                          },
                         },
                       }}
                     >
-                      <Image
-                        alt={webtoon.title}
-                        src={webtoon.coverUrl}
-                        ratio="3/4"
-                        sx={{
-                          borderRadius: 1.5,
-                          transition: 'filter 0.3s ease',
-                          '&:hover': {
-                            filter: 'brightness(1.1)',
-                          },
-                        }}
-                      />
-
-                      {/* Ranking Badge */}
                       <Box
                         sx={{
-                          position: 'absolute',
-                          top: 12,
-                          left: 12,
-                          width: { xs: 36, md: 40 },
-                          height: { xs: 36, md: 40 },
-                          borderRadius: '50%',
-                          bgcolor:
-                            type === 'trending'
-                              ? theme.palette.error.main
-                              : theme.palette.primary.main,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'common.white',
-                          fontWeight: 800,
-                          fontSize: { xs: '0.875rem', md: '1rem' },
-                          boxShadow: `0 4px 12px ${alpha(
-                            type === 'trending'
-                              ? theme.palette.error.main
-                              : theme.palette.primary.main,
-                            0.4
-                          )}`,
-                          border: '2px solid white',
-                          zIndex: 2,
-                        }}
-                      >
-                        {index + 1}
-                      </Box>
-
-                      {webtoon.isNew && (
-                        <Chip
-                          label="NEW"
-                          color="error"
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 12,
-                            right: 12,
-                            fontWeight: 800,
-                            fontSize: '0.7rem',
-                            height: 24,
-                            boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.4)}`,
-                            border: '1px solid white',
-                            zIndex: 2,
-                          }}
-                        />
-                      )}
-
-                      {webtoon.isPopular && (
-                        <Chip
-                          label="HOT"
-                          color="warning"
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            bottom: 12,
-                            right: 12,
-                            fontWeight: 800,
-                            fontSize: '0.7rem',
-                            height: 24,
-                            boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.4)}`,
-                            border: '1px solid white',
-                            zIndex: 2,
-                          }}
-                        />
-                      )}
-                    </Box>
-
-                    <Stack spacing={1.5}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 700,
+                          position: 'relative',
+                          mb: 2,
+                          borderRadius: 1.5,
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          fontSize: { xs: '0.9rem', md: '1rem' },
-                          lineHeight: 1.3,
+                          transition: 'transform 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                          },
                         }}
                       >
-                        {webtoon.title}
-                      </Typography>
-
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'text.secondary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          fontSize: { xs: '0.75rem', md: '0.875rem' },
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {webtoon.description}
-                      </Typography>
-
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Rating
-                          value={webtoon.rating}
-                          readOnly
-                          size="small"
-                          precision={0.1}
+                        <Image
+                          alt={webtoon.title}
+                          src={webtoon.coverImage || '/assets/placeholder.jpg'}
+                          ratio="3/4"
                           sx={{
-                            '& .MuiRating-iconFilled': {
-                              color: theme.palette.warning.main,
+                            borderRadius: 1.5,
+                            transition: 'filter 0.3s ease',
+                            '&:hover': {
+                              filter: 'brightness(1.1)',
                             },
                           }}
                         />
-                        <Typography
-                          variant="caption"
+
+                        {/* Ranking Badge */}
+                        <Box
                           sx={{
-                            color: 'text.secondary',
-                            fontWeight: 600,
-                            fontSize: { xs: '0.7rem', md: '0.75rem' },
+                            position: 'absolute',
+                            top: 12,
+                            left: 12,
+                            width: { xs: 36, md: 40 },
+                            height: { xs: 36, md: 40 },
+                            borderRadius: '50%',
+                            bgcolor:
+                              type === 'trending'
+                                ? theme.palette.error.main
+                                : theme.palette.primary.main,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'common.white',
+                            fontWeight: 800,
+                            fontSize: { xs: '0.875rem', md: '1rem' },
+                            boxShadow: `0 4px 12px ${alpha(
+                              type === 'trending'
+                                ? theme.palette.error.main
+                                : theme.palette.primary.main,
+                              0.4
+                            )}`,
+                            border: '2px solid white',
+                            zIndex: 2,
                           }}
                         >
-                          ({webtoon.rating})
+                          {index + 1}
+                        </Box>
+
+                        {isNew && (
+                          <Chip
+                            label="NEW"
+                            color="error"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 12,
+                              right: 12,
+                              fontWeight: 800,
+                              fontSize: '0.7rem',
+                              height: 24,
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.4)}`,
+                              border: '1px solid white',
+                              zIndex: 2,
+                            }}
+                          />
+                        )}
+
+                        {isPopular && (
+                          <Chip
+                            label="HOT"
+                            color="warning"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              bottom: 12,
+                              right: 12,
+                              fontWeight: 800,
+                              fontSize: '0.7rem',
+                              height: 24,
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.4)}`,
+                              border: '1px solid white',
+                              zIndex: 2,
+                            }}
+                          />
+                        )}
+                      </Box>
+
+                      <Stack spacing={1.5}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 700,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontSize: { xs: '0.9rem', md: '1rem' },
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {webtoon.title}
                         </Typography>
-                      </Stack>
 
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        sx={{
-                          pt: 0.5,
-                          borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                        }}
-                      >
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Iconify
-                            icon="carbon:book"
-                            sx={{ fontSize: 14, color: 'text.secondary' }}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'text.secondary',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            fontSize: { xs: '0.75rem', md: '0.875rem' },
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {webtoon.description}
+                        </Typography>
+
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Rating
+                            value={rating}
+                            readOnly
+                            size="small"
+                            precision={0.1}
+                            sx={{
+                              '& .MuiRating-iconFilled': {
+                                color: theme.palette.warning.main,
+                              },
+                            }}
                           />
                           <Typography
                             variant="caption"
                             sx={{
                               color: 'text.secondary',
+                              fontWeight: 600,
                               fontSize: { xs: '0.7rem', md: '0.75rem' },
                             }}
                           >
-                            {webtoon.chapters}
+                            ({rating.toFixed(1)})
                           </Typography>
                         </Stack>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Iconify
-                            icon="carbon:view"
-                            sx={{ fontSize: 14, color: 'text.secondary' }}
-                          />
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.secondary',
-                              fontSize: { xs: '0.7rem', md: '0.75rem' },
-                            }}
-                          >
-                            {webtoon.views.toLocaleString()}
-                          </Typography>
-                        </Stack>
-                      </Stack>
 
-                      <Button
-                        variant="contained"
-                        size="small"
-                        fullWidth
-                        startIcon={<Iconify icon="carbon:play" />}
-                        sx={{
-                          mt: 1,
-                          fontWeight: 600,
-                          py: 1,
-                          borderRadius: 1.5,
-                          background: `linear-gradient(135deg,
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{
+                            pt: 0.5,
+                            borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                          }}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Iconify
+                              icon="carbon:book"
+                              sx={{ fontSize: 14, color: 'text.secondary' }}
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.7rem', md: '0.75rem' },
+                              }}
+                            >
+                              {webtoon.chapters || 0}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Iconify
+                              icon="carbon:view"
+                              sx={{ fontSize: 14, color: 'text.secondary' }}
+                            />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.7rem', md: '0.75rem' },
+                              }}
+                            >
+                              {(webtoon.views || 0).toLocaleString()}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+
+                        <Button
+                          variant="contained"
+                          size="small"
+                          fullWidth
+                          startIcon={<Iconify icon="carbon:play" />}
+                          sx={{
+                            mt: 1,
+                            fontWeight: 600,
+                            py: 1,
+                            borderRadius: 1.5,
+                            background: `linear-gradient(135deg,
                             ${theme.palette.primary.main} 0%,
                             ${theme.palette.secondary.main} 100%)`,
-                          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
-                          },
-                        }}
-                      >
-                        Read Now
-                      </Button>
-                    </Stack>
-                  </Card>
-                </m.div>
-              </Box>
-            ))}
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                            },
+                          }}
+                        >
+                          Read Now
+                        </Button>
+                      </Stack>
+                    </Card>
+                  </m.div>
+                </Box>
+              );
+            })}
           </Carousel>
 
           {mdUp && (

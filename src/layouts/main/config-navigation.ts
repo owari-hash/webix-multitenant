@@ -35,7 +35,7 @@ export const pageLinks = [
     cover: '/assets/images/menu/menu_travel.jpg',
     items: [
       { title: 'Хяналтын самбар', path: paths.webtoon.cms.dashboard },
-      { title: 'Комикууд', path: paths.webtoon.cms.comics },
+      { title: 'Жагсаалт', path: paths.webtoon.cms.comics },
       { title: 'Хэрэглэгчид', path: paths.webtoon.cms.users },
       { title: 'Статистик', path: paths.webtoon.cms.analytics },
       { title: 'Тохиргоо', path: paths.webtoon.cms.settings },
@@ -128,6 +128,7 @@ export const pageLinks = [
       { title: 'Login Cover', path: paths.loginCover },
       { title: 'Login Illustration', path: paths.loginIllustration },
       { title: 'Login Background', path: paths.loginBackground },
+      { title: 'Admin Login', path: paths.adminLogin },
       { title: 'Register Cover', path: paths.registerCover },
       { title: 'Register Illustration', path: paths.registerIllustration },
       { title: 'Register Background', path: paths.registerBackground },
@@ -147,7 +148,7 @@ export const pageLinks = [
 
 export const navConfig = [
   { title: 'Нүүр', path: '/' },
-  { title: 'Комикууд', path: paths.webtoon.browse },
+  { title: 'Жагсаалт', path: paths.webtoon.browse },
   { title: 'Ангиллууд', path: paths.webtoon.categories },
   { title: 'Тренд', path: paths.webtoon.trending },
   { title: 'Шинэ', path: paths.webtoon.new },

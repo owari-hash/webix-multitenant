@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -328,22 +328,24 @@ export default function CMSDashboardView() {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem onClick={handleActionClose}>
-            <Iconify icon="carbon:view" sx={{ mr: 2 }} />
-            Үзэх
-          </MenuItem>
-          <MenuItem onClick={handleActionClose}>
-            <Iconify icon="carbon:edit" sx={{ mr: 2 }} />
-            Засах
-          </MenuItem>
-          <MenuItem onClick={handleActionClose}>
-            <Iconify icon="carbon:analytics" sx={{ mr: 2 }} />
-            Статистик
-          </MenuItem>
-          <MenuItem onClick={handleActionClose} sx={{ color: 'error.main' }}>
-            <Iconify icon="carbon:trash-can" sx={{ mr: 2 }} />
-            Устгах
-          </MenuItem>
+          {[
+            <MenuItem key="view" onClick={handleActionClose}>
+              <Iconify icon="carbon:view" sx={{ mr: 2 }} />
+              Үзэх
+            </MenuItem>,
+            <MenuItem key="edit" onClick={handleActionClose}>
+              <Iconify icon="carbon:edit" sx={{ mr: 2 }} />
+              Засах
+            </MenuItem>,
+            <MenuItem key="analytics" onClick={handleActionClose}>
+              <Iconify icon="carbon:analytics" sx={{ mr: 2 }} />
+              Статистик
+            </MenuItem>,
+            <MenuItem key="delete" onClick={handleActionClose} sx={{ color: 'error.main' }}>
+              <Iconify icon="carbon:trash-can" sx={{ mr: 2 }} />
+              Устгах
+            </MenuItem>,
+          ]}
         </Menu>
       </Stack>
     </Container>
