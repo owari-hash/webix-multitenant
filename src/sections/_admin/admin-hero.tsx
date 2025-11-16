@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -14,22 +12,8 @@ import { MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
-const HERO_IMAGES = [
-  '/assets/images/hero/hero-admin-1.jpg',
-  '/assets/images/hero/hero-admin-2.jpg',
-  '/assets/images/hero/hero-admin-3.jpg',
-];
-
 export default function AdminHero() {
   const theme = useTheme();
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <Box

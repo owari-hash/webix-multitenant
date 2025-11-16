@@ -289,8 +289,7 @@ function ChapterTableRow({ chapter, comicId }: ChapterTableRowProps) {
   };
 
   return (
-    <React.Fragment>
-      <TableRow hover>
+    <TableRow hover>
         <TableCell>
           <Chip
             label={`#${chapter.chapterNumber}`}
@@ -382,7 +381,6 @@ function ChapterTableRow({ chapter, comicId }: ChapterTableRowProps) {
           </Menu>
         </TableCell>
       </TableRow>
-    </React.Fragment>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -53,7 +53,7 @@ export default function WebtoonBrowseView() {
       try {
         const response = await fetch('/api2/webtoon/comics');
         const result = await response.json();
-        
+
         if (result.success && result.comics) {
           setComics(result.comics);
         }
@@ -85,13 +85,13 @@ export default function WebtoonBrowseView() {
       const matchesSearch =
         comic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (comic.description && comic.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesCategory = 
-        selectedCategory === 'all' || 
+
+      const matchesCategory =
+        selectedCategory === 'all' ||
         (Array.isArray(comic.genre) && comic.genre.includes(selectedCategory));
-      
+
       const matchesStatus = status === 'all' || comic.status === status;
-      
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
 
@@ -120,7 +120,14 @@ export default function WebtoonBrowseView() {
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '60vh',
+          }}
+        >
           <CircularProgress size={60} />
         </Box>
       </Container>
@@ -240,11 +247,16 @@ export default function WebtoonBrowseView() {
         <Grid container spacing={3}>
           {filteredWebtoons.map((webtoon) => {
             const rating = webtoon.likes ? Math.min(5, webtoon.likes / 100) : 4.5;
-            const statusLabel = STATUS_OPTIONS.find((s) => s.value === webtoon.status)?.label || 'Үргэлжлэх';
-            const statusColor = 
-              webtoon.status === 'completed' ? 'default' : 
-              webtoon.status === 'hiatus' ? 'warning' : 'success';
-            
+            const statusLabel =
+              STATUS_OPTIONS.find((s) => s.value === webtoon.status)?.label || 'Үргэлжлэх';
+
+            let statusColor: 'default' | 'warning' | 'success' = 'success';
+            if (webtoon.status === 'completed') {
+              statusColor = 'default';
+            } else if (webtoon.status === 'hiatus') {
+              statusColor = 'warning';
+            }
+
             return (
               <Grid key={webtoon._id || webtoon.id} xs={12} sm={6} md={4} lg={3}>
                 <Card
@@ -285,7 +297,9 @@ export default function WebtoonBrowseView() {
                       <Iconify
                         icon="carbon:favorite"
                         sx={{
-                          color: favorites.includes(webtoon._id || webtoon.id) ? 'error.main' : 'text.secondary',
+                          color: favorites.includes(webtoon._id || webtoon.id)
+                            ? 'error.main'
+                            : 'text.secondary',
                         }}
                       />
                     </IconButton>
@@ -318,8 +332,8 @@ export default function WebtoonBrowseView() {
                     </Typography>
 
                     {/* Description */}
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       color="text.secondary"
                       sx={{
                         overflow: 'hidden',
@@ -337,12 +351,7 @@ export default function WebtoonBrowseView() {
                     {Array.isArray(webtoon.genre) && webtoon.genre.length > 0 && (
                       <Stack direction="row" spacing={0.5} flexWrap="wrap">
                         {webtoon.genre.slice(0, 2).map((genre: string) => (
-                          <Chip
-                            key={genre}
-                            label={genre}
-                            size="small"
-                            variant="outlined"
-                          />
+                          <Chip key={genre} label={genre} size="small" variant="outlined" />
                         ))}
                       </Stack>
                     )}
@@ -358,8 +367,8 @@ export default function WebtoonBrowseView() {
                       <Stack direction="row" alignItems="center" spacing={0.5}>
                         <Iconify icon="carbon:view" width={16} />
                         <Typography variant="caption" color="text.secondary">
-                          {webtoon.views >= 1000 
-                            ? `${(webtoon.views / 1000).toFixed(1)}K` 
+                          {webtoon.views >= 1000
+                            ? `${(webtoon.views / 1000).toFixed(1)}K`
                             : webtoon.views || 0}
                         </Typography>
                       </Stack>

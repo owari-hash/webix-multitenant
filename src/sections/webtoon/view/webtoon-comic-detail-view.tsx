@@ -8,9 +8,7 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Rating from '@mui/material/Rating';
-import Divider from '@mui/material/Divider';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -161,11 +159,12 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                   <Stack direction="row" alignItems="center" spacing={0.5}>
                     <Iconify icon="carbon:view" sx={{ fontSize: 24 }} />
                     <Typography variant="h6">
-                      {comic.views >= 1000000
-                        ? `${(comic.views / 1000000).toFixed(1)}M`
-                        : comic.views >= 1000
-                          ? `${(comic.views / 1000).toFixed(1)}K`
-                          : comic.views || 0}
+                      {(() => {
+                        const views = comic.views || 0;
+                        if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+                        if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
+                        return views;
+                      })()}
                     </Typography>
                   </Stack>
                   <Stack direction="row" alignItems="center" spacing={0.5}>

@@ -15,6 +15,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
+import { useResponsive } from 'src/hooks/use-responsive';
 
 // ----------------------------------------------------------------------
 
@@ -25,6 +26,7 @@ type Props = {
 
 export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
   const theme = useTheme();
+  const mdUp = useResponsive('up', 'md');
   const [chapter, setChapter] = useState<any>(null);
   const [comic, setComic] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -126,7 +128,7 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
 
   return (
     <>
-      {/* Reading Progress Bar */}
+      {/* Reading Progress Bar - hidden on mobile for immersive experience */}
       <LinearProgress
         variant="determinate"
         value={readProgress}
@@ -138,44 +140,108 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
           zIndex: 1300,
           height: 4,
           bgcolor: alpha(theme.palette.grey[500], 0.2),
+          display: { xs: 'none', md: 'block' },
           '& .MuiLinearProgress-bar': {
             bgcolor: theme.palette.primary.main,
           },
         }}
       />
 
-      {/* Header */}
+      {/* Compact Mobile Header */}
       <Box
         sx={{
-          position: 'sticky',
-          top: 0,
+          position: { xs: 'relative', md: 'sticky' },
+          top: { md: 0 },
           zIndex: 1200,
-          bgcolor: alpha(theme.palette.background.default, 0.9),
-          backdropFilter: 'blur(8px)',
-          borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
-          py: 2,
+          bgcolor: alpha(theme.palette.background.default, 0.98),
+          backdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${alpha(theme.palette.grey[500], 0.08)}`,
+          py: { xs: 1, sm: 1.5, md: 2 },
+          boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.06)}`,
         }}
       >
-        <Container>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <IconButton component={RouterLink} href={paths.webtoon.comic(comicId)}>
-                <Iconify icon="carbon:arrow-left" />
+        <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ minWidth: 0, flex: 1, mr: 1 }}
+            >
+              <IconButton
+                component={RouterLink}
+                href={paths.webtoon.comic(comicId)}
+                size="small"
+                sx={{
+                  flexShrink: 0,
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
+                }}
+              >
+                <Iconify icon="carbon:arrow-left" width={{ xs: 18, md: 22 }} />
               </IconButton>
 
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Box sx={{ minWidth: 0, overflow: 'hidden', flex: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1.125rem' },
+                    lineHeight: { xs: 1.3, md: 1.4 },
+                  }}
+                >
                   {comic?.title || 'Loading...'}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    display: { xs: 'none', sm: 'block' },
+                    fontSize: { sm: '0.688rem', md: '0.75rem' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   Бүлэг {chapter.chapterNumber}: {chapter.title}
                 </Typography>
               </Box>
             </Stack>
 
-            <Stack direction="row" spacing={1}>
-              <IconButton onClick={toggleFullscreen}>
-                <Iconify icon={isFullscreen ? 'carbon:minimize' : 'carbon:maximize'} />
+            <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }}>
+              <IconButton
+                component={RouterLink}
+                href={paths.webtoon.root}
+                size="small"
+                sx={{
+                  display: { xs: 'inline-flex', md: 'none' },
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+              >
+                <Iconify icon="carbon:home" width={18} />
+              </IconButton>
+              <IconButton
+                onClick={toggleFullscreen}
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                }}
+              >
+                <Iconify
+                  icon={isFullscreen ? 'carbon:minimize' : 'carbon:maximize'}
+                  width={{ xs: 18, md: 22 }}
+                />
               </IconButton>
             </Stack>
           </Stack>
@@ -185,21 +251,20 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
       {/* Chapter Images */}
       <Box
         sx={{
-          bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.200',
+          bgcolor: {
+            xs: theme.palette.mode === 'dark' ? '#000' : '#fff',
+            md: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.200',
+          },
           minHeight: '100vh',
-          pb: 8,
+          pb: { xs: 2, md: 8 },
         }}
       >
-        <Container
-          maxWidth="md"
+        <Box
           sx={{
-            pt: 3,
-            '& img': {
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              mb: 0.5,
-            },
+            maxWidth: { xs: '100%', md: '800px' },
+            mx: { xs: 0, md: 'auto' },
+            pt: { xs: 0, md: 3 },
+            px: { xs: 0, md: 2 },
           }}
         >
           {images.length === 0 ? (
@@ -214,12 +279,13 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               <Box
                 key={index}
                 sx={{
-                  mb: 0.5,
+                  mb: { xs: 0, md: 0.5 },
                   bgcolor: 'background.paper',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  minHeight: 200,
+                  minHeight: { xs: 300, md: 200 },
+                  position: 'relative',
                 }}
               >
                 <Box
@@ -228,9 +294,10 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
                   alt={`Page ${index + 1}`}
                   sx={{
                     width: '100%',
+                    maxWidth: '100%',
                     height: 'auto',
                     display: 'block',
-                    objectFit: 'contain',
+                    objectFit: { xs: 'cover', md: 'contain' },
                   }}
                   onError={(e: any) => {
                     console.error(`Failed to load image ${index + 1}:`, imageUrl);
@@ -244,58 +311,112 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               </Box>
             ))
           )}
-        </Container>
+        </Box>
 
         {/* Chapter Navigation */}
-        <Container maxWidth="md" sx={{ mt: 5 }}>
+        <Container maxWidth="md" sx={{ mt: { xs: 3, md: 5 }, px: { xs: 2, md: 3 } }}>
           <Stack
-            direction="row"
+            direction={{ xs: 'column', sm: 'row' }}
             justifyContent="space-between"
             alignItems="center"
+            spacing={{ xs: 2, sm: 0 }}
             sx={{
-              p: 3,
+              p: { xs: 2, sm: 2.5, md: 3 },
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: { xs: 1.5, md: 2 },
               boxShadow: theme.customShadows.z8,
             }}
           >
             <Button
               variant="outlined"
-              size="large"
-              startIcon={<Iconify icon="carbon:chevron-left" />}
+              size={mdUp ? 'large' : 'medium'}
+              startIcon={<Iconify icon="carbon:chevron-left" width={{ xs: 18, md: 20 }} />}
               disabled
+              fullWidth={!mdUp}
+              sx={{
+                order: { xs: 2, sm: 1 },
+                px: { xs: 2, md: 3 },
+                fontSize: { xs: '0.813rem', md: '0.938rem' },
+              }}
             >
-              Өмнөх бүлэг
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Өмнөх бүлэг
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                Өмнөх
+              </Box>
             </Button>
 
-            <Stack spacing={1} alignItems="center">
-              <Typography variant="h6">Бүлэг {chapter.chapterNumber}</Typography>
-              <Typography variant="body2" color="text.secondary">
+            <Stack spacing={0.5} alignItems="center" sx={{ order: { xs: 1, sm: 2 } }}>
+              <Typography
+                variant="h6"
+                sx={{ fontSize: { xs: '1rem', md: '1.25rem' }, fontWeight: 700 }}
+              >
+                Бүлэг {chapter.chapterNumber}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+              >
                 {images.length} зураг
               </Typography>
             </Stack>
 
             <Button
               variant="outlined"
-              size="large"
-              endIcon={<Iconify icon="carbon:chevron-right" />}
+              size={mdUp ? 'large' : 'medium'}
+              endIcon={<Iconify icon="carbon:chevron-right" width={{ xs: 18, md: 20 }} />}
               disabled
+              fullWidth={!mdUp}
+              sx={{
+                order: { xs: 3, sm: 3 },
+                px: { xs: 2, md: 3 },
+                fontSize: { xs: '0.813rem', md: '0.938rem' },
+              }}
             >
-              Дараах бүлэг
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Дараах бүлэг
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                Дараах
+              </Box>
             </Button>
           </Stack>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'center' }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ mt: 3, justifyContent: 'center' }}
+          >
             <Button
               variant="contained"
-              size="large"
+              size={mdUp ? 'large' : 'medium'}
               component={RouterLink}
               href={paths.webtoon.comic(comicId)}
-              startIcon={<Iconify icon="carbon:book" />}
+              startIcon={<Iconify icon="carbon:book" width={{ xs: 18, md: 20 }} />}
+              fullWidth={!mdUp}
+              sx={{
+                px: { xs: 3, md: 4 },
+                py: { xs: 1.25, md: 1.5 },
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                fontWeight: 600,
+              }}
             >
               Бүлгийн жагсаалт
             </Button>
-            <Button variant="outlined" size="large" startIcon={<Iconify icon="carbon:favorite" />}>
+            <Button
+              variant="outlined"
+              size={mdUp ? 'large' : 'medium'}
+              startIcon={<Iconify icon="carbon:favorite" width={{ xs: 18, md: 20 }} />}
+              fullWidth={!mdUp}
+              sx={{
+                px: { xs: 3, md: 4 },
+                py: { xs: 1.25, md: 1.5 },
+                fontSize: { xs: '0.875rem', md: '1rem' },
+                fontWeight: 600,
+              }}
+            >
               Дуртайд нэмэх
             </Button>
           </Stack>

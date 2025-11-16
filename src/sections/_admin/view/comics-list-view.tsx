@@ -28,46 +28,6 @@ import { RouterLink } from 'src/routes/components';
 
 // ----------------------------------------------------------------------
 
-// Mock data - replace with actual API data
-const COMICS_DATA = [
-  {
-    id: '1',
-    title: 'Solo Leveling',
-    author: 'Chugong',
-    status: 'ongoing',
-    chapters: 179,
-    views: 2500000,
-    rating: 4.9,
-    thumbnail: '/assets/images/comics/comic-1.jpg',
-    updatedAt: '2 цагийн өмнө',
-    genre: 'Action',
-  },
-  {
-    id: '2',
-    title: 'Tower of God',
-    author: 'SIU',
-    status: 'ongoing',
-    chapters: 584,
-    views: 1800000,
-    rating: 4.8,
-    thumbnail: '/assets/images/comics/comic-2.jpg',
-    updatedAt: '5 цагийн өмнө',
-    genre: 'Fantasy',
-  },
-  {
-    id: '3',
-    title: 'The Beginning After The End',
-    author: 'TurtleMe',
-    status: 'ongoing',
-    chapters: 167,
-    views: 1200000,
-    rating: 4.7,
-    thumbnail: '/assets/images/comics/comic-3.jpg',
-    updatedAt: '1 өдрийн өмнө',
-    genre: 'Fantasy',
-  },
-];
-
 const STATUS_OPTIONS = {
   ongoing: { label: 'Үргэлжилж байгаа', color: 'info' as const },
   completed: { label: 'Дууссан', color: 'success' as const },
@@ -196,13 +156,15 @@ export default function ComicsListView() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {loading ? (
+                {loading && (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
                       <Typography variant="body2">Уншиж байна...</Typography>
                     </TableCell>
                   </TableRow>
-                ) : comics.length === 0 ? (
+                )}
+                
+                {!loading && comics.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
                       <Iconify icon="carbon:book" sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -219,11 +181,11 @@ export default function ComicsListView() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  comics.map((comic) => (
-                    <ComicTableRow key={comic._id || comic.id} comic={comic} />
-                  ))
                 )}
+                
+                {!loading && comics.length > 0 && comics.map((comic) => (
+                  <ComicTableRow key={comic._id || comic.id} comic={comic} />
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -282,8 +244,7 @@ function ComicTableRow({ comic }: ComicTableRowProps) {
   };
 
   return (
-    <React.Fragment>
-      <TableRow hover>
+    <TableRow hover>
         <TableCell>
           <Stack direction="row" spacing={2} alignItems="center">
             <Avatar
@@ -337,11 +298,12 @@ function ComicTableRow({ comic }: ComicTableRowProps) {
 
         <TableCell align="center">
           <Typography variant="body2">
-            {comic.views >= 1000000 
-              ? `${(comic.views / 1000000).toFixed(1)}М`
-              : comic.views >= 1000
-              ? `${(comic.views / 1000).toFixed(1)}К`
-              : comic.views || 0}
+            {(() => {
+              const views = comic.views || 0;
+              if (views >= 1000000) return `${(views / 1000000).toFixed(1)}М`;
+              if (views >= 1000) return `${(views / 1000).toFixed(1)}К`;
+              return views;
+            })()}
           </Typography>
         </TableCell>
 
@@ -413,7 +375,6 @@ function ComicTableRow({ comic }: ComicTableRowProps) {
           </Menu>
         </TableCell>
       </TableRow>
-    </React.Fragment>
   );
 }
 

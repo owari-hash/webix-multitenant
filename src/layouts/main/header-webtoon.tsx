@@ -482,13 +482,13 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             )}
 
             {/* Settings - with proper spacing */}
-            <Box sx={{ ml: 1 }}>
+            <Box sx={{ ml: 1, display: { xs: 'none', md: 'block' } }}>
               <SettingsButton />
             </Box>
-          </Stack>
 
-          {/* Mobile Navigation */}
-          {!mdUp && <NavMobileModern data={navConfig} />}
+            {/* Mobile Navigation */}
+            {!mdUp && <NavMobileModern data={navConfig} />}
+          </Stack>
         </Container>
       </Toolbar>
 
