@@ -1,6 +1,7 @@
 'use client';
 
 import MainLayout from 'src/layouts/main';
+import CMSGuard from 'src/components/auth/cms-guard';
 
 // ----------------------------------------------------------------------
 
@@ -9,5 +10,9 @@ type Props = {
 };
 
 export default function CMSLayout({ children }: Props) {
-  return <MainLayout>{children}</MainLayout>;
+  return (
+    <MainLayout>
+      <CMSGuard>{children}</CMSGuard>
+    </MainLayout>
+  );
 }

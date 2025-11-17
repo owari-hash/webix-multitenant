@@ -18,7 +18,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
-import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
@@ -47,16 +46,56 @@ export default function WebtoonBrowseView() {
   const [status, setStatus] = useState('all');
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // Fetch comics from API
+  // Fetch comics from API with chapter counts
   useEffect(() => {
     const fetchComics = async () => {
       try {
         const response = await fetch('/api2/webtoon/comics');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
 
-        if (result.success && result.comics) {
-          setComics(result.comics);
+        // Handle different response formats
+        let comicsData: any[] = [];
+        if (result.success && Array.isArray(result.data)) {
+          comicsData = result.data;
+        } else if (result.success && Array.isArray(result.comics)) {
+          comicsData = result.comics;
+        } else if (Array.isArray(result)) {
+          comicsData = result;
         }
+
+        // Fetch chapter counts for each comic
+        const comicsWithChapters = await Promise.all(
+          comicsData.map(async (comic) => {
+            try {
+              const chaptersResponse = await fetch(
+                `/api2/webtoon/comic/${comic._id || comic.id}/chapters`
+              );
+              const chaptersResult = await chaptersResponse.json();
+              
+              const chapterCount = chaptersResult.success && Array.isArray(chaptersResult.chapters)
+                ? chaptersResult.chapters.length
+                : comic.chapters || 0;
+
+              return {
+                ...comic,
+                chapters: chapterCount,
+              };
+            } catch (error) {
+              console.error(`Failed to fetch chapters for comic ${comic._id}:`, error);
+              return {
+                ...comic,
+                chapters: comic.chapters || 0,
+              };
+            }
+          })
+        );
+
+        setComics(comicsWithChapters);
       } catch (error) {
         console.error('Failed to fetch comics:', error);
       } finally {
@@ -135,17 +174,42 @@ export default function WebtoonBrowseView() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
-      <Stack spacing={5}>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
+      <Stack spacing={{ xs: 3, md: 4 }}>
         {/* Header */}
-        <Box>
-          <Typography variant="h3" sx={{ mb: 2 }}>
-            Жагсаалт
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            {filteredWebtoons.length} комик олдлоо
-          </Typography>
-        </Box>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+          spacing={2}
+        >
+          <Box>
+            <Typography variant="h3" sx={{ mb: 1, fontWeight: 700 }}>
+              Комик жагсаалт
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {filteredWebtoons.length} комик олдлоо
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:grid" />}
+              size="small"
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
+            >
+              Grid
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:list" />}
+              size="small"
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
+            >
+              List
+            </Button>
+          </Stack>
+        </Stack>
 
         {/* Filters */}
         <Card sx={{ p: 3 }}>
@@ -244,7 +308,7 @@ export default function WebtoonBrowseView() {
         </Card>
 
         {/* Comics Grid */}
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 3 }}>
           {filteredWebtoons.map((webtoon) => {
             const rating = webtoon.likes ? Math.min(5, webtoon.likes / 100) : 4.5;
             const statusLabel =
@@ -258,44 +322,83 @@ export default function WebtoonBrowseView() {
             }
 
             return (
-              <Grid key={webtoon._id || webtoon.id} xs={12} sm={6} md={4} lg={3}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={webtoon._id || webtoon.id}>
                 <Card
                   sx={{
                     height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    textDecoration: 'none',
+                    color: 'inherit',
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: (theme) => theme.customShadows.z20,
+                      transform: 'translateY(-8px)',
+                      boxShadow: (theme) => theme.customShadows.z24,
                     },
                   }}
+                  component="a"
+                  href={paths.webtoon.comic(webtoon._id || webtoon.id)}
+                  onClick={(e: any) => {
+                    if (e.target.closest('button') || e.target.closest('.MuiIconButton-root')) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
-                  <Box sx={{ position: 'relative' }}>
-                    <Image
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::after': {
+                        content: '""',
+                        display: 'block',
+                        paddingBottom: '133.33%', // 3:4 ratio
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
                       src={webtoon.coverImage || '/assets/placeholder.jpg'}
                       alt={webtoon.title}
-                      ratio="3/4"
-                      sx={{ borderRadius: '8px 8px 0 0' }}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
                     />
 
                     {/* Favorite Button */}
                     <IconButton
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         handleToggleFavorite(webtoon._id || webtoon.id);
                       }}
+                      size="small"
                       sx={{
                         position: 'absolute',
                         top: 8,
                         right: 8,
-                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                        bgcolor: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: 1,
                         '&:hover': {
-                          bgcolor: 'rgba(255, 255, 255, 1)',
+                          bgcolor: 'white',
+                          transform: 'scale(1.1)',
                         },
                       }}
                     >
                       <Iconify
-                        icon="carbon:favorite"
+                        icon={
+                          favorites.includes(webtoon._id || webtoon.id)
+                            ? 'carbon:favorite-filled'
+                            : 'carbon:favorite'
+                        }
                         sx={{
                           color: favorites.includes(webtoon._id || webtoon.id)
                             ? 'error.main'
@@ -313,86 +416,141 @@ export default function WebtoonBrowseView() {
                         position: 'absolute',
                         bottom: 8,
                         left: 8,
+                        fontWeight: 600,
                       }}
                     />
                   </Box>
 
-                  <Stack spacing={2} sx={{ p: 2 }}>
+                  <Stack spacing={1.5} sx={{ p: 2, flex: 1 }}>
                     {/* Title */}
                     <Typography
-                      variant="h6"
+                      variant="subtitle1"
                       sx={{
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {webtoon.title}
-                    </Typography>
-
-                    {/* Description */}
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
+                        fontWeight: 700,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
-                        minHeight: 40,
+                        minHeight: { xs: 40, sm: 48 },
+                        lineHeight: 1.4,
                       }}
                     >
-                      {webtoon.description || 'No description available'}
+                      {webtoon.title}
+                    </Typography>
+
+                    {/* Author */}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {webtoon.author || 'Unknown Author'}
                     </Typography>
 
                     {/* Genres */}
                     {Array.isArray(webtoon.genre) && webtoon.genre.length > 0 && (
-                      <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                        {webtoon.genre.slice(0, 2).map((genre: string) => (
-                          <Chip key={genre} label={genre} size="small" variant="outlined" />
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                        {webtoon.genre.slice(0, 2).map((genre: string, index: number) => (
+                          <Chip
+                            key={`${genre}-${index}`}
+                            label={genre}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.65rem',
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                              },
+                            }}
+                          />
                         ))}
+                        {webtoon.genre.length > 2 && (
+                          <Chip
+                            label={`+${webtoon.genre.length - 2}`}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.65rem',
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                              },
+                            }}
+                          />
+                        )}
                       </Stack>
                     )}
 
-                    {/* Rating & Views */}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <Rating value={rating} precision={0.1} size="small" readOnly />
-                        <Typography variant="caption" color="text.secondary">
-                          {rating.toFixed(1)}
-                        </Typography>
-                      </Stack>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <Iconify icon="carbon:view" width={16} />
-                        <Typography variant="caption" color="text.secondary">
-                          {webtoon.views >= 1000
-                            ? `${(webtoon.views / 1000).toFixed(1)}K`
-                            : webtoon.views || 0}
-                        </Typography>
-                      </Stack>
-                    </Stack>
+                    <Box sx={{ flex: 1 }} />
 
-                    {/* Action Buttons */}
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        fullWidth
-                        href={paths.webtoon.comic(webtoon._id || webtoon.id)}
-                      >
-                        Унших
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Add to library logic
+                    {/* Stats Section */}
+                    <Stack
+                      spacing={1}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        bgcolor: (theme) => theme.palette.mode === 'light' ? 'grey.50' : 'grey.800',
+                      }}
+                    >
+                      {/* Rating & Views */}
+                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <Rating value={rating} precision={0.5} size="small" readOnly />
+                          <Typography variant="caption" fontWeight={700} sx={{ color: 'warning.main' }}>
+                            {rating.toFixed(1)}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <Iconify icon="carbon:view" width={16} sx={{ color: 'info.main' }} />
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {(() => {
+                              const views = webtoon.views || 0;
+                              if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
+                              if (views >= 1000) return `${(views / 1000).toFixed(1)}K`;
+                              return views;
+                            })()}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+
+                      {/* Chapters */}
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'light' ? 'primary.lighter' : 'primary.dark',
                         }}
                       >
-                        <Iconify icon="carbon:add" />
-                      </IconButton>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <Iconify icon="carbon:document" width={18} sx={{ color: 'primary.main' }} />
+                          <Typography variant="body2" fontWeight={700} color="primary.main">
+                            Бүлэг
+                          </Typography>
+                        </Stack>
+                        <Chip
+                          label={webtoon.chapters || 0}
+                          size="small"
+                          sx={{
+                            height: 24,
+                            fontWeight: 700,
+                            bgcolor: 'primary.main',
+                            color: 'primary.contrastText',
+                            '& .MuiChip-label': {
+                              px: 1.5,
+                            },
+                          }}
+                        />
+                      </Stack>
                     </Stack>
                   </Stack>
                 </Card>

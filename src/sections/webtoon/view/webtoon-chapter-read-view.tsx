@@ -29,6 +29,9 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
   const mdUp = useResponsive('up', 'md');
   const [chapter, setChapter] = useState<any>(null);
   const [comic, setComic] = useState<any>(null);
+  const [allChapters, setAllChapters] = useState<any[]>([]);
+  const [prevChapter, setPrevChapter] = useState<any>(null);
+  const [nextChapter, setNextChapter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [readProgress, setReadProgress] = useState(0);
@@ -37,6 +40,10 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setPrevChapter(null);
+        setNextChapter(null);
+        
         // Fetch comic data
         const comicResponse = await fetch(`/api2/webtoon/comic/${comicId}`);
         const comicResult = await comicResponse.json();
@@ -45,15 +52,41 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
           setComic(comicResult.comic);
         }
 
-        // Fetch chapter data
+        // Fetch all chapters for navigation
+        const chaptersResponse = await fetch(`/api2/webtoon/comic/${comicId}/chapters`);
+        const chaptersResult = await chaptersResponse.json();
+
+        if (chaptersResult.success && chaptersResult.chapters) {
+          const { chapters } = chaptersResult;
+          setAllChapters(chapters);
+
+          // Find current chapter index
+          const currentIndex = chapters.findIndex(
+            (ch: any) => (ch._id || ch.id) === chapterId
+          );
+
+          if (currentIndex !== -1) {
+            // Set prev and next chapters
+            if (currentIndex > 0) {
+              setPrevChapter(chapters[currentIndex - 1]);
+            } else {
+              setPrevChapter(null);
+            }
+            
+            if (currentIndex < chapters.length - 1) {
+              setNextChapter(chapters[currentIndex + 1]);
+            } else {
+              setNextChapter(null);
+            }
+          }
+        }
+
+        // Fetch current chapter data
         const chapterResponse = await fetch(`/api2/webtoon/chapter/${chapterId}`);
         const chapterResult = await chapterResponse.json();
 
-        console.log('Chapter data:', chapterResult);
-
         if (chapterResult.success && chapterResult.chapter) {
           setChapter(chapterResult.chapter);
-          console.log('Chapter images:', chapterResult.chapter.images);
         } else {
           setError(chapterResult.message || 'Бүлэг олдсонгүй');
         }
@@ -66,6 +99,8 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
     };
 
     fetchData();
+    // Scroll to top when chapter changes
+    window.scrollTo(0, 0);
   }, [comicId, chapterId]);
 
   // Track reading progress
@@ -91,6 +126,32 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
       setIsFullscreen(false);
     }
   }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Arrow Left or A - Previous chapter
+      if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && prevChapter) {
+        window.location.href = paths.webtoon.chapter(comicId, prevChapter._id || prevChapter.id);
+      }
+      // Arrow Right or D - Next chapter or back to comic detail
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        if (nextChapter) {
+          window.location.href = paths.webtoon.chapter(comicId, nextChapter._id || nextChapter.id);
+        } else {
+          // If no next chapter, go back to comic detail page
+          window.location.href = paths.webtoon.comic(comicId);
+        }
+      }
+      // F - Toggle fullscreen
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [prevChapter, nextChapter, comicId, toggleFullscreen]);
 
   if (loading) {
     return (
@@ -211,7 +272,23 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               </Box>
             </Stack>
 
-            <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" spacing={0.25} sx={{ flexShrink: 0 }} alignItems="center">
+              <Box
+                sx={{
+                  display: { xs: 'none', md: 'flex' },
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1,
+                  bgcolor: alpha(theme.palette.grey[500], 0.08),
+                  mr: 0.5,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.688rem' }}>
+                  ← → : Өмнөх/Дараах
+                </Typography>
+              </Box>
               <IconButton
                 component={RouterLink}
                 href={paths.webtoon.root}
@@ -331,7 +408,13 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               variant="outlined"
               size={mdUp ? 'large' : 'medium'}
               startIcon={<Iconify icon="carbon:chevron-left" width={{ xs: 18, md: 20 }} />}
-              disabled
+              disabled={!prevChapter}
+              component={prevChapter ? RouterLink : 'button'}
+              href={
+                prevChapter
+                  ? paths.webtoon.chapter(comicId, prevChapter._id || prevChapter.id)
+                  : undefined
+              }
               fullWidth={!mdUp}
               sx={{
                 order: { xs: 2, sm: 1 },
@@ -340,10 +423,10 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               }}
             >
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                Өмнөх бүлэг
+                {prevChapter ? `Бүлэг ${prevChapter.chapterNumber}` : 'Өмнөх бүлэг'}
               </Box>
               <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                Өмнөх
+                {prevChapter ? `#${prevChapter.chapterNumber}` : 'Өмнөх'}
               </Box>
             </Button>
 
@@ -359,15 +442,25 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
                 color="text.secondary"
                 sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
               >
-                {images.length} зураг
+                {images.length} зураг • {allChapters.length} бүлгээс
               </Typography>
             </Stack>
 
             <Button
-              variant="outlined"
+              variant={nextChapter ? 'outlined' : 'contained'}
               size={mdUp ? 'large' : 'medium'}
-              endIcon={<Iconify icon="carbon:chevron-right" width={{ xs: 18, md: 20 }} />}
-              disabled
+              endIcon={
+                <Iconify
+                  icon={nextChapter ? 'carbon:chevron-right' : 'carbon:checkmark'}
+                  width={{ xs: 18, md: 20 }}
+                />
+              }
+              component={RouterLink}
+              href={
+                nextChapter
+                  ? paths.webtoon.chapter(comicId, nextChapter._id || nextChapter.id)
+                  : paths.webtoon.comic(comicId)
+              }
               fullWidth={!mdUp}
               sx={{
                 order: { xs: 3, sm: 3 },
@@ -376,10 +469,10 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               }}
             >
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                Дараах бүлэг
+                {nextChapter ? `Бүлэг ${nextChapter.chapterNumber}` : 'Дууссан'}
               </Box>
               <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                Дараах
+                {nextChapter ? `#${nextChapter.chapterNumber}` : 'Дууссан'}
               </Box>
             </Button>
           </Stack>

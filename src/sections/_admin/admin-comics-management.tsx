@@ -247,12 +247,12 @@ export default function AdminComicsManagement() {
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Button
                             component={RouterLink}
-                            href={paths.webtoon.cms.chapters(comic._id || comic.id)}
+                            href={paths.webtoon.cms.manageComic(comic._id || comic.id)}
                             size="small"
                             variant="outlined"
-                            startIcon={<Iconify icon="carbon:page-break" />}
+                            startIcon={<Iconify icon="carbon:settings" />}
                           >
-                            Бүлгүүд
+                            Удирдах
                           </Button>
                           <Typography
                             variant="caption"

@@ -314,8 +314,8 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     </Badge>
                   </IconButton>
 
-                  {/* CMS Access for creators/admins */}
-                  {(displayUser.role === 'creator' || displayUser.role === 'admin') && (
+                  {/* CMS Access for admins only */}
+                  {displayUser.role === 'admin' && (
                     <IconButton
                       size="medium"
                       sx={{
@@ -377,23 +377,39 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                       </Typography>
                     </Box>,
                     <Divider key="divider1" />,
-                    <MenuItem key="profile" onClick={handleProfileMenuClose} href={paths.profile.root}>
+                    <MenuItem
+                      key="profile"
+                      onClick={handleProfileMenuClose}
+                      href={paths.profile.root}
+                    >
                       <Iconify icon="carbon:user" sx={{ mr: 2 }} />
                       Миний профайл
                     </MenuItem>,
-                    <MenuItem key="library" onClick={handleProfileMenuClose} href={paths.profile.library}>
+                    <MenuItem
+                      key="library"
+                      onClick={handleProfileMenuClose}
+                      href={paths.profile.library}
+                    >
                       <Iconify icon="carbon:book" sx={{ mr: 2 }} />
                       Номын сан
                     </MenuItem>,
-                    <MenuItem key="favorites" onClick={handleProfileMenuClose} href={paths.profile.favorites}>
+                    <MenuItem
+                      key="favorites"
+                      onClick={handleProfileMenuClose}
+                      href={paths.profile.favorites}
+                    >
                       <Iconify icon="carbon:favorite" sx={{ mr: 2 }} />
                       Дуртай комикууд
                     </MenuItem>,
-                    <MenuItem key="settings" onClick={handleProfileMenuClose} href={paths.profile.settings}>
+                    <MenuItem
+                      key="settings"
+                      onClick={handleProfileMenuClose}
+                      href={paths.profile.settings}
+                    >
                       <Iconify icon="carbon:settings" sx={{ mr: 2 }} />
                       Тохиргоо
                     </MenuItem>,
-                    ...(displayUser.role === 'creator' || displayUser.role === 'admin'
+                    ...(displayUser.role === 'admin'
                       ? [
                           <Divider key="divider2" />,
                           <MenuItem
@@ -461,7 +477,11 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                       </Stack>
                     </MenuItem>,
                     <Divider key="divider2" />,
-                    <MenuItem key="viewAll" onClick={handleNotificationClose} sx={{ justifyContent: 'center' }}>
+                    <MenuItem
+                      key="viewAll"
+                      onClick={handleNotificationClose}
+                      sx={{ justifyContent: 'center' }}
+                    >
                       <Typography variant="body2" color="primary">
                         Бүх мэдэгдлийг үзэх
                       </Typography>

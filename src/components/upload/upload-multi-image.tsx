@@ -10,9 +10,54 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import { alpha, useTheme } from '@mui/material/styles';
 
+import LinearProgress from '@mui/material/LinearProgress';
+import Alert from '@mui/material/Alert';
 import Iconify from '../iconify';
 
 // ----------------------------------------------------------------------
+
+// Compress image before converting to base64
+// Optimized for webtoon pages: 800px width, 75% quality
+const compressImage = (file: File, maxWidth = 800, quality = 0.75): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+
+        // Calculate new dimensions
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to base64 with compression
+        try {
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 type Props = {
   value?: string[];
@@ -20,6 +65,7 @@ type Props = {
   onUpload?: (files: File[]) => Promise<string[]>;
   helperText?: string;
   maxSize?: number;
+  maxFiles?: number;
 };
 
 export default function UploadMultiImage({
@@ -27,10 +73,12 @@ export default function UploadMultiImage({
   onChange,
   onUpload,
   helperText,
-  maxSize = 5242880, // 5MB per file
+  maxSize = 20971520, // 20MB per file
+  maxFiles = 50, // Max 50 images
 }: Props) {
   const theme = useTheme();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
 
   const onDrop = useCallback(
@@ -38,6 +86,16 @@ export default function UploadMultiImage({
       try {
         setError('');
         setUploading(true);
+        setUploadProgress(0);
+
+        // Check total number of images
+        if (value.length + acceptedFiles.length > maxFiles) {
+          setError(
+            `Хамгийн ихдээ ${maxFiles} зураг оруулах боломжтой. Одоо ${value.length} зураг байна.`
+          );
+          setUploading(false);
+          return;
+        }
 
         // Check file sizes
         const invalidFiles = acceptedFiles.filter((file) => file.size > maxSize);
@@ -52,28 +110,36 @@ export default function UploadMultiImage({
           const urls = await onUpload(acceptedFiles);
           onChange([...value, ...urls]);
         } else {
-          // Convert to base64
-          const promises = acceptedFiles.map(
-            (file) =>
-              new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              })
-          );
+          // Compress and convert to base64 one by one to avoid memory issues
+          const urls: string[] = [];
 
-          const urls = await Promise.all(promises);
-          onChange([...value, ...urls]);
+          // eslint-disable-next-line no-restricted-syntax
+          for (let i = 0; i < acceptedFiles.length; i += 1) {
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              const compressedUrl = await compressImage(acceptedFiles[i]);
+              urls.push(compressedUrl);
+              setUploadProgress(((i + 1) / acceptedFiles.length) * 100);
+            } catch (err) {
+              console.error(`Error processing file ${i + 1}:`, err);
+              setError(`Зураг ${i + 1} боловсруулахад алдаа гарлаа`);
+              break;
+            }
+          }
+
+          if (urls.length > 0) {
+            onChange([...value, ...urls]);
+          }
         }
       } catch (err) {
         console.error('Upload error:', err);
         setError('Зураг байршуулахад алдаа гарлаа');
       } finally {
         setUploading(false);
+        setUploadProgress(0);
       }
     },
-    [onChange, onUpload, maxSize, value]
+    [onChange, onUpload, maxSize, maxFiles, value]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -170,11 +236,31 @@ export default function UploadMultiImage({
         </Stack>
       </Box>
 
-      {/* Error Message */}
+      {/* Progress Bar */}
+      {uploading && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={uploadProgress}
+            sx={{ height: 8, borderRadius: 1, mb: 1 }}
+          />
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            Боловсруулж байна... {Math.round(uploadProgress)}%
+          </Typography>
+        </Box>
+      )}
+
+      {/* Error/Warning Messages */}
       {error && (
-        <Typography variant="caption" sx={{ color: 'error.main', mb: 2, display: 'block' }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-        </Typography>
+        </Alert>
+      )}
+
+      {value.length >= maxFiles * 0.8 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Анхаар: Та {maxFiles} зургийн хязгаараас {value.length} зураг оруулсан байна.
+        </Alert>
       )}
 
       {/* Image Grid */}
@@ -302,4 +388,3 @@ export default function UploadMultiImage({
     </Box>
   );
 }
-

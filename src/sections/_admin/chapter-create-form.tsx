@@ -1,17 +1,18 @@
 'use client';
 
 import * as Yup from 'yup';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import LinearProgress from '@mui/material/LinearProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
@@ -31,18 +32,64 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
   const theme = useTheme();
   const router = useRouter();
   const [imageUrls, setImageUrls] = useState<string[]>(['']);
+  const [uploadingBatch, setUploadingBatch] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const [currentBatchInfo, setCurrentBatchInfo] = useState('');
+  const [nextChapterNumber, setNextChapterNumber] = useState(1);
+  const [loadingChapterNumber, setLoadingChapterNumber] = useState(true);
+  const [manualChapterNumber, setManualChapterNumber] = useState(false);
+
+  // Fetch existing chapters to determine next chapter number
+  useEffect(() => {
+    const fetchLastChapter = async () => {
+      try {
+        const response = await fetch(`/api2/webtoon/comic/${comicId}/chapters`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+
+          // API returns 'chapters' not 'data'
+          const chapters = result.chapters || result.data || [];
+
+          if (result.success && Array.isArray(chapters) && chapters.length > 0) {
+            // Find the highest chapter number
+            const chapterNumbers = chapters.map((ch: any) => ch.chapterNumber || 0);
+            const maxChapterNumber = Math.max(...chapterNumbers);
+            setNextChapterNumber(maxChapterNumber + 1);
+          } else {
+            setNextChapterNumber(1);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch chapters:', error);
+        setNextChapterNumber(1); // Fallback to 1 on error
+      } finally {
+        setLoadingChapterNumber(false);
+      }
+    };
+
+    fetchLastChapter();
+  }, [comicId]);
 
   const ChapterSchema = Yup.object().shape({
     chapterNumber: Yup.number()
       .required('Бүлгийн дугаар оруулна уу')
       .positive('Эерэг тоо оруулна уу')
-      .integer('Бүхэл тоо оруулна уу'),
+      .test('is-valid-chapter', 'Буруу формат (жишээ: 1, 1.5, 2.3)', (value) => {
+        if (!value) return false;
+        // Allow integers and decimals with up to 2 decimal places
+        return /^\d+(\.\d{1,2})?$/.test(String(value));
+      }),
     title: Yup.string().required('Гарчиг оруулна уу'),
     description: Yup.string(),
   });
 
   const defaultValues = {
-    chapterNumber: 1,
+    chapterNumber: nextChapterNumber,
     title: '',
     description: '',
   };
@@ -53,10 +100,168 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
   });
 
   const {
-    reset,
+    setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
+
+  // Update chapter number when it changes
+  useEffect(() => {
+    setValue('chapterNumber', nextChapterNumber);
+  }, [nextChapterNumber, setValue]);
+
+  // Batch upload for large payloads
+  const uploadInBatches = async (data: any, images: string[], batchSize: number = 15) => {
+    setUploadingBatch(true);
+    const batches = [];
+
+    // Split images into batches
+    for (let i = 0; i < images.length; i += batchSize) {
+      batches.push(images.slice(i, i + batchSize));
+    }
+
+    setBatchProgress({ current: 0, total: batches.length });
+
+    try {
+      // Upload first batch with chapter creation
+      const firstBatch = batches[0];
+      const firstPayload = {
+        chapterNumber: data.chapterNumber,
+        title: data.title,
+        images: firstBatch,
+      };
+
+      setCurrentBatchInfo(`Batch 1/${batches.length}: Бүлэг үүсгэж байна...`);
+
+      const firstResponse = await fetch(`/api2/webtoon/comic/${comicId}/chapter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(firstPayload),
+      });
+
+      if (!firstResponse.ok) {
+        throw new Error(`Batch 1 failed: ${firstResponse.status}`);
+      }
+
+      const firstResult = await firstResponse.json();
+
+      if (!firstResult.success) {
+        throw new Error(firstResult.error || 'First batch failed');
+      }
+
+      // Extract chapter ID from various possible response structures
+      let chapterId =
+        firstResult.data?._id ||
+        firstResult.data?.id ||
+        firstResult.chapter?._id ||
+        firstResult.chapter?.id ||
+        firstResult._id ||
+        firstResult.id;
+
+      // Try to convert ObjectId to string if needed
+      if (chapterId && typeof chapterId === 'object' && chapterId.$oid) {
+        chapterId = chapterId.$oid;
+      }
+      if (chapterId && typeof chapterId === 'object') {
+        chapterId = String(chapterId);
+      }
+
+      if (!chapterId || chapterId === 'undefined') {
+        throw new Error('Chapter ID not found in response');
+      }
+      setBatchProgress({ current: 1, total: batches.length });
+
+      // Upload remaining batches if any (append to chapter)
+      let successfulBatches = 1;
+      let failedBatches = 0;
+
+      for (let i = 1; i < batches.length; i += 1) {
+        const batch = batches[i];
+        setCurrentBatchInfo(
+          `Batch ${i + 1}/${batches.length}: ${batch.length} зураг нэмж байна...`
+        );
+
+        try {
+          const batchPayload = {
+            images: batch,
+            append: true, // Flag to append instead of replace
+          };
+
+          // eslint-disable-next-line no-await-in-loop
+          const batchResponse = await fetch(`/api2/webtoon/chapter/${chapterId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify(batchPayload),
+          });
+
+          // eslint-disable-next-line no-await-in-loop
+          const batchResult = await batchResponse.json();
+
+          if (!batchResponse.ok || !batchResult.success) {
+            console.error(`Batch ${i + 1} failed:`, batchResult);
+            failedBatches += 1;
+          } else {
+            successfulBatches += 1;
+          }
+        } catch (error) {
+          console.error(`Batch ${i + 1} error:`, error);
+          failedBatches += 1;
+        }
+
+        setBatchProgress({ current: i + 1, total: batches.length });
+
+        // Small delay to prevent overwhelming server
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      // Show success message with stats
+      const totalUploaded =
+        successfulBatches * batchSize +
+        (batches[batches.length - 1]?.length || 0) -
+        failedBatches * batchSize;
+
+      if (failedBatches === 0) {
+        alert(
+          `✅ Амжилттай!\n\nНийт ${images.length} зураг ${batches.length} batch-аар илгээгдлээ.`
+        );
+      } else {
+        alert(
+          `⚠️ Хэсэгчлэн амжилттай!\n\n` +
+            `• Амжилттай: ${successfulBatches}/${batches.length} batches\n` +
+            `• Алдаатай: ${failedBatches} batches\n` +
+            `• Таамаглах дүн: ~${totalUploaded} зураг илгээгдсэн\n\n` +
+            `Console-г шалгаж алдааг үзнэ үү.`
+        );
+      }
+
+      setImageUrls(['']);
+      setNextChapterNumber((prev) => prev + 1); // Auto-increment for next chapter
+      setManualChapterNumber(false); // Reset to auto mode
+
+      // Reset only title and description, keep the new chapter number
+      setValue('title', '');
+      setValue('description', '');
+
+      const addAnother = window.confirm('Өөр бүлэг нэмэх үү?');
+      if (!addAnother) {
+        router.push(paths.webtoon.cms.chapters(comicId));
+      }
+    } catch (error) {
+      console.error('Batch upload error:', error);
+      alert(`Batch upload алдаа: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setUploadingBatch(false);
+      setBatchProgress({ current: 0, total: 0 });
+      setCurrentBatchInfo('');
+    }
+  };
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -74,7 +279,44 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
         images: validImages,
       };
 
-      console.log('Sending payload:', payload);
+      // Check payload size (rough estimate)
+      const payloadSize = JSON.stringify(payload).length;
+      const payloadMB = (payloadSize / (1024 * 1024)).toFixed(2);
+      console.log(`Sending payload: ${validImages.length} images, ~${payloadMB}MB`);
+
+      // Automatically use batch upload for many images or large payloads
+      if (validImages.length > 20 || payloadSize > 40 * 1024 * 1024) {
+        const useBatch = window.confirm(
+          `📦 Batch Upload санал болгож байна:\n\n` +
+            `Payload: ${payloadMB}MB (${validImages.length} зураг)\n\n` +
+            `Batch upload ашиглах уу?\n` +
+            `• Тийм: Зургуудыг 15 зургийн batch-аар хуваан илгээнэ\n` +
+            `  → Илүү найдвартай, серверт ээлтэй\n` +
+            `  → 50+ зураг ч асуудалгүй\n\n` +
+            `• Үгүй: Бүгдийг зэрэг илгээх\n` +
+            `  → Том payload-д алдаа гарч болзошгүй\n\n` +
+            `Зөвлөмж: ТИЙМ сонгох`
+        );
+
+        if (useBatch) {
+          await uploadInBatches(data, validImages, 15);
+          return;
+        }
+      }
+
+      // Warn if still trying single upload with large payload
+      if (payloadSize > 50 * 1024 * 1024) {
+        const proceed = window.confirm(
+          `⚠️ АНХААР: Payload хэмжээ ${payloadMB}MB байна!\n\n` +
+            `Энэ нь маш их магадлалтайгаар алдаа гаргана.\n\n` +
+            `Batch upload ашиглахыг ЗӨВЛӨЖ байна.\n\n` +
+            `Үргэлжлүүлэх үү?`
+        );
+        if (!proceed) return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
 
       const response = await fetch(`/api2/webtoon/comic/${comicId}/chapter`, {
         method: 'POST',
@@ -83,9 +325,10 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
-      console.log('Response status:', response.status);
+      clearTimeout(timeoutId);
 
       // Try to parse the response
       let result;
@@ -101,13 +344,15 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
         return;
       }
 
-      console.log('Response result:', result);
-
       if (result.success) {
         alert('Бүлэг амжилттай нэмэгдлээ!');
-        reset();
         setImageUrls(['']);
-        // Option to add another chapter or go back
+        setNextChapterNumber((prev) => prev + 1); // Auto-increment for next chapter
+
+        // Reset only title and description, keep the new chapter number
+        setValue('title', '');
+        setValue('description', '');
+
         const addAnother = window.confirm('Өөр бүлэг нэмэх үү?');
         if (!addAnother) {
           router.push(paths.webtoon.cms.chapters(comicId));
@@ -117,9 +362,59 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
       }
     } catch (error) {
       console.error('Create chapter error:', error);
-      alert(`Сүлжээний алдаа: ${error instanceof Error ? error.message : 'Дахин оролдоно уу.'}`);
+
+      // Provide specific error messages
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          alert(
+            `Хугацаа хэтэрсэн!\n\n` +
+              `Payload хэтэрхий том байна. Дараах арга хэмжээ авна уу:\n\n` +
+              `1. Зургийн тоог багасгах (одоо ${
+                imageUrls.filter((u) => u.trim()).length
+              } зураг)\n` +
+              `2. Хэд хэдэн бүлэгт хуваах\n` +
+              `3. Зургийн чанарыг бага зэрэг бууруулах`
+          );
+        } else if (error.message === 'Failed to fetch') {
+          alert(
+            `Сүлжээний алдаа!\n\n` +
+              `Боломжит шалтгаан:\n` +
+              `• Payload хэтэрхий том (${imageUrls.filter((u) => u.trim()).length} зураг)\n` +
+              `• Серверийн request size limit хэтэрсэн\n` +
+              `• Интернет холболт тасарсан\n\n` +
+              `Зөвлөмж:\n` +
+              `1. Зургийн тоог багасгах (< 20 зураг)\n` +
+              `2. Хэд хэдэн бүлэгт хуваах\n` +
+              `3. Интернет холболтоо шалгах`
+          );
+        } else {
+          alert(`Алдаа: ${error.message}`);
+        }
+      } else {
+        alert('Тодорхойгүй алдаа гарлаа. Дахин оролдоно уу.');
+      }
     }
   });
+
+  // Show loading while fetching chapter number
+  if (loadingChapterNumber) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <Stack spacing={2} alignItems="center">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Бүлгийн дугаар тооцоолж байна...
+          </Typography>
+        </Stack>
+      </Box>
+    );
+  }
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -134,13 +429,46 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
               </Typography>
 
               <Stack spacing={3}>
-                <RHFTextField
-                  name="chapterNumber"
-                  label="Бүлгийн дугаар"
-                  type="number"
-                  placeholder="1"
-                  helperText="Жишээ нь: 1, 2, 3..."
-                />
+                <Box>
+                  <Stack direction="row" spacing={2} alignItems="flex-start">
+                    <Box sx={{ flex: 1 }}>
+                      <RHFTextField
+                        name="chapterNumber"
+                        label="Бүлгийн дугаар"
+                        type="number"
+                        disabled={!manualChapterNumber}
+                        helperText={
+                          manualChapterNumber
+                            ? 'Гараар оруулж байна (жишээ: 1.5, 2.3)'
+                            : 'Автоматаар тооцоологдсон'
+                        }
+                        inputProps={{
+                          step: 0.1,
+                          min: 0.1,
+                        }}
+                      />
+                    </Box>
+                    <Button
+                      variant={manualChapterNumber ? 'contained' : 'outlined'}
+                      color={manualChapterNumber ? 'primary' : 'inherit'}
+                      onClick={() => setManualChapterNumber(!manualChapterNumber)}
+                      sx={{ minWidth: 100, mt: '4px' }}
+                      startIcon={
+                        <Iconify icon={manualChapterNumber ? 'carbon:locked' : 'carbon:unlocked'} />
+                      }
+                    >
+                      {manualChapterNumber ? 'Түгжих' : 'Засах'}
+                    </Button>
+                  </Stack>
+                  {manualChapterNumber && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: 'warning.main', display: 'block', mt: 1, ml: 1.75 }}
+                    >
+                      💡 Зөвлөмж: 1.1, 1.5 гэх мэт (side story, special chapter)
+                    </Typography>
+                  )}
+                </Box>
 
                 <RHFTextField
                   name="title"
@@ -167,27 +495,9 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
               <UploadMultiImage
                 value={imageUrls.filter((url) => url.trim() !== '')}
                 onChange={(urls) => setImageUrls(urls.length > 0 ? urls : [''])}
-                helperText="PNG, JPG, GIF файл тус бүр max 5MB"
-              />
-
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.disabled', mt: 3, mb: 1, display: 'block' }}
-              >
-                Эсвэл зургийн URL хаягууд эсвэл Base64 оруулах (шугам тус бүрт нэг):
-              </Typography>
-
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                placeholder="https://example.com/page1.jpg&#10;data:image/jpeg;base64,/9j/4AAQ...&#10;https://example.com/page3.jpg"
-                value={imageUrls.join('\n')}
-                onChange={(e) => {
-                  const urls = e.target.value.split('\n').filter((url) => url.trim() !== '');
-                  setImageUrls(urls.length > 0 ? urls : ['']);
-                }}
-                helperText="HTTP URL эсвэл data:image/... base64 хаяг оруулна уу"
+                helperText="PNG, JPG, GIF файл тус бүр max 20MB. Зургууд автоматаар багасгагдана."
+                maxFiles={50}
+                maxSize={20971520}
               />
             </Card>
           </Stack>
@@ -214,6 +524,107 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
               </Card>
             )}
 
+            {/* Tips Card */}
+            <Card sx={{ p: 3, bgcolor: alpha(theme.palette.info.main, 0.04) }}>
+              <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+                <Iconify icon="carbon:idea" sx={{ color: theme.palette.info.main, fontSize: 24 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  Зөвлөмж
+                </Typography>
+              </Stack>
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1}>
+                  <Iconify
+                    icon="carbon:checkmark-filled"
+                    sx={{ color: 'success.main', fontSize: 18, mt: 0.2 }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Зургууд автоматаар багасгагдаж, чанар хадгалагдана
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Iconify
+                    icon="carbon:checkmark-filled"
+                    sx={{ color: 'success.main', fontSize: 18, mt: 0.2 }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Олон зураг зэрэг оруулж болно (max 50)
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Iconify
+                    icon="carbon:rocket"
+                    sx={{ color: 'info.main', fontSize: 18, mt: 0.2 }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    40MB+ payload: Автомат batch upload санал болгоно
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Iconify
+                    icon="carbon:warning-filled"
+                    sx={{ color: 'warning.main', fontSize: 18, mt: 0.2 }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Batch upload: 50+ зургийг найдвартай илгээнэ
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Iconify
+                    icon="carbon:checkmark-filled"
+                    sx={{ color: 'success.main', fontSize: 18, mt: 0.2 }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Дарааллыг солих товчоор эмх цэгцтэй болгоно
+                  </Typography>
+                </Stack>
+              </Stack>
+            </Card>
+
+            {/* Batch Upload Progress */}
+            {uploadingBatch && (
+              <Card
+                sx={{
+                  p: 3,
+                  bgcolor: alpha(theme.palette.info.main, 0.08),
+                  border: `2px solid ${theme.palette.info.main}`,
+                }}
+              >
+                <Stack spacing={2}>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Iconify icon="carbon:cloud-upload" sx={{ color: 'info.main', fontSize: 28 }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'info.main' }}>
+                        Batch Upload явагдаж байна...
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                        {currentBatchInfo ||
+                          `Batch ${batchProgress.current} / {batchProgress.total}`}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                        {Math.round((batchProgress.current / batchProgress.total) * 100)}% дууссан
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(batchProgress.current / batchProgress.total) * 100}
+                    sx={{
+                      height: 8,
+                      borderRadius: 1,
+                      bgcolor: alpha(theme.palette.info.main, 0.12),
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                  >
+                    💡 Хаалгыг бүү хаа, upload дуустал хүлээнэ үү
+                  </Typography>
+                </Stack>
+              </Card>
+            )}
+
             {/* Actions Card */}
             <Card sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
@@ -226,7 +637,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                   size="large"
                   type="submit"
                   variant="contained"
-                  loading={isSubmitting}
+                  loading={isSubmitting || uploadingBatch}
                   startIcon={<Iconify icon="carbon:checkmark" />}
                   sx={{
                     bgcolor: theme.palette.success.main,
@@ -235,7 +646,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                     },
                   }}
                 >
-                  Хадгалах
+                  {uploadingBatch ? 'Уншиж байна...' : 'Хадгалах'}
                 </LoadingButton>
 
                 <Button
@@ -255,41 +666,14 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                   variant="soft"
                   color="error"
                   onClick={() => {
-                    reset();
+                    setValue('title', '');
+                    setValue('description', '');
                     setImageUrls(['']);
                   }}
                   startIcon={<Iconify icon="carbon:reset" />}
                 >
                   Цэвэрлэх
                 </Button>
-              </Stack>
-            </Card>
-
-            {/* Tips Card */}
-            <Card sx={{ p: 3, bgcolor: alpha(theme.palette.info.main, 0.08) }}>
-              <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-                <Iconify
-                  icon="carbon:information"
-                  sx={{ color: theme.palette.info.main, fontSize: 24 }}
-                />
-                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                  Зөвлөмж
-                </Typography>
-              </Stack>
-
-              <Stack spacing={1.5}>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                  • Зургуудыг дарааллын дагуу оруулна уу
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                  • Зургийн өргөн 800-1000px байхыг зөвлөж байна
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                  • Багадаа 5-10 зураг оруулах хэрэгтэй
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                  • JPG эсвэл PNG форматтай байх
-                </Typography>
               </Stack>
             </Card>
           </Stack>

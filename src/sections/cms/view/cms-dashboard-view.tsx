@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -9,8 +9,6 @@ import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -20,55 +18,88 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import { _webtoons } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
 // ----------------------------------------------------------------------
 
-// Mock CMS data
-const mockStats = {
-  totalComics: 156,
-  totalChapters: 2847,
-  totalUsers: 12500,
-  monthlyViews: 850000,
-  pendingReviews: 23,
-  activeCreators: 45,
-};
-
-const mockRecentComics = _webtoons.slice(0, 5).map((comic, index) => ({
-  ...comic,
-  status: ['published', 'draft', 'review', 'published', 'draft'][index],
-  createdAt: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString(),
-  chapters: Math.floor(Math.random() * 50) + 1,
-  views: Math.floor(Math.random() * 100000) + 1000,
-}));
-
-const mockRecentUsers = [
-  { id: '1', name: 'Батбаяр', email: 'batbayar@example.com', role: 'user', joinedAt: '2024-01-15' },
-  { id: '2', name: 'Сарнай', email: 'sarnai@example.com', role: 'creator', joinedAt: '2024-01-14' },
-  { id: '3', name: 'Болд', email: 'bold@example.com', role: 'user', joinedAt: '2024-01-13' },
-  { id: '4', name: 'Цэцэг', email: 'tsetseg@example.com', role: 'creator', joinedAt: '2024-01-12' },
-  { id: '5', name: 'Төмөр', email: 'tumor@example.com', role: 'user', joinedAt: '2024-01-11' },
-];
-
 export default function CMSDashboardView() {
-  const [actionAnchor, setActionAnchor] = useState<null | HTMLElement>(null);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [comics, setComics] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalComics: 0,
+    totalChapters: 0,
+    totalViews: 0,
+    totalLikes: 0,
+    ongoingComics: 0,
+    completedComics: 0,
+  });
 
-  // Avoid unused variable warning
-  console.log('Selected item:', selectedItem);
+  // Fetch comics data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api2/webtoon/comics');
+        console.log('CMS Dashboard - API Response Status:', response.status);
 
-  const handleActionClick = (event: React.MouseEvent<HTMLElement>, itemId: string) => {
-    setActionAnchor(event.currentTarget);
-    setSelectedItem(itemId);
-  };
+        if (response.ok) {
+          const result = await response.json();
+          console.log('CMS Dashboard - API Result:', result);
 
-  const handleActionClose = () => {
-    setActionAnchor(null);
-    setSelectedItem(null);
-  };
+          // Handle both result.data and direct array response
+          let comicsData: any[] = [];
+          if (result.success && Array.isArray(result.data)) {
+            comicsData = result.data;
+          } else if (Array.isArray(result)) {
+            comicsData = result;
+          }
+
+          console.log('CMS Dashboard - Comics Data:', comicsData);
+          setComics(comicsData);
+
+          // Calculate statistics
+          const totalChapters = comicsData.reduce(
+            (sum: number, comic: any) => sum + (comic.chapters || 0),
+            0
+          );
+          const totalViews = comicsData.reduce(
+            (sum: number, comic: any) => sum + (comic.views || 0),
+            0
+          );
+          const totalLikes = comicsData.reduce(
+            (sum: number, comic: any) => sum + (comic.likes || 0),
+            0
+          );
+          const ongoingComics = comicsData.filter(
+            (comic: any) => comic.status === 'ongoing'
+          ).length;
+          const completedComics = comicsData.filter(
+            (comic: any) => comic.status === 'completed'
+          ).length;
+
+          setStats({
+            totalComics: comicsData.length,
+            totalChapters,
+            totalViews,
+            totalLikes,
+            ongoingComics,
+            completedComics,
+          });
+        } else {
+          console.error('CMS Dashboard - API Error:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('CMS Dashboard - Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,32 +127,62 @@ export default function CMSDashboardView() {
     }
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'user':
-        return 'Уншигч';
-      case 'creator':
-        return 'Зохиолч';
-      case 'admin':
-        return 'Админ';
-      default:
-        return role;
-    }
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
   };
+
+  // Get most recent comics (sorted by updatedAt)
+  const recentComics = [...comics]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 5);
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+        }}
+      >
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 5, md: 8 } }}>
       <Stack spacing={5}>
         {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          spacing={2}
+        >
           <Typography variant="h3">CMS Хяналтын самбар</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="carbon:add" />}
-            href={paths.webtoon.cms.createComic}
-          >
-            Шинэ комик
-          </Button>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:book" />}
+              href={paths.webtoon.cms.comics}
+              component={RouterLink}
+            >
+              Комикууд
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="carbon:add" />}
+              href={paths.webtoon.cms.createComic}
+              component={RouterLink}
+            >
+              Шинэ комик
+            </Button>
+          </Stack>
         </Stack>
 
         {/* Stats Cards */}
@@ -129,7 +190,7 @@ export default function CMSDashboardView() {
           <Grid xs={12} sm={6} md={4} lg={2}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Iconify icon="carbon:book" sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h4">{mockStats.totalComics}</Typography>
+              <Typography variant="h4">{stats.totalComics}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Нийт комик
               </Typography>
@@ -142,7 +203,7 @@ export default function CMSDashboardView() {
                 icon="carbon:page-break"
                 sx={{ fontSize: 48, color: 'success.main', mb: 2 }}
               />
-              <Typography variant="h4">{mockStats.totalChapters}</Typography>
+              <Typography variant="h4">{stats.totalChapters}</Typography>
               <Typography variant="body2" color="text.secondary">
                 Нийт бүлэг
               </Typography>
@@ -151,33 +212,30 @@ export default function CMSDashboardView() {
 
           <Grid xs={12} sm={6} md={4} lg={2}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
-              <Iconify
-                icon="carbon:user-multiple"
-                sx={{ fontSize: 48, color: 'info.main', mb: 2 }}
-              />
-              <Typography variant="h4">{mockStats.totalUsers.toLocaleString()}</Typography>
+              <Iconify icon="carbon:view" sx={{ fontSize: 48, color: 'info.main', mb: 2 }} />
+              <Typography variant="h4">{formatNumber(stats.totalViews)}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Нийт хэрэглэгч
+                Нийт үзэлт
               </Typography>
             </Card>
           </Grid>
 
           <Grid xs={12} sm={6} md={4} lg={2}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
-              <Iconify icon="carbon:view" sx={{ fontSize: 48, color: 'warning.main', mb: 2 }} />
-              <Typography variant="h4">{(mockStats.monthlyViews / 1000).toFixed(0)}K</Typography>
+              <Iconify icon="carbon:favorite" sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
+              <Typography variant="h4">{formatNumber(stats.totalLikes)}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Сарын үзэлт
+                Нийт лайк
               </Typography>
             </Card>
           </Grid>
 
           <Grid xs={12} sm={6} md={4} lg={2}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
-              <Iconify icon="carbon:time" sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
-              <Typography variant="h4">{mockStats.pendingReviews}</Typography>
+              <Iconify icon="carbon:renew" sx={{ fontSize: 48, color: 'warning.main', mb: 2 }} />
+              <Typography variant="h4">{stats.ongoingComics}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Хүлээгдэж байна
+                Үргэлжилж байгаа
               </Typography>
             </Card>
           </Grid>
@@ -185,12 +243,12 @@ export default function CMSDashboardView() {
           <Grid xs={12} sm={6} md={4} lg={2}>
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Iconify
-                icon="carbon:user-speaker"
+                icon="carbon:checkmark-filled"
                 sx={{ fontSize: 48, color: 'secondary.main', mb: 2 }}
               />
-              <Typography variant="h4">{mockStats.activeCreators}</Typography>
+              <Typography variant="h4">{stats.completedComics}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Идэвхтэй зохиолч
+                Дууссан
               </Typography>
             </Card>
           </Grid>
@@ -229,21 +287,35 @@ export default function CMSDashboardView() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {mockRecentComics.map((comic) => (
-                      <TableRow key={comic.id}>
+                    {recentComics.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Комик байхгүй байна
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {recentComics.map((comic) => (
+                      <TableRow key={comic._id || comic.id}>
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={2}>
                             <Avatar
-                              src={comic.coverUrl}
+                              src={comic.coverImage || '/assets/placeholder.jpg'}
                               alt={comic.title}
                               variant="rounded"
                               sx={{ width: 40, height: 40 }}
                             />
                             <Box>
                               <Typography variant="subtitle2">{comic.title}</Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {comic.genre}
-                              </Typography>
+                              <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                {(comic.genre || []).slice(0, 2).map((g: string, index: number) => (
+                                  <Typography key={index} variant="caption" color="text.secondary">
+                                    {g}
+                                    {index < Math.min(comic.genre.length, 2) - 1 ? ', ' : ''}
+                                  </Typography>
+                                ))}
+                              </Stack>
                             </Box>
                           </Stack>
                         </TableCell>
@@ -255,14 +327,18 @@ export default function CMSDashboardView() {
                             size="small"
                           />
                         </TableCell>
-                        <TableCell>{comic.chapters}</TableCell>
-                        <TableCell>{comic.views.toLocaleString()}</TableCell>
+                        <TableCell>{comic.chapters || 0}</TableCell>
+                        <TableCell>{formatNumber(comic.views || 0)}</TableCell>
                         <TableCell>
-                          {new Date(comic.createdAt).toLocaleDateString('mn-MN')}
+                          {new Date(comic.updatedAt).toLocaleDateString('mn-MN')}
                         </TableCell>
                         <TableCell align="right">
-                          <IconButton onClick={(e) => handleActionClick(e, comic.id)} size="small">
-                            <Iconify icon="carbon:overflow-menu-horizontal" />
+                          <IconButton
+                            component={RouterLink}
+                            href={paths.webtoon.cms.manageComic(comic._id || comic.id)}
+                            size="small"
+                          >
+                            <Iconify icon="carbon:settings" />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -273,80 +349,71 @@ export default function CMSDashboardView() {
             </Card>
           </Grid>
 
-          {/* Recent Users */}
+          {/* Quick Actions Card */}
           <Grid xs={12} lg={4}>
-            <Card>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ p: 3, pb: 0 }}
-              >
-                <Typography variant="h6">Шинэ хэрэглэгчид</Typography>
+            <Card sx={{ p: 3, height: '100%' }}>
+              <Typography variant="h6" sx={{ mb: 3 }}>
+                Хурдан үйлдлүүд
+              </Typography>
+              <Stack spacing={2}>
                 <Button
-                  href={paths.webtoon.cms.users}
-                  endIcon={<Iconify icon="carbon:arrow-right" />}
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Iconify icon="carbon:add" />}
+                  href={paths.webtoon.cms.createComic}
+                  component={RouterLink}
                 >
-                  Бүгдийг үзэх
+                  Шинэ комик нэмэх
                 </Button>
-              </Stack>
-
-              <Stack spacing={0} sx={{ p: 3 }}>
-                {mockRecentUsers.map((user) => (
-                  <Stack
-                    key={user.id}
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ py: 1.5 }}
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Iconify icon="carbon:document" />}
+                  href={paths.webtoon.cms.comics}
+                  component={RouterLink}
+                >
+                  Комикуудыг харах
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Iconify icon="carbon:user-multiple" />}
+                  href={paths.webtoon.cms.users}
+                  component={RouterLink}
+                >
+                  Хэрэглэгчдийг харах
+                </Button>
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.neutral', borderRadius: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1 }}
                   >
-                    <Avatar sx={{ width: 40, height: 40 }}>{user.name.charAt(0)}</Avatar>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle2">{user.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {user.email}
+                    📊 Статистик
+                  </Typography>
+                  <Stack spacing={1}>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography variant="caption">Дундаж үзэлт:</Typography>
+                      <Typography variant="caption" fontWeight="bold">
+                        {stats.totalComics > 0
+                          ? formatNumber(Math.round(stats.totalViews / stats.totalComics))
+                          : '0'}
                       </Typography>
-                    </Box>
-                    <Chip
-                      label={getRoleLabel(user.role)}
-                      size="small"
-                      color={user.role === 'creator' ? 'primary' : 'default'}
-                      variant="outlined"
-                    />
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography variant="caption">Дундаж бүлэг:</Typography>
+                      <Typography variant="caption" fontWeight="bold">
+                        {stats.totalComics > 0
+                          ? Math.round(stats.totalChapters / stats.totalComics)
+                          : '0'}
+                      </Typography>
+                    </Stack>
                   </Stack>
-                ))}
+                </Box>
               </Stack>
             </Card>
           </Grid>
         </Grid>
-
-        {/* Action Menu */}
-        <Menu
-          anchorEl={actionAnchor}
-          open={Boolean(actionAnchor)}
-          onClose={handleActionClose}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        >
-          {[
-            <MenuItem key="view" onClick={handleActionClose}>
-              <Iconify icon="carbon:view" sx={{ mr: 2 }} />
-              Үзэх
-            </MenuItem>,
-            <MenuItem key="edit" onClick={handleActionClose}>
-              <Iconify icon="carbon:edit" sx={{ mr: 2 }} />
-              Засах
-            </MenuItem>,
-            <MenuItem key="analytics" onClick={handleActionClose}>
-              <Iconify icon="carbon:analytics" sx={{ mr: 2 }} />
-              Статистик
-            </MenuItem>,
-            <MenuItem key="delete" onClick={handleActionClose} sx={{ color: 'error.main' }}>
-              <Iconify icon="carbon:trash-can" sx={{ mr: 2 }} />
-              Устгах
-            </MenuItem>,
-          ]}
-        </Menu>
       </Stack>
     </Container>
   );
