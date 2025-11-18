@@ -7,7 +7,6 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 
-import { _faqsSupport } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -21,32 +20,32 @@ const TOPICS = [
   {
     title: 'Account',
     icon: '/assets/icons/faq/ic_faq_account.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
   {
     title: 'Payment',
     icon: '/assets/icons/faq/ic_faq_payment.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
   {
     title: 'Delivery',
     icon: '/assets/icons/faq/ic_faq_delivery.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
   {
     title: 'Product',
     icon: '/assets/icons/faq/ic_faq_package.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
   {
     title: 'Return & Refund',
     icon: '/assets/icons/faq/ic_faq_refund.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
   {
     title: 'Assurances',
     icon: '/assets/icons/faq/ic_faq_assurances.svg',
-    content: <SupportContent contents={_faqsSupport} />,
+    content: <SupportContent contents={[]} />,
   },
 ];
 

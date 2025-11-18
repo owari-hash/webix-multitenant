@@ -45,7 +45,7 @@ export default function HomeView() {
   const featuredComics = comics
     .filter((comic) => comic.status === 'ongoing')
     .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-    .slice(0, 8);
+    .slice(0, 15); // 3 slides × 5 cards = 15 comics
 
   const trendingComics = comics
     .filter((comic) => comic.status === 'ongoing')

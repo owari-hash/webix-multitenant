@@ -14,7 +14,6 @@ import Container from '@mui/material/Container';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
-import { _mock } from 'src/_mock';
 import { paths } from 'src/routes/paths';
 import Image from 'src/components/image';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
@@ -23,7 +22,7 @@ import Lightbox, { SlideVideo, useLightbox } from 'src/components/lightbox';
 // ----------------------------------------------------------------------
 
 const images = [...Array(4)].map((_, index) => ({
-  src: _mock.image.cover(index + 1),
+  src: `/assets/images/cover/cover_${index + 1}.jpg`,
   title: 'Flamingo',
   description: 'Vicko Mozara \n Veliki zali, Dubravica, Croatia',
 }));

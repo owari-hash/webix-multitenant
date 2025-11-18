@@ -3,8 +3,6 @@ import { m } from 'framer-motion';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 
-import { _mock } from 'src/_mock';
-
 import getVariant from '../get-variant';
 
 // ----------------------------------------------------------------------
@@ -29,7 +27,7 @@ export default function ContainerView({ selectVariant, ...other }: ContainerView
       {isKenburns ? (
         <Box
           component={m.img}
-          src={_mock.image.cover(7)}
+          src="/assets/images/cover/cover_7.jpg"
           {...getVariant(selectVariant)}
           sx={{ width: 1, height: 1, objectFit: 'cover' }}
         />

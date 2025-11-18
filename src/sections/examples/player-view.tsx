@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
 
-import { _mock } from 'src/_mock';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -42,7 +41,10 @@ export default function PlayerView() {
 
       <Container sx={{ my: 10 }}>
         <Box gap={3} display="grid" gridTemplateColumns="repeat(2, 1fr)">
-          <Player controls url={_mock.video(0)} />
+          <Player
+            controls
+            url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          />
 
           <Stack alignItems="center" justifyContent="center">
             <Fab color="primary" variant="extended" onClick={videoOpen.onTrue}>
@@ -53,7 +55,11 @@ export default function PlayerView() {
         </Box>
       </Container>
 
-      <PlayerDialog open={videoOpen.value} onClose={videoOpen.onFalse} videoPath={_mock.video(0)} />
+      <PlayerDialog
+        open={videoOpen.value}
+        onClose={videoOpen.onFalse}
+        videoPath="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      />
     </>
   );
 }

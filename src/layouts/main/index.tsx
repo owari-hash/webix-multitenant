@@ -42,6 +42,9 @@ export default function MainLayout({ children }: Props) {
   // Homepage has dark hero background, so header should be on dark
   const isHomePage = pathname === '/';
 
+  // Show spacing for all webtoon pages except homepage (hero section)
+  const showSpacing = isWebtoonPage ? !isHomePage : !actionPage(spacingLayout);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 1 }}>
       {isWebtoonPage ? (
@@ -56,7 +59,7 @@ export default function MainLayout({ children }: Props) {
           flexGrow: 1,
         }}
       >
-        {!actionPage(spacingLayout) && <Spacing />}
+        {showSpacing && <Spacing />}
 
         {children}
       </Box>
@@ -73,6 +76,7 @@ function Spacing() {
     <Box
       sx={{
         height: { xs: HEADER.H_MOBILE, md: HEADER.H_DESKTOP },
+        flexShrink: 0,
       }}
     />
   );

@@ -8,7 +8,6 @@ import AppBar from '@mui/material/AppBar';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
-import { _mock } from 'src/_mock';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -94,7 +93,7 @@ export default function MegaMenuView() {
             <Box
               component="img"
               alt="any photo"
-              src={_mock.image.cover(2)}
+              src="/assets/images/cover/cover_2.jpg"
               sx={{ borderRadius: 1 }}
             />
           </div>
@@ -108,8 +107,8 @@ export default function MegaMenuView() {
 // ----------------------------------------------------------------------
 
 const PRODUCTS = [...Array(10)].map((_, index) => ({
-  name: _mock.productName(index),
-  coverUrl: _mock.image.product(index),
+  name: `Product ${index + 1}`,
+  coverUrl: `/assets/images/product/product_${index + 1}.jpg`,
   path: '#',
 }));
 

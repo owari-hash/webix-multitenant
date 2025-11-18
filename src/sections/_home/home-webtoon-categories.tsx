@@ -11,16 +11,20 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
-import { _webtoons, _webtoonCategories } from 'src/_mock';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
 export default function HomeWebtoonCategories() {
   const theme = useTheme();
+  const categories: any[] = []; // Empty for now, will be populated from API
 
-  const getWebtoonsByCategory = (categorySlug: string) =>
-    _webtoons.filter((webtoon) => webtoon.genre === categorySlug).slice(0, 3);
+  const getWebtoonsByCategory = (categorySlug: string): any[] => [];
+
+  // Return null if no categories
+  if (categories.length === 0) {
+    return null;
+  }
 
   const getCategoryIcon = (categoryName: string) => {
     const iconMap: Record<string, string> = {
@@ -117,7 +121,7 @@ export default function HomeWebtoonCategories() {
                 justifyContent: { xs: 'center', md: 'flex-start' },
               }}
             >
-              {_webtoonCategories.slice(0, 8).map((category, index) => {
+              {categories.map((category: any, index: number) => {
                 const categoryWebtoons = getWebtoonsByCategory(category.slug);
                 const translatedName = translateCategoryName(category.name);
                 const categoryIcon = getCategoryIcon(translatedName);
@@ -294,7 +298,7 @@ export default function HomeWebtoonCategories() {
 
                           {/* Webtoon Previews */}
                           <Stack spacing={1.5} sx={{ flex: 1, minHeight: 140 }}>
-                            {categoryWebtoons.map((webtoon, idx) => (
+                            {categoryWebtoons.map((webtoon: any, idx: number) => (
                               <Stack
                                 key={webtoon.id}
                                 direction="row"

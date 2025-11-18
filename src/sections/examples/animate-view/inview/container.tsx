@@ -3,7 +3,6 @@ import { m } from 'framer-motion';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 
-import { _mock } from 'src/_mock';
 import { MotionContainer } from 'src/components/animate';
 
 import getVariant from '../get-variant';
@@ -11,14 +10,6 @@ import getVariant from '../get-variant';
 // ----------------------------------------------------------------------
 
 const TEXT = 'Zone';
-
-const IMG = [
-  _mock.image.cover(2),
-  _mock.image.cover(3),
-  _mock.image.cover(4),
-  _mock.image.cover(5),
-  _mock.image.cover(8),
-];
 
 type ContainerViewProps = {
   isText: boolean;
@@ -32,7 +23,7 @@ export default function ContainerView({
   selectVariant,
   ...other
 }: ContainerViewProps) {
-  const items = isMulti ? IMG : IMG.slice(0, 1);
+  const items = isMulti;
 
   return (
     <Paper
@@ -60,11 +51,9 @@ export default function ContainerView({
         </MotionContainer>
       ) : (
         <MotionContainer>
-          {items.map((row, index) => (
+          {[].map((_: any) => (
             <Box
-              key={index}
               component={m.img}
-              src={row}
               variants={getVariant(selectVariant)}
               sx={{
                 my: 2,

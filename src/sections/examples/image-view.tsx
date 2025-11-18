@@ -7,7 +7,6 @@ import Container from '@mui/material/Container';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
-import { _mock } from 'src/_mock';
 import { paths } from 'src/routes/paths';
 import Image from 'src/components/image';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
@@ -15,11 +14,6 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 // ----------------------------------------------------------------------
 
 const RATIO = ['4/3', '3/4', '6/4', '4/6', '16/9', '9/16', '21/9', '9/21', '1/1'] as const;
-
-const IMAGES = RATIO.map((ratio, index) => ({
-  ratio,
-  url: _mock.image.cover(index + 1),
-}));
 
 export default function ImageView() {
   return (
@@ -58,25 +52,7 @@ export default function ImageView() {
               }}
               sx={{ p: 3 }}
             >
-              {IMAGES.map((img) => (
-                <Image key={img.ratio} alt={img.ratio} src={img.url} sx={{ borderRadius: 2 }} />
-              ))}
-            </Box>
-          </Card>
-
-          <Card>
-            <CardHeader title="Aspect Ratio" />
-            <Box
-              gap={3}
-              display="grid"
-              gridTemplateColumns={{
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(3, 1fr)',
-                md: 'repeat(4, 1fr)',
-              }}
-              sx={{ p: 3 }}
-            >
-              {IMAGES.map((img) => (
+              {RATIO.map((img: any) => (
                 <Stack key={img.ratio} spacing={1}>
                   <Typography variant="overline" sx={{ color: 'text.secondary' }}>
                     {img.ratio}

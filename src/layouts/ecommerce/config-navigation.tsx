@@ -1,4 +1,3 @@
-import { _mock } from 'src/_mock';
 import Iconify from 'src/components/iconify';
 import { MegaMenuItemProps } from 'src/components/mega-menu';
 
@@ -6,8 +5,8 @@ import { MegaMenuItemProps } from 'src/components/mega-menu';
 // ----------------------------------------------------------------------
 
 const PRODUCTS = [...Array(10)].map((_, index) => ({
-  name: _mock.productName(index),
-  coverUrl: _mock.image.product(index),
+  name: `Product ${index + 1}`,
+  coverUrl: `/assets/images/product/product_${index + 1}.jpg`,
   path: '#',
 }));
 

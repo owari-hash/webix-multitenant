@@ -1,13 +1,9 @@
 'use client';
 
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 
-import { _pricing02 } from 'src/_mock';
-import Iconify from 'src/components/iconify';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import PlanHeader from '../02/pricing-02-header';
@@ -45,7 +41,7 @@ export default function Pricing02View() {
           </Grid>
         )}
 
-        {_pricing02.map((plan) => (
+        {[].map((plan: any) => (
           <Grid
             key={plan.license}
             xs={12}
@@ -70,30 +66,9 @@ export default function Pricing02View() {
             sx={{
               borderTop: (theme) => `solid 1px ${theme.palette.divider}`,
             }}
-          >
-            {_pricing02[0].options.map((option) => (
-              <Stack
-                key={option.title}
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{
-                  height: 72,
-                  borderBottom: (theme) => `solid 1px ${theme.palette.divider}`,
-                }}
-              >
-                <Typography variant="subtitle2">{option.title}</Typography>
+          />
 
-                <Tooltip title={option.tootip} placement="right" arrow>
-                  <div>
-                    <Iconify icon="carbon:information" sx={{ color: 'text.secondary' }} />
-                  </div>
-                </Tooltip>
-              </Stack>
-            ))}
-          </Grid>
-
-          {_pricing02.map((plan) => (
+          {[].map((plan: any) => (
             <Grid
               key={plan.license}
               xs={12}

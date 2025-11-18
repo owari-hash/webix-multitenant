@@ -9,7 +9,6 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
-import { _featuredWebtoons } from 'src/_mock';
 import { HEADER } from 'src/layouts/config-layout';
 import { MotionViewport } from 'src/components/animate';
 
@@ -19,12 +18,20 @@ export default function HomeWebtoonHero() {
   const theme = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const featuredWebtoons = [
+    { coverImage: '/assets/images/cover/webt1.jpg', title: 'Featured 1' },
+    { coverImage: '/assets/images/cover/webt2.jpeg', title: 'Featured 2' },
+    { coverImage: '/assets/images/cover/webt3.jpg', title: 'Featured 3' },
+  ];
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3); // Rotate between 3 images only
-    }, 8000); // Increased delay from 5s to 8s for slower rotation
-    return () => clearInterval(interval);
-  }, []);
+      setCurrentSlide((prev) => (prev + 1) % featuredWebtoons.length);
+    }, 8000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [featuredWebtoons.length]);
 
   return (
     <Box
@@ -32,7 +39,7 @@ export default function HomeWebtoonHero() {
       sx={{
         position: 'relative',
         height: {
-          xs: '100vh', // Full viewport on mobile
+          xs: '100vh',
           md: `calc(100vh - ${HEADER.H_DESKTOP}px)`,
         },
         minHeight: { xs: '100vh', md: 'auto' },
@@ -51,8 +58,8 @@ export default function HomeWebtoonHero() {
           zIndex: 1,
         }}
       >
-        {_featuredWebtoons.length > 0
-          ? _featuredWebtoons.slice(0, 3).map((webtoon, index) => {
+        {featuredWebtoons.length > 0
+          ? featuredWebtoons.map((webtoon: any, index: number) => {
               // Korean manhwa style gradient colors - more subtle
               const gradientColors = [
                 // Slide 0: Vibrant Purple to Pink (Romance/Fantasy manhwa style)
@@ -77,7 +84,7 @@ export default function HomeWebtoonHero() {
 
               return (
                 <Box
-                  key={webtoon.id}
+                  key={`webtoon-${index}`}
                   sx={{
                     position: 'absolute',
                     top: 0,
@@ -91,8 +98,8 @@ export default function HomeWebtoonHero() {
                   }}
                 >
                   <Image
-                    alt={webtoon.title}
-                    src={webtoon.coverUrl}
+                    alt={webtoon.title || `Featured ${index + 1}`}
+                    src={webtoon.coverImage || webtoon.coverUrl || ''}
                     sx={{
                       width: '100%',
                       height: '100%',
@@ -492,7 +499,7 @@ export default function HomeWebtoonHero() {
       </Container>
 
       {/* Slide Indicators */}
-      {_featuredWebtoons.length > 0 && (
+      {featuredWebtoons.length > 0 && (
         <Box
           sx={{
             position: 'absolute',
@@ -511,7 +518,7 @@ export default function HomeWebtoonHero() {
             border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
           }}
         >
-          {_featuredWebtoons.slice(0, 3).map((_, index) => (
+          {featuredWebtoons.slice(0, 3).map((_, index) => (
             <Box
               key={index}
               onClick={() => setCurrentSlide(index)}

@@ -8,7 +8,6 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 
-import { _mock } from 'src/_mock';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useActiveLink } from 'src/routes/hooks';
@@ -70,7 +69,7 @@ export default function Nav({ open, onClose }: Props) {
     >
       <Stack spacing={2} sx={{ p: 3, pb: 2 }}>
         <Stack spacing={2} direction="row" alignItems="center">
-          <Avatar src={_mock.image.avatar(0)} sx={{ width: 64, height: 64 }} />
+          <Avatar src="/assets/images/avatar/avatar_0.jpg" sx={{ width: 64, height: 64 }} />
           <Stack
             direction="row"
             alignItems="center"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -38,6 +39,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function WebtoonBrowseView() {
+  const searchParams = useSearchParams();
   const [comics, setComics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,16 +48,24 @@ export default function WebtoonBrowseView() {
   const [status, setStatus] = useState('all');
   const [favorites, setFavorites] = useState<string[]>([]);
 
+  // Set category from URL parameter on mount
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
+
   // Fetch comics from API with chapter counts
   useEffect(() => {
     const fetchComics = async () => {
       try {
         const response = await fetch('/api2/webtoon/comics');
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
 
         // Handle different response formats
@@ -76,10 +86,11 @@ export default function WebtoonBrowseView() {
                 `/api2/webtoon/comic/${comic._id || comic.id}/chapters`
               );
               const chaptersResult = await chaptersResponse.json();
-              
-              const chapterCount = chaptersResult.success && Array.isArray(chaptersResult.chapters)
-                ? chaptersResult.chapters.length
-                : comic.chapters || 0;
+
+              const chapterCount =
+                chaptersResult.success && Array.isArray(chaptersResult.chapters)
+                  ? chaptersResult.chapters.length
+                  : comic.chapters || 0;
 
               return {
                 ...comic,
@@ -495,14 +506,19 @@ export default function WebtoonBrowseView() {
                       sx={{
                         p: 1.5,
                         borderRadius: 1.5,
-                        bgcolor: (theme) => theme.palette.mode === 'light' ? 'grey.50' : 'grey.800',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light' ? 'grey.50' : 'grey.800',
                       }}
                     >
                       {/* Rating & Views */}
                       <Stack direction="row" alignItems="center" justifyContent="space-between">
                         <Stack direction="row" alignItems="center" spacing={0.5}>
                           <Rating value={rating} precision={0.5} size="small" readOnly />
-                          <Typography variant="caption" fontWeight={700} sx={{ color: 'warning.main' }}>
+                          <Typography
+                            variant="caption"
+                            fontWeight={700}
+                            sx={{ color: 'warning.main' }}
+                          >
                             {rating.toFixed(1)}
                           </Typography>
                         </Stack>
@@ -532,7 +548,11 @@ export default function WebtoonBrowseView() {
                         }}
                       >
                         <Stack direction="row" alignItems="center" spacing={0.75}>
-                          <Iconify icon="carbon:document" width={18} sx={{ color: 'primary.main' }} />
+                          <Iconify
+                            icon="carbon:document"
+                            width={18}
+                            sx={{ color: 'primary.main' }}
+                          />
                           <Typography variant="body2" fontWeight={700} color="primary.main">
                             Бүлэг
                           </Typography>

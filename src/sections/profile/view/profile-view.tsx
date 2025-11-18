@@ -18,7 +18,6 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 
-import { _webtoons } from 'src/_mock';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
@@ -37,14 +36,14 @@ interface User {
   avatar?: string;
 }
 
-const mockReadingHistory = _webtoons.slice(0, 8).map((webtoon, index) => ({
+const mockReadingHistory = [].slice(0, 8).map((webtoon: any, index: number) => ({
   ...webtoon,
   lastRead: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString(),
   progress: Math.floor(Math.random() * 100),
   currentChapter: Math.floor(Math.random() * 50) + 1,
 }));
 
-const mockFavorites = _webtoons.slice(0, 6);
+const mockFavorites = [].slice(0, 6);
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -119,7 +118,16 @@ export default function ProfileView() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 }, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: { xs: 5, md: 8 },
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh',
+        }}
+      >
         <CircularProgress />
       </Container>
     );
@@ -128,9 +136,7 @@ export default function ProfileView() {
   if (error || !user) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
-        <Alert severity="error">
-          {error || 'Failed to load profile. Please try again.'}
-        </Alert>
+        <Alert severity="error">{error || 'Failed to load profile. Please try again.'}</Alert>
       </Container>
     );
   }
@@ -169,18 +175,18 @@ export default function ProfileView() {
         {/* Profile Header */}
         <Card sx={{ p: 4 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
-            <Avatar src={displayUser.avatar} alt={displayUser.name} sx={{ width: 120, height: 120 }}>
+            <Avatar
+              src={displayUser.avatar}
+              alt={displayUser.name}
+              sx={{ width: 120, height: 120 }}
+            >
               {displayUser.name.charAt(0).toUpperCase()}
             </Avatar>
 
             <Stack spacing={2} sx={{ flex: 1 }}>
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="h4">{displayUser.name}</Typography>
-                <Chip
-                  label={getRoleLabel()}
-                  color="primary"
-                  size="small"
-                />
+                <Chip label={getRoleLabel()} color="primary" size="small" />
               </Stack>
 
               <Typography variant="body1" color="text.secondary">
@@ -332,10 +338,10 @@ export default function ProfileView() {
               </Typography>
 
               <Grid container spacing={3}>
-                {mockFavorites.map((comic) => (
-                  <Grid key={comic.id} xs={12} sm={6} md={4} lg={3}>
+                {mockFavorites.map((comic: any) => (
+                  <Grid key={comic.id || ''} xs={12} sm={6} md={4} lg={3}>
                     <Card sx={{ height: '100%' }}>
-                      <Image src={comic.coverUrl} alt={comic.title} ratio="3/4" />
+                      <Image src={comic.coverUrl || ''} alt={comic.title || ''} ratio="3/4" />
 
                       <Stack spacing={2} sx={{ p: 2 }}>
                         <Typography
@@ -346,11 +352,11 @@ export default function ProfileView() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {comic.title}
+                          {comic.title || ''}
                         </Typography>
 
                         <Typography variant="body2" color="text.secondary">
-                          {comic.author}
+                          {comic.author || ''}
                         </Typography>
 
                         <Stack direction="row" alignItems="center" spacing={0.5}>
