@@ -64,8 +64,9 @@ export default function AuthCoverLayout({ title, images, children }: AuthCarouse
           mx: 'auto',
           flexShrink: 0,
           py: { xs: 5, md: 8 },
-          px: { xs: 2, md: 10 },
-          width: { xs: 1, md: 480 },
+          px: { xs: 2, md: 4 },
+          width: { xs: 1, md: 600 },
+          maxWidth: { xs: 1, md: 600 },
         }}
       >
         {children}

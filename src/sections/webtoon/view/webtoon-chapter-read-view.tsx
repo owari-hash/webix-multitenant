@@ -16,6 +16,7 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
 import { useResponsive } from 'src/hooks/use-responsive';
+import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
         setLoading(true);
         setPrevChapter(null);
         setNextChapter(null);
-        
+
         // Fetch comic data
         const comicResponse = await fetch(`/api2/webtoon/comic/${comicId}`);
         const comicResult = await comicResponse.json();
@@ -61,9 +62,7 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
           setAllChapters(chapters);
 
           // Find current chapter index
-          const currentIndex = chapters.findIndex(
-            (ch: any) => (ch._id || ch.id) === chapterId
-          );
+          const currentIndex = chapters.findIndex((ch: any) => (ch._id || ch.id) === chapterId);
 
           if (currentIndex !== -1) {
             // Set prev and next chapters
@@ -72,7 +71,7 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
             } else {
               setPrevChapter(null);
             }
-            
+
             if (currentIndex < chapters.length - 1) {
               setNextChapter(chapters[currentIndex + 1]);
             } else {
@@ -513,6 +512,9 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
               Дуртайд нэмэх
             </Button>
           </Stack>
+
+          {/* Comments Section */}
+          <CommentsSection chapterId={chapterId} />
         </Container>
       </Box>
     </>

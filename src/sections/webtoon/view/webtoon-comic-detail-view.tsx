@@ -17,6 +17,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
+import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
 
@@ -24,7 +25,10 @@ type Props = {
   comicId: string;
 };
 
-const STATUS_MAP: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' }> = {
+const STATUS_MAP: Record<
+  string,
+  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+> = {
   ongoing: { label: 'Үргэлжилж байна', color: 'success' },
   completed: { label: 'Дууссан', color: 'default' },
   hiatus: { label: 'Түр зогссон', color: 'warning' },
@@ -43,7 +47,7 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
         // Fetch comic details
         const comicResponse = await fetch(`/api2/webtoon/comic/${comicId}`);
         const comicResult = await comicResponse.json();
-        
+
         if (comicResult.success && comicResult.comic) {
           setComic(comicResult.comic);
         }
@@ -51,7 +55,7 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
         // Fetch chapters
         const chaptersResponse = await fetch(`/api2/webtoon/comic/${comicId}/chapters`);
         const chaptersResult = await chaptersResponse.json();
-        
+
         if (chaptersResult.success && chaptersResult.chapters) {
           setChapters(chaptersResult.chapters);
         }
@@ -73,7 +77,14 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '60vh',
+          }}
+        >
           <CircularProgress size={60} />
         </Box>
       </Container>
@@ -103,10 +114,10 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
           position: 'relative',
           pt: { xs: 3, md: 5 },
           pb: { xs: 3, md: 5 },
-          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(
-            theme.palette.secondary.main,
+          background: `linear-gradient(135deg, ${alpha(
+            theme.palette.primary.main,
             0.08
-          )} 100%)`,
+          )} 0%, ${alpha(theme.palette.secondary.main, 0.08)} 100%)`,
         }}
       >
         <Container maxWidth="lg">
@@ -175,7 +186,13 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                 <Grid container spacing={2}>
                   <Grid item xs={4}>
                     <Card sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
-                      <Rating value={rating} precision={0.5} size="small" readOnly sx={{ mb: 0.5 }} />
+                      <Rating
+                        value={rating}
+                        precision={0.5}
+                        size="small"
+                        readOnly
+                        sx={{ mb: 0.5 }}
+                      />
                       <Typography variant="h6" fontWeight={700}>
                         {rating.toFixed(1)}
                       </Typography>
@@ -186,7 +203,10 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                   </Grid>
                   <Grid item xs={4}>
                     <Card sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
-                      <Iconify icon="carbon:view" sx={{ fontSize: 24, color: 'info.main', mb: 0.5 }} />
+                      <Iconify
+                        icon="carbon:view"
+                        sx={{ fontSize: 24, color: 'info.main', mb: 0.5 }}
+                      />
                       <Typography variant="h6" fontWeight={700}>
                         {(() => {
                           const views = comic.views || 0;
@@ -254,7 +274,10 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                     component={chapters.length > 0 ? RouterLink : 'button'}
                     href={
                       chapters.length > 0
-                        ? paths.webtoon.chapter(comic._id || comic.id, chapters[0]._id || chapters[0].id)
+                        ? paths.webtoon.chapter(
+                            comic._id || comic.id,
+                            chapters[0]._id || chapters[0].id
+                          )
                         : undefined
                     }
                     disabled={chapters.length === 0}
@@ -276,9 +299,7 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                     size="large"
                     fullWidth
                     startIcon={
-                      <Iconify
-                        icon={isFavorite ? 'carbon:favorite-filled' : 'carbon:favorite'}
-                      />
+                      <Iconify icon={isFavorite ? 'carbon:favorite-filled' : 'carbon:favorite'} />
                     }
                     onClick={handleToggleFavorite}
                     sx={{
@@ -309,7 +330,13 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
         <Stack spacing={3}>
           {/* Chapters Header */}
           <Card sx={{ p: 3, bgcolor: 'background.paper' }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              flexWrap="wrap"
+              gap={2}
+            >
               <Box>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
                   📖 Бүх бүлгүүд
@@ -447,7 +474,10 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                         </Stack>
 
                         <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Iconify icon="carbon:time" sx={{ fontSize: 18, color: 'text.secondary' }} />
+                          <Iconify
+                            icon="carbon:time"
+                            sx={{ fontSize: 18, color: 'text.secondary' }}
+                          />
                           <Typography variant="body2" color="text.secondary" fontWeight={500}>
                             {chapter.createdAt
                               ? new Date(chapter.createdAt).toLocaleDateString('mn-MN', {
@@ -482,9 +512,11 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
               ))}
             </Stack>
           )}
+
+          {/* Comments Section */}
+          <CommentsSection comicId={comicId} />
         </Stack>
       </Container>
     </Box>
   );
 }
-

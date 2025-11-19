@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -21,7 +21,8 @@ import Alert from '@mui/material/Alert';
 import Image from 'src/components/image';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
-import { getUser, getCurrentUser, isAuthenticated } from 'src/utils/auth';
+import { RouterLink } from 'src/routes/components';
+import { getUser, getAuthHeaders, getCurrentUser, isAuthenticated } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
@@ -36,14 +37,26 @@ interface User {
   avatar?: string;
 }
 
-const mockReadingHistory = [].slice(0, 8).map((webtoon: any, index: number) => ({
-  ...webtoon,
-  lastRead: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString(),
-  progress: Math.floor(Math.random() * 100),
-  currentChapter: Math.floor(Math.random() * 50) + 1,
-}));
+interface Comic {
+  _id?: string;
+  id?: string;
+  title: string;
+  coverUrl?: string;
+  cover?: string;
+  author?: string;
+  genre?: string[];
+  rating?: number;
+  views?: number;
+  likes?: number;
+  status?: string;
+}
 
-const mockFavorites = [].slice(0, 6);
+interface ReadingHistoryItem extends Comic {
+  lastRead?: string;
+  progress?: number;
+  currentChapter?: number;
+  chapterId?: string;
+}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -72,6 +85,10 @@ export default function ProfileView() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [readingHistory, setReadingHistory] = useState<ReadingHistoryItem[]>([]);
+  const [favorites, setFavorites] = useState<Comic[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -112,9 +129,100 @@ export default function ProfileView() {
     loadUser();
   }, []);
 
+  // Fetch reading history
+  useEffect(() => {
+    const fetchReadingHistory = async () => {
+      if (!isAuthenticated()) return;
+
+      try {
+        setLoadingHistory(true);
+        // Try to fetch from API endpoint for reading history
+        try {
+          const response = await fetch('/api2/webtoon/user/history', {
+            headers: getAuthHeaders(),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && Array.isArray(result.data)) {
+              setReadingHistory(result.data);
+            } else if (result.success && Array.isArray(result.history)) {
+              setReadingHistory(result.history);
+            }
+          }
+        } catch (apiError) {
+          // If API endpoint doesn't exist, try to get from localStorage or use empty array
+          console.log('Reading history API not available');
+        }
+      } catch (err) {
+        console.error('Error loading reading history:', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    if (currentTab === 0) {
+      fetchReadingHistory();
+    }
+  }, [currentTab]);
+
+  // Fetch favorites
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!isAuthenticated()) return;
+
+      try {
+        setLoadingFavorites(true);
+        // Try to fetch from API endpoint for favorites
+        try {
+          const response = await fetch('/api2/webtoon/user/favorites', {
+            headers: getAuthHeaders(),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && Array.isArray(result.data)) {
+              setFavorites(result.data);
+            } else if (result.success && Array.isArray(result.favorites)) {
+              setFavorites(result.favorites);
+            }
+          }
+        } catch (apiError) {
+          // If API endpoint doesn't exist, try to get from localStorage or use empty array
+          console.log('Favorites API not available');
+        }
+      } catch (err) {
+        console.error('Error loading favorites:', err);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+
+    if (currentTab === 1) {
+      fetchFavorites();
+    }
+  }, [currentTab]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
+
+  // Calculate stats from real data (must be before early returns)
+  const stats = useMemo(() => {
+    const uniqueComicsRead = new Set(readingHistory.map((item) => item._id || item.id)).size;
+    const totalChaptersRead = readingHistory.reduce(
+      (sum, item) => sum + (item.currentChapter || 0),
+      0
+    );
+    const estimatedHours = Math.floor(totalChaptersRead * 0.5); // Estimate 0.5 hours per chapter
+
+    return {
+      readComics: uniqueComicsRead || readingHistory.length,
+      favoriteComics: favorites.length,
+      readingHours: estimatedHours,
+      chaptersRead: totalChaptersRead,
+    };
+  }, [readingHistory, favorites]);
 
   if (loading) {
     return (
@@ -149,12 +257,7 @@ export default function ProfileView() {
     avatar: user.avatar || '/assets/images/avatar/avatar_1.jpg',
     role: user.role || 'user',
     joinDate: user.createdAt || new Date().toISOString(),
-    stats: {
-      readComics: 45,
-      favoriteComics: 12,
-      readingHours: 156,
-      chaptersRead: 342,
-    },
+    stats,
     badges: [
       { id: '1', name: 'Шинэ уншигч', icon: 'carbon:star', color: 'primary' },
       { id: '2', name: 'Комик дуртай', icon: 'carbon:favorite', color: 'error' },
@@ -220,7 +323,7 @@ export default function ProfileView() {
               </Stack>
             </Stack>
 
-            <Button variant="contained" href={paths.profile.settings}>
+            <Button variant="contained" component={RouterLink} href={paths.profile.settings}>
               Профайл засах
             </Button>
           </Stack>
@@ -291,42 +394,103 @@ export default function ProfileView() {
                 Сүүлд уншсан комикууд
               </Typography>
 
-              <Grid container spacing={3}>
-                {mockReadingHistory.map((comic) => (
-                  <Grid key={comic.id} xs={12} sm={6} md={4} lg={3}>
-                    <Card sx={{ height: '100%' }}>
-                      <Image src={comic.coverUrl} alt={comic.title} ratio="3/4" />
+              {(() => {
+                if (loadingHistory) {
+                  return (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                      <CircularProgress />
+                    </Box>
+                  );
+                }
 
-                      <Stack spacing={2} sx={{ p: 2 }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {comic.title}
-                        </Typography>
+                if (readingHistory.length === 0) {
+                  return (
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        py: 8,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      <Iconify icon="carbon:book" sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" sx={{ mb: 1 }}>
+                        Уншсан түүх байхгүй байна
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 3 }}>
+                        Комик уншаад түүхээ эндээс харна уу
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        component={RouterLink}
+                        href={paths.webtoon.browse}
+                      >
+                        Комик хайх
+                      </Button>
+                    </Box>
+                  );
+                }
 
-                        <Typography variant="caption" color="text.secondary">
-                          Бүлэг {comic.currentChapter} - {comic.progress}% дууссан
-                        </Typography>
+                return (
+                  <Grid container spacing={3}>
+                    {readingHistory.map((comic) => {
+                      const comicId = comic._id || comic.id || '';
+                      const coverUrl = comic.coverUrl || comic.cover || '/assets/placeholder.svg';
+                      const progress = comic.progress || 0;
+                      const currentChapter = comic.currentChapter || 1;
 
-                        <LinearProgress
-                          variant="determinate"
-                          value={comic.progress}
-                          sx={{ height: 6, borderRadius: 3 }}
-                        />
+                      return (
+                        <Grid key={comicId} xs={12} sm={6} md={4} lg={3}>
+                          <Card
+                            sx={{ height: '100%', cursor: 'pointer' }}
+                            component={RouterLink}
+                            href={paths.webtoon.comic(comicId)}
+                          >
+                            <Image src={coverUrl} alt={comic.title} ratio="3/4" />
 
-                        <Button variant="outlined" size="small" fullWidth>
-                          Үргэлжлүүлэх
-                        </Button>
-                      </Stack>
-                    </Card>
+                            <Stack spacing={2} sx={{ p: 2 }}>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {comic.title}
+                              </Typography>
+
+                              <Typography variant="caption" color="text.secondary">
+                                Бүлэг {currentChapter} - {progress}% дууссан
+                              </Typography>
+
+                              <LinearProgress
+                                variant="determinate"
+                                value={progress}
+                                sx={{ height: 6, borderRadius: 3 }}
+                              />
+
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                component={RouterLink}
+                                href={
+                                  comic.chapterId
+                                    ? paths.webtoon.chapter(comicId, comic.chapterId)
+                                    : paths.webtoon.comic(comicId)
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Үргэлжлүүлэх
+                              </Button>
+                            </Stack>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
                   </Grid>
-                ))}
-              </Grid>
+                );
+              })()}
             </Box>
           </TabPanel>
 
@@ -337,43 +501,103 @@ export default function ProfileView() {
                 Дуртай комикууд
               </Typography>
 
-              <Grid container spacing={3}>
-                {mockFavorites.map((comic: any) => (
-                  <Grid key={comic.id || ''} xs={12} sm={6} md={4} lg={3}>
-                    <Card sx={{ height: '100%' }}>
-                      <Image src={comic.coverUrl || ''} alt={comic.title || ''} ratio="3/4" />
+              {(() => {
+                if (loadingFavorites) {
+                  return (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                      <CircularProgress />
+                    </Box>
+                  );
+                }
 
-                      <Stack spacing={2} sx={{ p: 2 }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {comic.title || ''}
-                        </Typography>
+                if (favorites.length === 0) {
+                  return (
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        py: 8,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      <Iconify icon="carbon:favorite" sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" sx={{ mb: 1 }}>
+                        Дуртай комик байхгүй байна
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 3 }}>
+                        Комик дуртай болгож тэндээс харна уу
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        component={RouterLink}
+                        href={paths.webtoon.browse}
+                      >
+                        Комик хайх
+                      </Button>
+                    </Box>
+                  );
+                }
 
-                        <Typography variant="body2" color="text.secondary">
-                          {comic.author || ''}
-                        </Typography>
+                return (
+                  <Grid container spacing={3}>
+                    {favorites.map((comic) => {
+                      const comicId = comic._id || comic.id || '';
+                      const coverUrl = comic.coverUrl || comic.cover || '/assets/placeholder.svg';
+                      const rating = comic.rating || 0;
 
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Rating value={4.5} precision={0.1} size="small" readOnly />
-                          <Typography variant="caption" color="text.secondary">
-                            4.5
-                          </Typography>
-                        </Stack>
+                      return (
+                        <Grid key={comicId} xs={12} sm={6} md={4} lg={3}>
+                          <Card
+                            sx={{ height: '100%', cursor: 'pointer' }}
+                            component={RouterLink}
+                            href={paths.webtoon.comic(comicId)}
+                          >
+                            <Image src={coverUrl} alt={comic.title} ratio="3/4" />
 
-                        <Button variant="contained" size="small" fullWidth>
-                          Унших
-                        </Button>
-                      </Stack>
-                    </Card>
+                            <Stack spacing={2} sx={{ p: 2 }}>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {comic.title}
+                              </Typography>
+
+                              {comic.author && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {comic.author}
+                                </Typography>
+                              )}
+
+                              {rating > 0 && (
+                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                  <Rating value={rating} precision={0.1} size="small" readOnly />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {rating.toFixed(1)}
+                                  </Typography>
+                                </Stack>
+                              )}
+
+                              <Button
+                                variant="contained"
+                                size="small"
+                                fullWidth
+                                component={RouterLink}
+                                href={paths.webtoon.comic(comicId)}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Унших
+                              </Button>
+                            </Stack>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
                   </Grid>
-                ))}
-              </Grid>
+                );
+              })()}
             </Box>
           </TabPanel>
 
@@ -385,15 +609,21 @@ export default function ProfileView() {
               </Typography>
 
               <Stack spacing={3}>
-                <Button variant="outlined" href={paths.profile.settings}>
+                <Button variant="outlined" component={RouterLink} href={paths.profile.settings}>
                   Хувийн мэдээлэл засах
                 </Button>
 
-                <Button variant="outlined">Нууц үг солих</Button>
+                <Button variant="outlined" component={RouterLink} href={paths.profile.settings}>
+                  Нууц үг солих
+                </Button>
 
-                <Button variant="outlined">Мэдэгдлийн тохиргоо</Button>
+                <Button variant="outlined" component={RouterLink} href={paths.profile.settings}>
+                  Мэдэгдлийн тохиргоо
+                </Button>
 
-                <Button variant="outlined">Хувийн нууцлал</Button>
+                <Button variant="outlined" component={RouterLink} href={paths.profile.settings}>
+                  Хувийн нууцлал
+                </Button>
 
                 <Button variant="outlined" color="error">
                   Бүртгэл устгах
