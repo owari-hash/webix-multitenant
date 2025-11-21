@@ -17,6 +17,7 @@ export const paths = {
     completed: '/webtoon/completed',
     search: '/webtoon/search',
     author: (id: string) => `/webtoon/author/${id}`,
+    premium: '/webtoon/premium',
     // CMS Routes
     cms: {
       root: '/cms',

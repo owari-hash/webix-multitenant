@@ -12,11 +12,19 @@ export const StyledNavItem = styled(ListItemButton, {
 })<StyledNavItemProps>(({ active, theme }) => ({
   ...theme.typography.body2,
   color: theme.palette.text.secondary,
-  height: 40,
+  height: 48,
+  borderRadius: theme.shape.borderRadius,
+  '&:hover': {
+    color: theme.palette.primary.main,
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+  },
   // Active
   ...(active && {
     color: theme.palette.primary.main,
     ...theme.typography.subtitle2,
-    backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity),
+    backgroundColor: alpha(theme.palette.primary.main, 0.16),
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.24),
+    },
   }),
 }));

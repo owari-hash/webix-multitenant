@@ -1,4 +1,5 @@
 import WebtoonChapterReadView from 'src/sections/webtoon/view/webtoon-chapter-read-view';
+import ChapterGuard from 'src/auth/guard/chapter-guard';
 
 // ----------------------------------------------------------------------
 
@@ -16,6 +17,10 @@ type Props = {
 
 export default function WebtoonChapterReadPage({ params }: Props) {
   const { id, chapterId } = params;
-  return <WebtoonChapterReadView comicId={id} chapterId={chapterId} />;
+  return (
+    <ChapterGuard>
+      <WebtoonChapterReadView comicId={id} chapterId={chapterId} />
+    </ChapterGuard>
+  );
 }
 

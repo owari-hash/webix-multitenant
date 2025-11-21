@@ -24,6 +24,7 @@ import Iconify from 'src/components/iconify';
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
 import { logout, getUser, isAuthenticated } from 'src/utils/auth';
+import { RouterLink } from 'src/routes/components';
 
 import { HEADER } from '../config-layout';
 import Searchbar from '../common/searchbar';
@@ -379,32 +380,45 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     <Divider key="divider1" />,
                     <MenuItem
                       key="profile"
-                      onClick={handleProfileMenuClose}
+                      component={RouterLink}
                       href={paths.profile.root}
+                      onClick={handleProfileMenuClose}
                     >
                       <Iconify icon="carbon:user" sx={{ mr: 2 }} />
                       Миний профайл
                     </MenuItem>,
                     <MenuItem
                       key="library"
-                      onClick={handleProfileMenuClose}
+                      component={RouterLink}
                       href={paths.profile.library}
+                      onClick={handleProfileMenuClose}
                     >
                       <Iconify icon="carbon:book" sx={{ mr: 2 }} />
                       Номын сан
                     </MenuItem>,
                     <MenuItem
                       key="favorites"
-                      onClick={handleProfileMenuClose}
+                      component={RouterLink}
                       href={paths.profile.favorites}
+                      onClick={handleProfileMenuClose}
                     >
                       <Iconify icon="carbon:favorite" sx={{ mr: 2 }} />
                       Дуртай комикууд
                     </MenuItem>,
                     <MenuItem
-                      key="settings"
+                      key="payment"
+                      component={RouterLink}
+                      href={paths.webtoon.premium}
                       onClick={handleProfileMenuClose}
+                    >
+                      <Iconify icon="carbon:wallet" sx={{ mr: 2 }} />
+                      Төлбөр тооцоо
+                    </MenuItem>,
+                    <MenuItem
+                      key="settings"
+                      component={RouterLink}
                       href={paths.profile.settings}
+                      onClick={handleProfileMenuClose}
                     >
                       <Iconify icon="carbon:settings" sx={{ mr: 2 }} />
                       Тохиргоо
@@ -414,8 +428,9 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                           <Divider key="divider2" />,
                           <MenuItem
                             key="cms"
-                            onClick={handleProfileMenuClose}
+                            component={RouterLink}
                             href={paths.webtoon.cms.dashboard}
+                            onClick={handleProfileMenuClose}
                           >
                             <Iconify icon="carbon:dashboard" sx={{ mr: 2 }} />
                             CMS Удирдлага

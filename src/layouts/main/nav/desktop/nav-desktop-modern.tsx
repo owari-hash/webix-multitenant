@@ -57,7 +57,7 @@ export default function NavDesktopModern({ data, sx }: Props) {
         ...sx,
       }}
     >
-      <Stack direction="row" spacing={0.5}>
+      <Stack direction="row" spacing={{ md: 1, lg: 3 }}>
         {data.map((link) => {
           const isActive =
             pathname === link.path || (link.path !== '/' && pathname.startsWith(link.path));

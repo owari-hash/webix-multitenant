@@ -1,5 +1,5 @@
 import Paper from '@mui/material/Paper';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import ListSubheader from '@mui/material/ListSubheader';
 import ListItemButton from '@mui/material/ListItemButton';
 
@@ -31,8 +31,8 @@ export const StyledNavItem = styled(ListItemButton, {
       duration: theme.transitions.duration.shorter,
     }),
     '&:hover': {
-      opacity: 0.8,
-      backgroundColor: 'transparent',
+      color: theme.palette.text.primary,
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
       '&::before': dotActiveStyle,
     },
     // Sub item
@@ -73,7 +73,8 @@ export const StyledMenu = styled(Paper)(({ theme }) => ({
   position: 'fixed',
   zIndex: theme.zIndex.modal,
   boxShadow: theme.customShadows.dialog,
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: alpha(theme.palette.background.default, 0.9),
+  backdropFilter: 'blur(20px)',
 }));
 
 // ----------------------------------------------------------------------
