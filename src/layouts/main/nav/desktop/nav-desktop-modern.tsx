@@ -60,7 +60,7 @@ export default function NavDesktopModern({ data, sx }: Props) {
       <Stack direction="row" spacing={{ md: 1, lg: 3 }}>
         {data.map((link) => {
           const isActive =
-            pathname === link.path || (link.path !== '/' && pathname.startsWith(link.path));
+            pathname === link.path || (link.path !== '/' && pathname?.startsWith(link.path));
 
           return (
             <NextLink key={link.title} href={link.path} passHref>

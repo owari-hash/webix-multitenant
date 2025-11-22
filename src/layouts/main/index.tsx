@@ -30,13 +30,13 @@ type Props = {
 export default function MainLayout({ children }: Props) {
   const pathname = usePathname();
 
-  const actionPage = (arr: string[]) => arr.some((path) => pathname === path);
+  const actionPage = (arr: string[]) => pathname ? arr.some((path) => pathname === path) : false;
 
   // Use webtoon header for webtoon-related pages
   const isWebtoonPage =
-    pathname.startsWith('/webtoon') ||
-    pathname.startsWith('/profile') ||
-    pathname.startsWith('/cms') ||
+    pathname?.startsWith('/webtoon') ||
+    pathname?.startsWith('/profile') ||
+    pathname?.startsWith('/cms') ||
     pathname === '/';
 
   // Homepage has dark hero background, so header should be on dark

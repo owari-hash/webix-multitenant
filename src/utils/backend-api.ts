@@ -1,3 +1,5 @@
+import { getAuthToken } from 'src/utils/auth';
+
 // ----------------------------------------------------------------------
 
 /**
@@ -19,17 +21,27 @@ function getBackendUrl(): string {
       }
     }
 
-    // Always use the main production domain
+    // Always use the production domain
     const mainDomain = 'anzaidev.fun';
     const protocol = 'https';
 
     // Construct backend URL with subdomain
+    let backendUrl;
     if (subdomain) {
-      return `${protocol}://${subdomain}.${mainDomain}`;
+      backendUrl = `${protocol}://${subdomain}.${mainDomain}`;
+    } else {
+      backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || `${protocol}://${mainDomain}`;
     }
 
-    // No subdomain, use main domain (or default from env)
-    return process.env.NEXT_PUBLIC_BACKEND_URL || `${protocol}://${mainDomain}`;
+    // Debug logging
+    console.log('🔍 Backend URL Debug:', {
+      hostname,
+      subdomain,
+      backendUrl,
+      parts,
+    });
+
+    return backendUrl;
   }
 
   // For server-side, use environment variable or default
@@ -76,9 +88,13 @@ export async function backendRequest<T = any>(
     }
     const url = `${backendBaseUrl}${apiEndpoint}`;
 
+    // Get token
+    const token = getAuthToken();
+
     // Prepare headers
     const headers = new Headers({
       'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }), // Add Authorization header if token exists
       ...options.headers,
     });
 
@@ -97,15 +113,25 @@ export async function backendRequest<T = any>(
       credentials: 'include', // Important for CORS with credentials
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      
+      // Handle License Expired Error
+      if (response.status === 403 && errorData.code === 'LICENSE_EXPIRED') {
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/license-expired')) {
+          window.location.href = '/license-expired';
+        }
+        return { success: false, error: 'License Expired' };
+      }
+
       return {
         success: false,
-        error: data.message || data.error || 'Request failed',
-        ...data,
+        error: errorData.message || `HTTP error! status: ${response.status}`,
+        ...errorData,
       };
     }
+
+    const data = await response.json();
 
     return {
       success: true,

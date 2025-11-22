@@ -78,7 +78,7 @@ export default function NavMobileModern({ data }: Props) {
         <List disablePadding sx={{ px: 2 }}>
           {data.map((item) => {
             const isActive =
-              pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
+              pathname === item.path || (item.path !== '/' && pathname?.startsWith(item.path));
 
             return (
               <ListItem key={item.title} disablePadding sx={{ mb: 0.5 }}>

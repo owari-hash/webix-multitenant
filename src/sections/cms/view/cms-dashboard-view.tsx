@@ -23,11 +23,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
+import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
 
 export default function CMSDashboardView() {
   const [loading, setLoading] = useState(true);
+  const [license, setLicense] = useState<any>(null);
   const [comics, setComics] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalComics: 0,
@@ -38,20 +40,25 @@ export default function CMSDashboardView() {
     completedComics: 0,
   });
 
-  // Fetch comics data
+  // Fetch comics data and license info
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api2/webtoon/comics');
-        console.log('CMS Dashboard - API Response Status:', response.status);
+        // Fetch License Info
+        const licenseResponse = await backendRequest('/organizations/license');
+        if (licenseResponse.success && licenseResponse.data) {
+          setLicense(licenseResponse.data.subscription);
+        }
 
-        if (response.ok) {
-          const result = await response.json();
-          console.log('CMS Dashboard - API Result:', result);
+        const response = await backendRequest('/webtoon/comics');
+        console.log('CMS Dashboard - API Response:', response);
 
+        if (response.success) {
+          const result = response;
+          
           // Handle both result.data and direct array response
           let comicsData: any[] = [];
-          if (result.success && Array.isArray(result.data)) {
+          if (Array.isArray(result.data)) {
             comicsData = result.data;
           } else if (Array.isArray(result)) {
             comicsData = result;
@@ -89,7 +96,7 @@ export default function CMSDashboardView() {
             completedComics,
           });
         } else {
-          console.error('CMS Dashboard - API Error:', response.status, response.statusText);
+          console.error('CMS Dashboard - API Error:', response.error);
         }
       } catch (error) {
         console.error('CMS Dashboard - Failed to fetch data:', error);
@@ -165,7 +172,19 @@ export default function CMSDashboardView() {
           spacing={2}
         >
           <Typography variant="h3">CMS Хяналтын самбар</Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {/* License Info */}
+            {license?.endDate && (
+              <Chip
+                icon={<Iconify icon="solar:calendar-bold" />}
+                label={`Лиценз: ${new Date(license.endDate).toLocaleDateString('mn-MN')}`}
+                color={
+                  new Date(license.endDate) < new Date() ? 'error' : 'success'
+                }
+                variant="soft"
+              />
+            )}
+            
             <Button
               variant="outlined"
               startIcon={<Iconify icon="carbon:book" />}

@@ -105,7 +105,7 @@ const ParentItem = forwardRef<HTMLDivElement, ParentItemProps>(
 
 type SubMenuProps = {
   parent: MegaMenuItemProps;
-  pathname: string;
+  pathname: string | null;
 };
 
 function SubMenu({ parent, pathname }: SubMenuProps) {

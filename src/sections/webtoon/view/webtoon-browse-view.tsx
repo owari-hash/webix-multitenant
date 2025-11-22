@@ -50,7 +50,7 @@ export default function WebtoonBrowseView() {
 
   // Set category from URL parameter on mount
   useEffect(() => {
-    const categoryParam = searchParams.get('category');
+    const categoryParam = searchParams?.get('category');
     if (categoryParam) {
       setSelectedCategory(categoryParam);
     }

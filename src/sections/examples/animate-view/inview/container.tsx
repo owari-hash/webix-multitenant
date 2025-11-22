@@ -23,8 +23,6 @@ export default function ContainerView({
   selectVariant,
   ...other
 }: ContainerViewProps) {
-  const items = isMulti;
-
   return (
     <Paper
       sx={{

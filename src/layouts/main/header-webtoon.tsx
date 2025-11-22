@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import Link from '@mui/material/Link';
-import Badge from '@mui/material/Badge';
 import Stack from '@mui/material/Stack';
 import AppBar from '@mui/material/AppBar';
 import Button from '@mui/material/Button';
@@ -30,6 +29,7 @@ import { HEADER } from '../config-layout';
 import Searchbar from '../common/searchbar';
 import HeaderShadow from '../common/header-shadow';
 import SettingsButton from '../common/settings-button';
+import NotificationsPopover from '../common/notifications-popover';
 
 import { navConfig } from './config-navigation';
 import NavMobileModern from './nav/mobile/nav-mobile-modern';
@@ -56,7 +56,6 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
   const mdUp = useResponsive('up', 'md');
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -100,13 +99,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
     setAnchorEl(null);
   };
 
-  const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setNotificationAnchor(event.currentTarget);
-  };
 
-  const handleNotificationClose = () => {
-    setNotificationAnchor(null);
-  };
 
   const handleLogout = async () => {
     handleProfileMenuClose();
@@ -298,39 +291,25 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     <Iconify icon="carbon:time" />
                   </IconButton>
 
-                  {/* Notifications */}
+                {/* Notifications */}
+                <NotificationsPopover />
+
+                {/* CMS Access for admins only */}
+                {displayUser.role === 'admin' && (
                   <IconButton
                     size="medium"
                     sx={{
                       color: 'text.secondary',
                       '&:hover': {
-                        color: 'warning.main',
-                        bgcolor: 'warning.lighter',
+                        color: 'success.main',
+                        bgcolor: 'success.lighter',
                       },
                     }}
-                    onClick={handleNotificationOpen}
+                    href={paths.webtoon.cms.dashboard}
                   >
-                    <Badge badgeContent={3} color="error">
-                      <Iconify icon="carbon:notification" />
-                    </Badge>
+                    <Iconify icon="carbon:dashboard" />
                   </IconButton>
-
-                  {/* CMS Access for admins only */}
-                  {displayUser.role === 'admin' && (
-                    <IconButton
-                      size="medium"
-                      sx={{
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'success.main',
-                          bgcolor: 'success.lighter',
-                        },
-                      }}
-                      href={paths.webtoon.cms.dashboard}
-                    >
-                      <Iconify icon="carbon:dashboard" />
-                    </IconButton>
-                  )}
+                )}
                 </Stack>
 
                 {/* User Profile */}
@@ -441,65 +420,6 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     <MenuItem key="logout" onClick={handleLogout} sx={{ color: 'error.main' }}>
                       <Iconify icon="carbon:logout" sx={{ mr: 2 }} />
                       Гарах
-                    </MenuItem>,
-                  ]}
-                </Menu>
-
-                {/* Notifications Menu */}
-                <Menu
-                  anchorEl={notificationAnchor}
-                  open={Boolean(notificationAnchor)}
-                  onClose={handleNotificationClose}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  PaperProps={{
-                    sx: { width: 320, mt: 1 },
-                  }}
-                >
-                  {[
-                    <Box key="header" sx={{ p: 2 }}>
-                      <Typography variant="h6">Мэдэгдэл</Typography>
-                    </Box>,
-                    <Divider key="divider1" />,
-                    <MenuItem key="notif1" onClick={handleNotificationClose}>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle2">
-                          &ldquo;Миний дуртай комик&rdquo; шинэ бүлэг нэмэгдлээ
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          2 цагийн өмнө
-                        </Typography>
-                      </Stack>
-                    </MenuItem>,
-                    <MenuItem key="notif2" onClick={handleNotificationClose}>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle2">
-                          Таны дуртай зохиолч шинэ комик эхлүүллээ
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          1 өдрийн өмнө
-                        </Typography>
-                      </Stack>
-                    </MenuItem>,
-                    <MenuItem key="notif3" onClick={handleNotificationClose}>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle2">
-                          Долоо хоногийн шилдэг комикууд гарлаа
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          3 өдрийн өмнө
-                        </Typography>
-                      </Stack>
-                    </MenuItem>,
-                    <Divider key="divider2" />,
-                    <MenuItem
-                      key="viewAll"
-                      onClick={handleNotificationClose}
-                      sx={{ justifyContent: 'center' }}
-                    >
-                      <Typography variant="body2" color="primary">
-                        Бүх мэдэгдлийг үзэх
-                      </Typography>
                     </MenuItem>,
                   ]}
                 </Menu>
