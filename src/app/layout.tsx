@@ -10,6 +10,7 @@ import MotionLazy from 'src/components/animate/motion-lazy';
 import { SettingsDrawer, SettingsProvider } from 'src/components/settings';
 import { TenantProvider } from 'src/contexts/tenant-context';
 import { AuthProvider } from 'src/contexts/auth-context';
+import { SnackbarProvider } from 'src/components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -64,11 +65,13 @@ export default function RootLayout({ children }: Props) {
               }}
             >
               <ThemeProvider>
-                <MotionLazy>
-                  <ProgressBar />
-                  <SettingsDrawer />
-                  {children}
-                </MotionLazy>
+                <SnackbarProvider>
+                  <MotionLazy>
+                    <ProgressBar />
+                    <SettingsDrawer />
+                    {children}
+                  </MotionLazy>
+                </SnackbarProvider>
               </ThemeProvider>
             </SettingsProvider>
           </LocalizationProvider>

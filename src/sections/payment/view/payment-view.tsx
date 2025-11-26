@@ -1,34 +1,39 @@
 'use client';
 
+import { useState } from 'react';
+
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import { useResponsive } from 'src/hooks/use-responsive';
+import { InvoiceResponse } from 'src/utils/qpay-api';
 
 import PaymentSummary from '../payment-summary';
-import PaymentMethods from '../payment-methods';
+import QPayInvoiceForm from '../qpay-invoice-form';
+import QPayPaymentStatus from '../qpay-payment-status';
 
 // ----------------------------------------------------------------------
 
 export default function PaymentView() {
   const mdUp = useResponsive('up', 'md');
+  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null);
 
-  const renderBillingAddress = (
-    <div>
-      <Typography variant="h5">Billing Address</Typography>
+  const handleInvoiceCreated = (createdInvoice: InvoiceResponse) => {
+    setInvoice(createdInvoice);
+  };
 
-      <Stack spacing={2.5} mt={5}>
-        <TextField fullWidth label="Person name" />
-        <TextField fullWidth label="Phone number" />
-        <TextField fullWidth label="Email" />
-        <TextField fullWidth label="Address" />
-      </Stack>
-    </div>
-  );
+  const handlePaymentComplete = () => {
+    // Refresh or redirect after payment
+    setTimeout(() => {
+      setInvoice(null);
+    }, 3000);
+  };
+
+  const handleCancel = () => {
+    setInvoice(null);
+  };
 
   return (
     <Container
@@ -40,22 +45,16 @@ export default function PaymentView() {
       }}
     >
       <Typography variant="h3" align="center" paragraph>
-        {`Let's Finish Powering You Up!`}
+        QPay Төлбөр Төлөх
       </Typography>
 
       <Typography align="center" sx={{ color: 'text.secondary', mb: { xs: 5, md: 8 } }}>
-        Professional plan is right for you.
+        Нэхэмжлэх үүсгэж QR код ашиглан төлбөрөө төлөөрэй
       </Typography>
 
       <Grid container spacing={mdUp ? 3 : 5}>
         <Grid xs={12} md={8}>
           <Box
-            gap={5}
-            display="grid"
-            gridTemplateColumns={{
-              xs: 'repeat(1, 1fr)',
-              md: 'repeat(2, 1fr)',
-            }}
             sx={{
               p: { md: 5 },
               borderRadius: 2,
@@ -64,9 +63,15 @@ export default function PaymentView() {
               }),
             }}
           >
-            {renderBillingAddress}
-
-            <PaymentMethods />
+            {!invoice ? (
+              <QPayInvoiceForm onInvoiceCreated={handleInvoiceCreated} />
+            ) : (
+              <QPayPaymentStatus
+                invoice={invoice.invoice}
+                onPaymentComplete={handlePaymentComplete}
+                onCancel={handleCancel}
+              />
+            )}
           </Box>
         </Grid>
 

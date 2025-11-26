@@ -78,9 +78,20 @@ export default function CarouselArrows({
   const hasChild = !!children;
 
   if (hasChild) {
+    const hasLeftPosition =
+      leftButtonProps?.sx &&
+      typeof leftButtonProps.sx === 'object' &&
+      !Array.isArray(leftButtonProps.sx) &&
+      'left' in leftButtonProps.sx;
+    const hasRightPosition =
+      rightButtonProps?.sx &&
+      typeof rightButtonProps.sx === 'object' &&
+      !Array.isArray(rightButtonProps.sx) &&
+      'right' in rightButtonProps.sx;
+
     return (
       <Stack sx={sx} {...other}>
-        {onNext && (
+        {onPrev && (
           <StyledIconButton
             filled={filled}
             shape={shape}
@@ -88,7 +99,7 @@ export default function CarouselArrows({
             onClick={onPrev}
             {...leftButtonProps}
             sx={{
-              left: 16,
+              ...(!hasLeftPosition && { left: 16 }),
               ...leftButtonProps?.sx,
             }}
           >
@@ -98,7 +109,7 @@ export default function CarouselArrows({
 
         {children}
 
-        {onPrev && (
+        {onNext && (
           <StyledIconButton
             filled={filled}
             shape={shape}
@@ -106,7 +117,7 @@ export default function CarouselArrows({
             onClick={onNext}
             {...rightButtonProps}
             sx={{
-              right: 16,
+              ...(!hasRightPosition && { right: 16 }),
               ...rightButtonProps?.sx,
             }}
           >

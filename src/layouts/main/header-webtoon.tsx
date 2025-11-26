@@ -99,8 +99,6 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
     setAnchorEl(null);
   };
 
-
-
   const handleLogout = async () => {
     handleProfileMenuClose();
     await logout();
@@ -115,10 +113,16 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
   };
 
   return (
-    <AppBar>
+    <AppBar
+      elevation={0}
+      sx={{
+        boxShadow: 'none',
+      }}
+    >
       <Toolbar
         disableGutters
         sx={{
+          minHeight: { xs: HEADER.H_MOBILE, md: HEADER.H_DESKTOP },
           height: {
             xs: HEADER.H_MOBILE,
             md: HEADER.H_DESKTOP,
@@ -141,22 +145,27 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             // Make ALL navigation text white - force override with maximum specificity
             '& nav': {
               '& a, & [class*="MuiBox-root"], & *': {
-                color: 'common.white !important',
+                color: 'common.white',
               },
               // Active nav item - white text with white background (override primary color)
               '& [data-active="true"], & [data-active="true"] a, & a[data-active="true"]': {
-                color: 'common.white !important',
-                backgroundColor: `${alpha(theme.palette.common.white, 0.15)} !important`,
+                color: 'common.white',
+                backgroundColor: alpha(theme.palette.common.white, 0.15),
               },
-              // Hover state - white text with white background
-              '& a:hover, & [class*="MuiBox-root"]:hover, & a[data-active="true"]:hover': {
-                color: 'common.white !important',
-                backgroundColor: `${alpha(theme.palette.common.white, 0.1)} !important`,
+              // Hover state - white text with white background (use :hover pseudo-class properly)
+              '& a:hover, & [class*="MuiBox-root"]:hover': {
+                color: 'common.white',
+                backgroundColor: alpha(theme.palette.common.white, 0.1),
+              },
+              // Ensure hover works on active items too
+              '& [data-active="true"]:hover, & a[data-active="true"]:hover': {
+                color: 'common.white',
+                backgroundColor: alpha(theme.palette.common.white, 0.2),
               },
             },
             // Additional override for any nested elements
             '& nav *': {
-              color: 'common.white !important',
+              color: 'common.white',
             },
           }),
           ...(offset && {
@@ -170,9 +179,13 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
             borderBottom: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.04)}, 0 1px 3px ${alpha(
+              theme.palette.common.black,
+              0.08
+            )}`,
             color: 'text.primary',
             height: {
+              xs: HEADER.H_MOBILE - 8, // Reduce mobile height when scrolled
               md: HEADER.H_DESKTOP - 16,
             },
             // Remove text shadows when scrolled
@@ -185,28 +198,40 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             // Reset navigation text to normal colors when scrolled
             '& nav': {
               '& a, & [class*="MuiBox-root"], & *': {
-                color: 'text.primary !important',
+                color: 'text.primary',
               },
               // Active nav item - normal colors when scrolled
               '& [data-active="true"], & [data-active="true"] a, & a[data-active="true"]': {
-                color: 'primary.main !important',
-                backgroundColor: `${alpha(theme.palette.primary.main, 0.12)} !important`,
+                color: 'primary.main',
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
               },
               // Hover state - normal colors when scrolled
-              '& a:hover, & [class*="MuiBox-root"]:hover, & a[data-active="true"]:hover': {
-                color: 'text.primary !important',
-                backgroundColor: `${alpha(theme.palette.primary.main, 0.08)} !important`,
+              '& a:hover, & [class*="MuiBox-root"]:hover': {
+                color: 'text.primary',
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
+              // Ensure hover works on active items too
+              '& [data-active="true"]:hover, & a[data-active="true"]:hover': {
+                color: 'primary.main',
+                backgroundColor: alpha(theme.palette.primary.main, 0.16),
               },
             },
             // Reset nav elements to normal colors
             '& nav *': {
-              color: 'inherit !important',
+              color: 'inherit',
             },
           }),
         }}
       >
         <Container
-          sx={{ height: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          sx={{
+            height: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: { xs: 1.5, md: 3 }, // Reduce padding on mobile
+            minHeight: { xs: 44, md: 80 }, // Ensure minimum height matches
+          }}
         >
           {/* Logo */}
           <Box
@@ -253,14 +278,32 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
           {mdUp && <NavDesktopModern data={navConfig} />}
 
           {/* Right Side Actions */}
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={2}
+            sx={{
+              flex: { xs: 1, md: 'none' },
+              justifyContent: 'flex-end',
+              minWidth: 0, // Allow shrinking
+            }}
+          >
             {/* Search */}
-            <Searchbar />
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Searchbar />
+            </Box>
 
             {authenticated ? (
               <>
                 {/* Quick Actions for authenticated users */}
-                <Stack direction="row" spacing={1} sx={{ mx: 1 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    mx: 1,
+                    display: { xs: 'none', sm: 'flex' }, // Hide on mobile to save space
+                  }}
+                >
                   {/* Favorites */}
                   <IconButton
                     size="medium"
@@ -291,25 +334,25 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                     <Iconify icon="carbon:time" />
                   </IconButton>
 
-                {/* Notifications */}
-                <NotificationsPopover />
+                  {/* Notifications */}
+                  <NotificationsPopover />
 
-                {/* CMS Access for admins only */}
-                {displayUser.role === 'admin' && (
-                  <IconButton
-                    size="medium"
-                    sx={{
-                      color: 'text.secondary',
-                      '&:hover': {
-                        color: 'success.main',
-                        bgcolor: 'success.lighter',
-                      },
-                    }}
-                    href={paths.webtoon.cms.dashboard}
-                  >
-                    <Iconify icon="carbon:dashboard" />
-                  </IconButton>
-                )}
+                  {/* CMS Access for admins only */}
+                  {displayUser.role === 'admin' && (
+                    <IconButton
+                      size="medium"
+                      sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                          color: 'success.main',
+                          bgcolor: 'success.lighter',
+                        },
+                      }}
+                      href={paths.webtoon.cms.dashboard}
+                    >
+                      <Iconify icon="carbon:dashboard" />
+                    </IconButton>
+                  )}
                 </Stack>
 
                 {/* User Profile */}
@@ -318,6 +361,7 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                   sx={{
                     p: 0,
                     ml: 1,
+                    display: { xs: 'none', sm: 'flex' }, // Hide on mobile to save space
                     '&:hover': {
                       '& .MuiAvatar-root': {
                         boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
@@ -426,7 +470,11 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
               </>
             ) : (
               /* Login/Register buttons for non-authenticated users */
-              <Stack direction="row" spacing={1.5}>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ display: { xs: 'none', sm: 'flex' } }} // Hide on mobile
+              >
                 <Button variant="outlined" size="small" href={paths.loginCover}>
                   Нэвтрэх
                 </Button>
@@ -441,8 +489,12 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
               <SettingsButton />
             </Box>
 
-            {/* Mobile Navigation */}
-            {!mdUp && <NavMobileModern data={navConfig} />}
+            {/* Mobile Navigation - Always visible on mobile, positioned last */}
+            {!mdUp && (
+              <Box sx={{ ml: 'auto', flexShrink: 0 }}>
+                <NavMobileModern data={navConfig} />
+              </Box>
+            )}
           </Stack>
         </Container>
       </Toolbar>

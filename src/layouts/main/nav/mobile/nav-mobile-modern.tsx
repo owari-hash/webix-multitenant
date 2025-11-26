@@ -46,10 +46,12 @@ export default function NavMobileModern({ data }: Props) {
         sx={{
           ml: 1,
           color: 'text.secondary',
-          transition: theme.transitions.create('transform'),
+          transition: theme.transitions.create(['color', 'transform', 'background-color']),
+          zIndex: 10,
           '&:hover': {
             color: 'text.primary',
             transform: 'scale(1.1)',
+            bgcolor: alpha(theme.palette.primary.main, 0.08),
           },
         }}
       >
@@ -68,7 +70,15 @@ export default function NavMobileModern({ data }: Props) {
           },
         }}
       >
-        <Box sx={{ px: 2.5, py: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            px: 2.5,
+            py: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Logo />
           <IconButton onClick={handleClose}>
             <Iconify icon="mingcute:close-line" />

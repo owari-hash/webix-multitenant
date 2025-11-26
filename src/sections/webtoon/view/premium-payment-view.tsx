@@ -21,6 +21,9 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { useRouter } from 'src/routes/hooks';
 import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/contexts/auth-context';
+import { useSnackbar } from 'src/components/snackbar';
+import { qpayApi, InvoiceResponse } from 'src/utils/qpay-api';
+import QPayPaymentStatus from 'src/sections/payment/qpay-payment-status';
 
 // ----------------------------------------------------------------------
 
@@ -31,9 +34,11 @@ export default function PremiumPaymentView() {
   const theme = useTheme();
   const router = useRouter();
   const { user, authenticated } = useAuthContext();
+  const { enqueueSnackbar } = useSnackbar();
   const [plan, setPlan] = useState<PlanType>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qpay');
   const [processing, setProcessing] = useState(false);
+  const [qpayInvoice, setQpayInvoice] = useState<InvoiceResponse | null>(null);
 
   // Card details
   const [cardNumber, setCardNumber] = useState('');
@@ -42,16 +47,109 @@ export default function PremiumPaymentView() {
   const [cvv, setCvv] = useState('');
 
   const planDetails = {
-    monthly: { price: 9900, label: 'Сарын багц', period: 'сар' },
-    yearly: { price: 99000, label: 'Жилийн багц', period: 'жил', discount: '2 сар үнэгүй' },
+    monthly: { price: 200, label: 'Сарын багц', period: 'сар' },
+    yearly: { price: 2000, label: 'Жилийн багц', period: 'жил', discount: '2 сар үнэгүй' },
   };
 
   const handlePayment = async () => {
     if (!authenticated) {
-      alert('Та эхлээд нэвтэрнэ үү!');
+      enqueueSnackbar('Та эхлээд нэвтэрнэ үү!', { variant: 'warning' });
       return;
     }
 
+    // If QPay, create invoice
+    if (paymentMethod === 'qpay') {
+      setProcessing(true);
+      try {
+        const invoiceData = {
+          amount: planDetails[plan].price,
+          currency: 'MNT',
+          description: `Premium ${planDetails[plan].label} - ${user?.email || ''}`,
+          sender_invoice_no: `PREMIUM-${plan}-${Date.now()}`,
+        };
+
+        const result = await qpayApi.createInvoice(invoiceData);
+        // Map response to expected format
+        const invoiceDataFromResponse: any = result.data?.invoice || result.invoice || {};
+
+        // Extract QR image - it might be in data.qr_image or invoice.qr_image
+        const qrImage =
+          result.data?.qr_image || invoiceDataFromResponse?.qr_image || result.qr_image || null;
+
+        // Ensure QR image has data: prefix if it's base64
+        let qrImageFormatted: string | null = null;
+        if (qrImage) {
+          qrImageFormatted = qrImage.startsWith('data:')
+            ? qrImage
+            : `data:image/png;base64,${qrImage}`;
+        }
+
+        // Extract QR code text
+        const qrCode =
+          result.data?.qr_code || invoiceDataFromResponse?.qr_code || result.qr_code || null;
+
+        const qrText =
+          invoiceDataFromResponse?.qr_text ||
+          invoiceDataFromResponse?.qr_code ||
+          result.data?.qr_code ||
+          result.data?.qr_text ||
+          result.qr_text ||
+          qrCode ||
+          null;
+
+        console.log('🔍 QPay Response Debug:', {
+          'result.data': result.data,
+          'result.data.qr_image': result.data?.qr_image?.substring(0, 50),
+          'invoiceDataFromResponse.qr_image': invoiceDataFromResponse?.qr_image?.substring(0, 50),
+          qrImageFormatted: qrImageFormatted?.substring(0, 50),
+          qrCode: qrCode?.substring(0, 50),
+        });
+
+        const mappedInvoice = {
+          invoice_id: result.data?.id || result.data?.invoice_id || result.invoice_id,
+          qr_code: qrCode,
+          qr_image: qrImageFormatted,
+          qr_text: qrText,
+          urls: result.data?.urls || [],
+          invoice: {
+            invoice_id:
+              invoiceDataFromResponse?.invoice_id ||
+              result.data?.id ||
+              result.data?.invoice_id ||
+              result.invoice_id,
+            qpay_invoice_id:
+              invoiceDataFromResponse?.qpay_invoice_id ||
+              result.data?.id ||
+              result.data?.invoice_id ||
+              result.invoice_id,
+            merchant_id:
+              invoiceDataFromResponse?.merchant_id || result.data?.invoice?.merchant_id || '',
+            amount: invoiceDataFromResponse?.amount || invoiceData.amount,
+            currency: invoiceDataFromResponse?.currency || invoiceData.currency || 'MNT',
+            description: invoiceDataFromResponse?.description || invoiceData.description || '',
+            status: (invoiceDataFromResponse?.status || 'PENDING') as
+              | 'PENDING'
+              | 'PAID'
+              | 'CANCELLED',
+            qr_text: qrText,
+            qr_image: qrImageFormatted,
+            qr_code: qrCode,
+            createdAt: invoiceDataFromResponse?.createdAt || new Date().toISOString(),
+            updatedAt: invoiceDataFromResponse?.updatedAt || new Date().toISOString(),
+          },
+        };
+        setQpayInvoice(mappedInvoice as any);
+        enqueueSnackbar('Нэхэмжлэх амжилттай үүслээ', { variant: 'success' });
+      } catch (error: any) {
+        console.error('QPay invoice creation error:', error);
+        enqueueSnackbar(error?.message || 'Нэхэмжлэх үүсгэхэд алдаа гарлаа', { variant: 'error' });
+      } finally {
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // For other payment methods (card, bank)
     setProcessing(true);
 
     try {
@@ -80,25 +178,47 @@ export default function PremiumPaymentView() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.');
+        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', {
+          variant: 'success',
+        });
         router.push('/webtoon');
         window.location.reload();
       } else {
-        alert(result.message || 'Төлбөр төлөхөд алдаа гарлаа. Дахин оролдоно уу.');
+        enqueueSnackbar(result.message || 'Төлбөр төлөхөд алдаа гарлаа. Дахин оролдоно уу.', {
+          variant: 'error',
+        });
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Сүлжээний алдаа. Дахин оролдоно уу.');
+      enqueueSnackbar('Сүлжээний алдаа. Дахин оролдоно уу.', { variant: 'error' });
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleQPayPaymentComplete = () => {
+    enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', { variant: 'success' });
+    setTimeout(() => {
+      router.push('/webtoon');
+      window.location.reload();
+    }, 2000);
+  };
+
+  const handleQPayCancel = () => {
+    setQpayInvoice(null);
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 5, md: 10 } }}>
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: { xs: 5, md: 8 } }}>
-        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+          spacing={1}
+          sx={{ mb: 2 }}
+        >
           <Iconify icon="mdi:crown" width={48} sx={{ color: 'warning.main' }} />
           <Typography variant="h2" sx={{ fontWeight: 700 }}>
             Premium эрх авах
@@ -304,8 +424,20 @@ export default function PremiumPaymentView() {
               </Stack>
             )}
 
-            {/* QPay Info */}
-            {paymentMethod === 'qpay' && (
+            {/* QPay Invoice Status */}
+            {paymentMethod === 'qpay' && qpayInvoice && (
+              <Box sx={{ mt: 3 }}>
+                <QPayPaymentStatus
+                  invoice={qpayInvoice.invoice}
+                  urls={qpayInvoice.urls || []}
+                  onPaymentComplete={handleQPayPaymentComplete}
+                  onCancel={handleQPayCancel}
+                />
+              </Box>
+            )}
+
+            {/* QPay Info - Show before invoice creation */}
+            {paymentMethod === 'qpay' && !qpayInvoice && (
               <Box
                 sx={{
                   mt: 3,
@@ -315,12 +447,20 @@ export default function PremiumPaymentView() {
                   textAlign: 'center',
                 }}
               >
-                <Iconify icon="mdi:qrcode-scan" width={120} sx={{ mb: 2, color: 'text.secondary' }} />
+                <Iconify
+                  icon="mdi:qrcode-scan"
+                  width={120}
+                  sx={{ mb: 2, color: 'text.secondary' }}
+                />
                 <Typography variant="body2" color="text.secondary">
-                  QPay QR код энд харагдана
+                  &quot;Төлбөр төлөх&quot; товч дарахад QPay QR код үүснэ
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  Төлбөр баталгаажсаны дараа автоматаар Premium эрх идэвхжинэ
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1 }}
+                >
+                  QR код уншуулаад төлбөрөө төлсний дараа автоматаар Premium эрх идэвхжинэ
                 </Typography>
               </Box>
             )}
@@ -345,7 +485,11 @@ export default function PremiumPaymentView() {
                     <strong>Гүйлгээний утга:</strong> Premium-{user?.email || '[Таны имэйл]'}
                   </Typography>
                 </Stack>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 2 }}
+                >
                   Шилжүүлэг хийсний дараа 1-2 цагийн дотор Premium эрх идэвхжинэ
                 </Typography>
               </Box>
@@ -395,10 +539,11 @@ export default function PremiumPaymentView() {
             variant="contained"
             loading={processing}
             onClick={handlePayment}
+            disabled={qpayInvoice !== null}
             startIcon={<Iconify icon="mdi:lock" />}
             sx={{ mt: 3 }}
           >
-            Төлбөр төлөх
+            {qpayInvoice ? 'Нэхэмжлэх үүссэн' : 'Төлбөр төлөх'}
           </LoadingButton>
 
           <Button
@@ -411,7 +556,11 @@ export default function PremiumPaymentView() {
             Буцах
           </Button>
 
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 2, textAlign: 'center' }}
+          >
             🔒 Таны төлбөрийн мэдээлэл аюулгүй хадгалагдана
           </Typography>
         </Card>

@@ -24,6 +24,9 @@ const StyledNavItem = styled(Box, {
   '&:hover': {
     color: theme.palette.text.primary,
     backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    transition: theme.transitions.create(['color', 'background-color'], {
+      duration: theme.transitions.duration.shorter,
+    }),
   },
   ...(active && {
     color: theme.palette.primary.main, // Default active color - will be overridden by header CSS

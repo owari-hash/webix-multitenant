@@ -2,15 +2,15 @@ import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import Rating from '@mui/material/Rating';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import Image from 'src/components/image';
-import { useResponsive } from 'src/hooks/use-responsive';
+import Iconify from 'src/components/iconify';
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 import { varFade, MotionViewport } from 'src/components/animate';
 import Carousel, { useCarousel, CarouselArrows } from 'src/components/carousel';
 
@@ -22,168 +22,248 @@ type Props = {
 
 export default function HomeWebtoonFeatured({ data }: Props) {
   const theme = useTheme();
-  const mdUp = useResponsive('up', 'md');
+  const router = useRouter();
 
   const carousel = useCarousel({
-    slidesToShow: 5,
-    slidesToScroll: 5,
+    slidesToShow: Math.min(6, data.length),
+    slidesToScroll: 2,
+    infinite: data.length > 6,
+    autoplay: data.length > 6,
+    autoplaySpeed: 4000,
+    speed: 600,
     responsive: [
       {
         breakpoint: theme.breakpoints.values.lg,
-        settings: { slidesToShow: 4, slidesToScroll: 4 },
+        settings: {
+          slidesToShow: Math.min(5, data.length),
+          slidesToScroll: 2,
+          infinite: data.length > 5,
+        },
       },
       {
         breakpoint: theme.breakpoints.values.md,
-        settings: { slidesToShow: 3, slidesToScroll: 3 },
+        settings: {
+          slidesToShow: Math.min(4, data.length),
+          slidesToScroll: 2,
+          infinite: data.length > 4,
+        },
       },
       {
         breakpoint: theme.breakpoints.values.sm,
-        settings: { slidesToShow: 2, slidesToScroll: 2 },
+        settings: {
+          slidesToShow: Math.min(3, data.length),
+          slidesToScroll: 1,
+          infinite: data.length > 3,
+        },
       },
       {
         breakpoint: 480,
-        settings: { slidesToShow: 1, slidesToScroll: 1 },
+        settings: {
+          slidesToShow: Math.min(2, data.length),
+          slidesToScroll: 1,
+          infinite: data.length > 2,
+        },
       },
     ],
   });
 
+  const formatViews = (views: number) => {
+    if (!views) return '0';
+    return views.toLocaleString('en-US');
+  };
+
   return (
-    <Container
+    <Box
       component={MotionViewport}
       sx={{
-        py: { xs: 8, md: 12 },
+        py: { xs: 6, md: 10 },
+        position: 'relative',
+        overflow: 'visible',
       }}
     >
-      <Stack spacing={5}>
-        <m.div variants={varFade().inUp}>
-          <Typography
-            variant="h3"
-            sx={{
-              mb: 1,
-              fontWeight: 800,
-              fontSize: { xs: '1.75rem', md: '2.25rem' },
+      <Container>
+        <Stack spacing={4}>
+          <m.div variants={varFade().inUp}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Iconify
+                icon="solar:book-bookmark-bold"
+                sx={{
+                  fontSize: { xs: 24, md: 32 },
+                  color: theme.palette.primary.main,
+                }}
+              />
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                }}
+              >
+                Топ 10 – Их Уншсан Зохиол
+              </Typography>
+            </Stack>
+          </m.div>
+        </Stack>
+      </Container>
+
+      <Container
+        sx={{
+          position: 'relative',
+          overflow: 'visible',
+          px: { xs: 2, md: 3 },
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            overflow: 'visible',
+            '& .slick-list': {
+              overflow: 'hidden',
+              margin: { xs: '0 -4px', md: '0 -8px' },
+            },
+            '& .slick-track': {
+              display: 'flex !important',
+              flexWrap: 'nowrap !important',
+            },
+            '& .slick-slide': {
+              float: 'none !important',
+              display: 'inline-block !important',
+              verticalAlign: 'top',
+              '& > div': {
+                height: '100%',
+                padding: { xs: '0 4px', md: '0 8px' },
+              },
+            },
+          }}
+        >
+          <CarouselArrows
+            filled
+            onNext={carousel.onNext}
+            onPrev={carousel.onPrev}
+            leftButtonProps={{
+              sx: {
+                left: { xs: 8, md: -44 },
+                bgcolor: alpha(theme.palette.grey[900], 0.6),
+                backdropFilter: 'blur(10px)',
+                color: 'common.white',
+                boxShadow: theme.customShadows.z8,
+                zIndex: 10,
+                '&:hover': {
+                  bgcolor: theme.palette.primary.main,
+                  color: 'common.white',
+                },
+              },
+            }}
+            rightButtonProps={{
+              sx: {
+                right: { xs: 8, md: -44 },
+                bgcolor: alpha(theme.palette.grey[900], 0.6),
+                backdropFilter: 'blur(10px)',
+                color: 'common.white',
+                boxShadow: theme.customShadows.z8,
+                zIndex: 10,
+                '&:hover': {
+                  bgcolor: theme.palette.primary.main,
+                  color: 'common.white',
+                },
+              },
             }}
           >
-            Онцлох Веб Комикууд
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.secondary',
-              mb: 3,
-            }}
-          >
-            Хүн бүрийн ярьж байгаа хамгийн алдартай болон тренд веб комикуудыг олж мэдээрэй
-          </Typography>
-        </m.div>
-
-        <Box sx={{ position: 'relative' }}>
-          <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
-            {data.map((webtoon) => {
-              const rating = webtoon.likes ? Math.min(5, webtoon.likes / 100) : 4.5;
-
-              return (
-                <Box key={webtoon._id || webtoon.id} sx={{ px: 1 }}>
+            <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
+              {data.map((webtoon, index) => (
+                <Box key={webtoon._id || webtoon.id || index}>
                   <Card
                     sx={{
                       cursor: 'pointer',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                      maxWidth: { xs: 140, sm: 160, md: 180 },
                       '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: (t) => t.customShadows.z24,
+                        transform: 'translateY(-4px)',
+                        boxShadow: theme.customShadows.z16,
+                        borderColor: theme.palette.primary.main,
                       },
                     }}
+                    onClick={() => router.push(paths.webtoon.comic(webtoon._id || webtoon.id))}
                   >
                     <Box sx={{ position: 'relative' }}>
                       <Image
-                        alt={webtoon.title}
-                        src={webtoon.coverImage || '/assets/placeholder.jpg'}
+                        alt={webtoon.title || 'Comic cover'}
+                        src={webtoon.coverImage || webtoon.coverUrl || '/assets/placeholder.jpg'}
                         ratio="3/4"
-                        sx={{ borderRadius: '8px 8px 0 0' }}
-                      />
-
-                      {/* MANHUA Badge - Top Left */}
-                      <Chip
-                        label="MANHUA"
-                        size="small"
                         sx={{
-                          position: 'absolute',
-                          top: 8,
-                          left: 8,
-                          bgcolor: '#FF5252',
-                          color: 'white',
-                          fontWeight: 700,
-                          fontSize: '0.65rem',
-                          height: 22,
+                          borderRadius: '6px 6px 0 0',
+                          transition: 'transform 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.03)',
+                          },
                         }}
                       />
 
-                      {/* Chapter Number - Bottom Left */}
+                      {/* View Count Badge - Top Center */}
                       <Box
                         sx={{
                           position: 'absolute',
-                          bottom: 8,
-                          left: 8,
-                          bgcolor: 'rgba(0, 0, 0, 0.75)',
-                          color: 'white',
+                          top: 6,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          bgcolor: alpha(theme.palette.grey[800], 0.95),
+                          backdropFilter: 'blur(10px)',
                           px: 1,
-                          py: 0.5,
-                          borderRadius: 0.5,
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
+                          py: 0.25,
+                          borderRadius: 2,
+                          border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+                          zIndex: 2,
                         }}
                       >
-                        Chapter {webtoon.chapters || 0}
+                        <Stack direction="row" alignItems="center" spacing={0.25}>
+                          <Iconify
+                            icon="solar:eye-bold"
+                            sx={{
+                              fontSize: 10,
+                              color: theme.palette.common.white,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'common.white',
+                              fontWeight: 700,
+                              fontSize: '0.65rem',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatViews(webtoon.views || 0)}
+                          </Typography>
+                        </Stack>
                       </Box>
                     </Box>
 
-                    <Box sx={{ p: 2 }}>
+                    <Box sx={{ p: 1 }}>
                       <Typography
-                        variant="subtitle1"
+                        variant="caption"
                         sx={{
                           fontWeight: 600,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          mb: 1,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          fontSize: '0.75rem',
+                          lineHeight: 1.3,
+                          minHeight: 32,
                         }}
                       >
                         {webtoon.title}
                       </Typography>
-
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <Rating value={rating} readOnly size="small" precision={0.1} />
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {rating.toFixed(1)}
-                        </Typography>
-                      </Stack>
                     </Box>
                   </Card>
                 </Box>
-              );
-            })}
-          </Carousel>
-
-          <CarouselArrows
-            onNext={carousel.onNext}
-            onPrev={carousel.onPrev}
-            sx={{
-              '& .arrow': {
-                bgcolor: 'background.paper',
-                boxShadow: (t) => t.customShadows.z8,
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                },
-                ...(mdUp && {
-                  '&.left': { left: -16 },
-                  '&.right': { right: -16 },
-                }),
-              },
-            }}
-          />
+              ))}
+            </Carousel>
+          </CarouselArrows>
         </Box>
-      </Stack>
-    </Container>
+      </Container>
+    </Box>
   );
 }

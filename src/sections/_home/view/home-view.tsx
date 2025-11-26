@@ -8,7 +8,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import ScrollProgress from 'src/components/scroll-progress';
 
-import HomeWebtoonHero from '../home-webtoon-hero';
+import HomeWebtoonHotSection from '../home-webtoon-hot-section';
+import HomeWebtoonFinished from '../home-webtoon-finished';
 import HomeWebtoonStats from '../home-webtoon-stats';
 import HomeWebtoonFeatured from '../home-webtoon-featured';
 import HomeWebtoonTrending from '../home-webtoon-trending';
@@ -27,7 +28,7 @@ export default function HomeView() {
       try {
         const response = await fetch('/api2/webtoon/comics');
         const result = await response.json();
-        
+
         if (result.success && result.comics) {
           setComics(result.comics);
         }
@@ -42,6 +43,18 @@ export default function HomeView() {
   }, []);
 
   // Sort and filter comics
+  const hotComics = comics
+    .sort((a, b) => (b.views || 0) + (b.likes || 0) - (a.views || 0) - (a.likes || 0))
+    .slice(0, 3); // Top 3 hot comics
+
+  const finishedComics = comics
+    .filter((comic) => comic.status === 'completed' || comic.status === 'finished')
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt).getTime() -
+        new Date(a.updatedAt || a.createdAt).getTime()
+    );
+
   const featuredComics = comics
     .filter((comic) => comic.status === 'ongoing')
     .sort((a, b) => (b.likes || 0) - (a.likes || 0))
@@ -75,27 +88,27 @@ export default function HomeView() {
     <>
       <ScrollProgress scrollYProgress={scrollYProgress} />
 
-      {/* Hero Section */}
-      <HomeWebtoonHero />
+      {/* Hot Section - 3 Large Featured Comics */}
+      <HomeWebtoonHotSection data={hotComics} />
+
+      {/* Finished Books/Comics Section */}
+      <HomeWebtoonFinished data={finishedComics} />
 
       {/* Featured Webtoons */}
       <HomeWebtoonFeatured data={featuredComics} />
 
       {/* Platform Statistics */}
-      <HomeWebtoonStats comics={comics} />
 
       {/* Trending Webtoons */}
-      <HomeWebtoonTrending
-        title="Энэ долоо хоногийн тренд"
-        data={trendingComics}
-        type="trending"
-      />
+      <HomeWebtoonTrending title="Энэ долоо хоногийн тренд" data={trendingComics} type="trending" />
 
       {/* Categories */}
       <HomeWebtoonCategories />
 
       {/* New Releases */}
       <HomeWebtoonTrending title="Шинэ гарсан" data={newComics} type="new" />
+
+      <HomeWebtoonStats comics={comics} />
 
       {/* Newsletter */}
       <HomeWebtoonNewsletter />

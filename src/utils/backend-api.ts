@@ -91,6 +91,16 @@ export async function backendRequest<T = any>(
     // Get token
     const token = getAuthToken();
 
+    // Extract subdomain from current hostname if not provided
+    let detectedSubdomain = subdomain;
+    if (!detectedSubdomain && typeof window !== 'undefined') {
+      const { hostname } = window.location;
+      const parts = hostname.split('.');
+      if (parts.length > 1 && parts[0] !== 'www' && parts[0] !== 'localhost') {
+        detectedSubdomain = parts[0];
+      }
+    }
+
     // Prepare headers
     const headers = new Headers({
       'Content-Type': 'application/json',
@@ -98,13 +108,18 @@ export async function backendRequest<T = any>(
       ...options.headers,
     });
 
-    // Forward subdomain to backend if provided
-    // The backend will detect it from the X-Original-Host header
-    if (subdomain) {
-      headers.set(
-        'X-Original-Host',
-        subdomain.includes('.') ? subdomain : `${subdomain}.anzaidev.fun`
-      );
+    // Forward subdomain to backend via X-Original-Host header
+    // The backend will detect it from this header
+    if (detectedSubdomain) {
+      let mainDomain = 'anzaidev.fun';
+      if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
+        mainDomain = 'localhost:8002';
+      }
+      const hostHeader = detectedSubdomain.includes('.')
+        ? detectedSubdomain
+        : `${detectedSubdomain}.${mainDomain}`;
+      headers.set('X-Original-Host', hostHeader);
+      console.log(`🔍 Forwarding subdomain to backend: ${detectedSubdomain} (${hostHeader})`);
     }
 
     const response = await fetch(url, {
@@ -115,10 +130,13 @@ export async function backendRequest<T = any>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      
+
       // Handle License Expired Error
       if (response.status === 403 && errorData.code === 'LICENSE_EXPIRED') {
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/license-expired')) {
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.includes('/license-expired')
+        ) {
           window.location.href = '/license-expired';
         }
         return { success: false, error: 'License Expired' };

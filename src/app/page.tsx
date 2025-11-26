@@ -4,9 +4,15 @@ import HomeView from 'src/sections/_home/view/home-view';
 // ----------------------------------------------------------------------
 
 export const metadata = {
-  title: 'Webix - Зургаар амилна',
+  title: 'Webix - Зургаар амилна | Хамгийн алдартай веб комикууд',
   description:
-    'Immerse yourself in captivating stories with stunning artwork. Read the latest webtoons from talented creators around the world.',
+    'Гайхамшигт зургууд, сэтгэл хөдөлгөм түүхүүдийн ертөнцөд нэвтрэн, дэлхийн шилдэг зурагт номуудыг хүлээн ав. Хамгийн алдартай болон тренд веб комикуудыг уншаарай.',
+  keywords: 'веб комик, манхва, манга, зурагт ном, уншлага, вебтоон',
+  openGraph: {
+    title: 'Webix - Зургаар амилна',
+    description: 'Гайхамшигт зургууд, сэтгэл хөдөлгөм түүхүүдийн ертөнц',
+    type: 'website',
+  },
 };
 
 export default function HomePage() {

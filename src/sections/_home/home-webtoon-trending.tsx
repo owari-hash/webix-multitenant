@@ -385,7 +385,7 @@ export default function HomeWebtoonTrending({ title, data, type }: Props) {
                             },
                           }}
                         >
-                          Read Now
+                          Унших
                         </Button>
                       </Stack>
                     </Card>
