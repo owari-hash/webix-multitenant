@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent, type SyntheticEvent } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -33,7 +33,7 @@ type PaymentMethod = 'card' | 'qpay' | 'bank';
 export default function PremiumPaymentView() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, authenticated } = useAuthContext();
+  const { user, authenticated, checkUser } = useAuthContext();
   const { enqueueSnackbar } = useSnackbar();
   const [plan, setPlan] = useState<PlanType>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qpay');
@@ -46,10 +46,13 @@ export default function PremiumPaymentView() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  const planDetails = {
+  const planDetails: Record<PlanType, { price: number; label: string; period: string; discount?: string }> = {
     monthly: { price: 200, label: 'Сарын багц', period: 'сар' },
     yearly: { price: 2000, label: 'Жилийн багц', period: 'жил', discount: '2 сар үнэгүй' },
-  };
+  } as const;
+
+  // Type-safe helper to get plan details
+  const getPlanDetails = (planKey: PlanType) => planDetails[planKey];
 
   const handlePayment = async () => {
     if (!authenticated) {
@@ -61,10 +64,11 @@ export default function PremiumPaymentView() {
     if (paymentMethod === 'qpay') {
       setProcessing(true);
       try {
+        const currentPlan = getPlanDetails(plan);
         const invoiceData = {
-          amount: planDetails[plan].price,
+          amount: currentPlan.price,
           currency: 'MNT',
-          description: `Premium ${planDetails[plan].label} - ${user?.email || ''}`,
+          description: `Premium ${currentPlan.label} - ${user?.email || ''}`,
           sender_invoice_no: `PREMIUM-${plan}-${Date.now()}`,
         };
 
@@ -156,6 +160,7 @@ export default function PremiumPaymentView() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const token = localStorage.getItem('token');
+      const currentPlan = getPlanDetails(plan);
       const response = await fetch('/api2/payment/premium', {
         method: 'POST',
         headers: {
@@ -165,7 +170,7 @@ export default function PremiumPaymentView() {
         body: JSON.stringify({
           plan,
           paymentMethod,
-          amount: planDetails[plan].price,
+          amount: currentPlan.price,
           ...(paymentMethod === 'card' && {
             cardNumber,
             cardName,
@@ -196,12 +201,41 @@ export default function PremiumPaymentView() {
     }
   };
 
-  const handleQPayPaymentComplete = () => {
-    enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', { variant: 'success' });
-    setTimeout(() => {
-      router.push('/webtoon');
-      window.location.reload();
-    }, 2000);
+  const handleQPayPaymentComplete = async () => {
+    try {
+      // Update premium status on backend
+      const token = localStorage.getItem('token');
+      const currentPlan = getPlanDetails(plan);
+      const response = await fetch('/api2/payment/premium', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          plan,
+          paymentMethod: 'qpay',
+          amount: currentPlan.price,
+          invoiceId: qpayInvoice?.invoice_id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh user data to update premium status
+        await checkUser();
+        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', { variant: 'success' });
+        setTimeout(() => {
+          router.push('/webtoon');
+        }, 2000);
+      } else {
+        enqueueSnackbar(result.message || 'Premium эрх шинэчлэхэд алдаа гарлаа', { variant: 'error' });
+      }
+    } catch (error) {
+      console.error('Premium status update error:', error);
+      enqueueSnackbar('Premium эрх шинэчлэхэд алдаа гарлаа', { variant: 'error' });
+    }
   };
 
   const handleQPayCancel = () => {
@@ -272,7 +306,7 @@ export default function PremiumPaymentView() {
             <Typography variant="h6" sx={{ mb: 2 }}>
               Багц сонгох
             </Typography>
-            <Tabs value={plan} onChange={(_, value) => setPlan(value)} sx={{ mb: 3 }}>
+            <Tabs value={plan} onChange={(_: SyntheticEvent, value: PlanType) => setPlan(value)} sx={{ mb: 3 }}>
               <Tab label="Сарын" value="monthly" />
               <Tab label="Жилийн" value="yearly" />
             </Tabs>
@@ -285,26 +319,31 @@ export default function PremiumPaymentView() {
                 border: `2px solid ${theme.palette.primary.main}`,
               }}
             >
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                    {planDetails[plan].label}
-                  </Typography>
-                  {plan === 'yearly' && (
-                    <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                      ✨ {planDetails[plan].discount}
-                    </Typography>
-                  )}
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                    ₮{planDetails[plan].price.toLocaleString()}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    / {planDetails[plan].period}
-                  </Typography>
-                </Box>
-              </Stack>
+              {(() => {
+                const currentPlan = getPlanDetails(plan);
+                return (
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                        {currentPlan.label}
+                      </Typography>
+                      {plan === 'yearly' && currentPlan.discount && (
+                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                          ✨ {currentPlan.discount}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                        ₮{currentPlan.price.toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        / {currentPlan.period}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                );
+              })()}
             </Box>
           </Card>
 
@@ -315,7 +354,7 @@ export default function PremiumPaymentView() {
             </Typography>
             <RadioGroup
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setPaymentMethod(e.target.value as PaymentMethod)}
             >
               <Stack spacing={2}>
                 <FormControlLabel
@@ -386,7 +425,7 @@ export default function PremiumPaymentView() {
                   label="Картын дугаар"
                   placeholder="1234 5678 9012 3456"
                   value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setCardNumber(e.target.value)}
                   InputProps={{
                     endAdornment: (
                       <Stack direction="row" spacing={0.5}>
@@ -401,7 +440,7 @@ export default function PremiumPaymentView() {
                   label="Картын эзэмшигчийн нэр"
                   placeholder="JOHN DOE"
                   value={cardName}
-                  onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setCardName(e.target.value.toUpperCase())}
                 />
                 <Stack direction="row" spacing={2}>
                   <TextField
@@ -409,7 +448,7 @@ export default function PremiumPaymentView() {
                     label="Дуусах хугацаа"
                     placeholder="MM/YY"
                     value={expiryDate}
-                    onChange={(e) => setExpiryDate(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setExpiryDate(e.target.value)}
                   />
                   <TextField
                     fullWidth
@@ -417,7 +456,7 @@ export default function PremiumPaymentView() {
                     placeholder="123"
                     type="password"
                     value={cvv}
-                    onChange={(e) => setCvv(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setCvv(e.target.value)}
                     inputProps={{ maxLength: 3 }}
                   />
                 </Stack>
@@ -504,33 +543,40 @@ export default function PremiumPaymentView() {
           </Typography>
 
           <Stack spacing={2} divider={<Divider />}>
-            <Box>
-              <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Багц
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {planDetails[plan].label}
-                </Typography>
-              </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="text.secondary">
-                  Төлбөрийн хэрэгсэл
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {paymentMethod === 'qpay' && 'QPay'}
-                  {paymentMethod === 'card' && 'Карт'}
-                  {paymentMethod === 'bank' && 'Банк'}
-                </Typography>
-              </Stack>
-            </Box>
+            {(() => {
+              const currentPlan = getPlanDetails(plan);
+              return (
+                <>
+                  <Box>
+                    <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Багц
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {currentPlan.label}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography variant="body2" color="text.secondary">
+                        Төлбөрийн хэрэгсэл
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {paymentMethod === 'qpay' && 'QPay'}
+                        {paymentMethod === 'card' && 'Карт'}
+                        {paymentMethod === 'bank' && 'Банк'}
+                      </Typography>
+                    </Stack>
+                  </Box>
 
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6">Нийт дүн</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                ₮{planDetails[plan].price.toLocaleString()}
-              </Typography>
-            </Stack>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h6">Нийт дүн</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      ₮{currentPlan.price.toLocaleString()}
+                    </Typography>
+                  </Stack>
+                </>
+              );
+            })()}
           </Stack>
 
           <LoadingButton

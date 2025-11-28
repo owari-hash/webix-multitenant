@@ -60,7 +60,10 @@ export default function QPayPaymentStatus({
               intervalRef.current = null;
             }
             enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
-            if (onPaymentComplete) onPaymentComplete();
+            // Call onPaymentComplete to update premium status
+            if (onPaymentComplete) {
+              await onPaymentComplete();
+            }
           } else if (result.status === 'CANCELLED') {
             setStatus('CANCELLED');
             setPolling(false);
@@ -96,7 +99,10 @@ export default function QPayPaymentStatus({
 
       if (result.status === 'PAID') {
         enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
-        if (onPaymentComplete) onPaymentComplete();
+        // Call onPaymentComplete to update premium status
+        if (onPaymentComplete) {
+          await onPaymentComplete();
+        }
       }
     } catch (error: any) {
       console.error('Check payment error:', error);
