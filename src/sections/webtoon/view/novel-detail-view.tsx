@@ -55,7 +55,6 @@ export default function NovelDetailView({ novelId }: Props) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeSort, setActiveSort] = useState<'asc' | 'desc'>('asc');
   const [tab, setTab] = useState<'overview' | 'chapters' | 'comments'>('chapters');
-  const [, setTocQuery] = useState('');
   const [chapterQuery, setChapterQuery] = useState('');
   const [continueChapterId, setContinueChapterId] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
@@ -88,6 +87,16 @@ export default function NovelDetailView({ novelId }: Props) {
     if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
     if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
     return `${num}`;
+  };
+
+  const getContinueReadingHref = () => {
+    if (continueChapterId) {
+      return paths.webtoon.novelChapter(novel._id || novel.id, continueChapterId);
+    }
+    if (firstChapter) {
+      return paths.webtoon.novelChapter(novel._id || novel.id, firstChapter._id || firstChapter.id);
+    }
+    return undefined;
   };
 
   useEffect(() => {
@@ -311,16 +320,7 @@ export default function NovelDetailView({ novelId }: Props) {
                     size="large"
                     startIcon={<Iconify icon="carbon:play" />}
                     component={continueChapterId || firstChapter ? RouterLink : 'button'}
-                    href={
-                      continueChapterId
-                        ? paths.webtoon.novelChapter(novel._id || novel.id, continueChapterId)
-                        : firstChapter
-                        ? paths.webtoon.novelChapter(
-                            novel._id || novel.id,
-                            firstChapter._id || firstChapter.id
-                          )
-                        : undefined
-                    }
+                    href={getContinueReadingHref()}
                     disabled={!continueChapterId && !firstChapter}
                     sx={{
                       borderRadius: 999,

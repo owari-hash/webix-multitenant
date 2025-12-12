@@ -8,9 +8,7 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
@@ -19,10 +17,10 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import {
   Feedback,
-  FeedbackPriority,
-  FeedbackStatus,
-  FeedbackType,
   feedbackApi,
+  FeedbackType,
+  FeedbackStatus,
+  FeedbackPriority,
 } from 'src/utils/feedback-api';
 
 // ----------------------------------------------------------------------
@@ -236,4 +234,3 @@ export default function FeedbackList({ showCreateButton = true, adminView = fals
     </Stack>
   );
 }
-

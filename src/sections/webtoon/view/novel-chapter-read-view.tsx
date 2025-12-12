@@ -21,8 +21,8 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
 import { isAuthenticated } from 'src/utils/auth';
-import CommentsSection from '../components/comments-section';
 import { trackChapterRead } from 'src/utils/achievements-api';
+import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
 

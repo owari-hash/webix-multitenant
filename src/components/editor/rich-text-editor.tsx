@@ -4,10 +4,10 @@ import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { alpha, styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import 'react-quill/dist/quill.snow.css';
 
 // Dynamically import ReactQuill to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
 
 // ----------------------------------------------------------------------
 

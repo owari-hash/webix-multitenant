@@ -33,10 +33,10 @@ import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import {
   Feedback,
-  FeedbackPriority,
-  FeedbackStatus,
-  FeedbackType,
   feedbackApi,
+  FeedbackType,
+  FeedbackStatus,
+  FeedbackPriority,
 } from 'src/utils/feedback-api';
 
 // ----------------------------------------------------------------------
@@ -275,19 +275,22 @@ export default function FeedbackManagementView() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {loading ? (
+                {loading && (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                       <Typography color="text.secondary">Ачааллаж байна...</Typography>
                     </TableCell>
                   </TableRow>
-                ) : feedbacks.length === 0 ? (
+                )}
+                {!loading && feedbacks.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
                       <Typography color="text.secondary">Санал хүсэл гомдол олдсонгүй</Typography>
                     </TableCell>
                   </TableRow>
-                ) : (
+                )}
+                {!loading &&
+                  feedbacks.length > 0 &&
                   feedbacks.map((feedback) => (
                     <TableRow key={feedback._id} hover>
                       <TableCell>
@@ -363,7 +366,9 @@ export default function FeedbackManagementView() {
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
                           <IconButton
                             size="small"
-                            onClick={() => router.push(paths.webtoon.cms.feedbackDetail(feedback._id))}
+                            onClick={() =>
+                              router.push(paths.webtoon.cms.feedbackDetail(feedback._id))
+                            }
                           >
                             <Iconify icon="carbon:view" />
                           </IconButton>
@@ -377,8 +382,7 @@ export default function FeedbackManagementView() {
                         </Stack>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -399,12 +403,7 @@ export default function FeedbackManagementView() {
       </Stack>
 
       {/* Response Dialog */}
-      <Dialog
-        open={responseDialogOpen}
-        onClose={handleCloseResponseDialog}
-        maxWidth="md"
-        fullWidth
-      >
+      <Dialog open={responseDialogOpen} onClose={handleCloseResponseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Iconify icon="carbon:chat" width={24} />
@@ -451,4 +450,3 @@ export default function FeedbackManagementView() {
     </Container>
   );
 }
-

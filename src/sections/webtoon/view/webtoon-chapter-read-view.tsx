@@ -17,8 +17,8 @@ import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
 import { useResponsive } from 'src/hooks/use-responsive';
 import { isAuthenticated } from 'src/utils/auth';
-import CommentsSection from '../components/comments-section';
 import { trackChapterRead } from 'src/utils/achievements-api';
+import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
 
