@@ -89,15 +89,15 @@ export default function NovelDetailView({ novelId }: Props) {
     return `${num}`;
   };
 
-  const getContinueReadingHref = () => {
-    if (continueChapterId) {
+  const getContinueReadingHref = useMemo(() => {
+    if (continueChapterId && novel) {
       return paths.webtoon.novelChapter(novel._id || novel.id, continueChapterId);
     }
-    if (firstChapter) {
+    if (firstChapter && novel) {
       return paths.webtoon.novelChapter(novel._id || novel.id, firstChapter._id || firstChapter.id);
     }
     return undefined;
-  };
+  }, [continueChapterId, firstChapter, novel]);
 
   useEffect(() => {
     // Continue reading (persisted by reader page)
@@ -320,7 +320,7 @@ export default function NovelDetailView({ novelId }: Props) {
                     size="large"
                     startIcon={<Iconify icon="carbon:play" />}
                     component={continueChapterId || firstChapter ? RouterLink : 'button'}
-                    href={getContinueReadingHref()}
+                    href={getContinueReadingHref}
                     disabled={!continueChapterId && !firstChapter}
                     sx={{
                       borderRadius: 999,
