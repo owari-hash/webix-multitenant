@@ -13,7 +13,6 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
-import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
@@ -23,6 +22,7 @@ import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 import { getUser, getAuthHeaders, getCurrentUser, isAuthenticated } from 'src/utils/auth';
+import { LevelProgress, ProfileBorder, AchievementsGallery } from 'src/components/achievements';
 
 // ----------------------------------------------------------------------
 
@@ -278,13 +278,7 @@ export default function ProfileView() {
         {/* Profile Header */}
         <Card sx={{ p: 4 }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
-            <Avatar
-              src={displayUser.avatar}
-              alt={displayUser.name}
-              sx={{ width: 120, height: 120 }}
-            >
-              {displayUser.name.charAt(0).toUpperCase()}
-            </Avatar>
+            <ProfileBorder userId={user.id} size={120} showLevel />
 
             <Stack spacing={2} sx={{ flex: 1 }}>
               <Stack direction="row" alignItems="center" spacing={2}>
@@ -385,6 +379,7 @@ export default function ProfileView() {
             <Tab label="Унших түүх" />
             <Tab label="Дуртай комикууд" />
             <Tab label="Тохиргоо" />
+            <Tab label="Амжилт" />
           </Tabs>
 
           {/* Reading History Tab */}
@@ -628,6 +623,16 @@ export default function ProfileView() {
                 <Button variant="outlined" color="error">
                   Бүртгэл устгах
                 </Button>
+              </Stack>
+            </Box>
+          </TabPanel>
+
+          {/* Achievements Tab */}
+          <TabPanel value={currentTab} index={3}>
+            <Box sx={{ p: 3 }}>
+              <Stack spacing={3}>
+                <LevelProgress userId={user.id} compact={false} />
+                <AchievementsGallery userId={user.id} />
               </Stack>
             </Box>
           </TabPanel>

@@ -37,6 +37,7 @@ export default function MainLayout({ children }: Props) {
     pathname?.startsWith('/webtoon') ||
     pathname?.startsWith('/profile') ||
     pathname?.startsWith('/cms') ||
+    pathname?.startsWith('/feedback') ||
     pathname === '/';
 
   // Homepage has dark hero background, so header should be on dark

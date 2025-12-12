@@ -81,11 +81,31 @@ export default function WebtoonBrowseView() {
         // Fetch chapter counts for each comic
         const comicsWithChapters = await Promise.all(
           comicsData.map(async (comic) => {
+            const comicId = comic._id || comic.id;
+            
+            // Validate ID before making request
+            if (!comicId || typeof comicId !== 'string' || comicId.length !== 24) {
+              console.warn(`Invalid comic ID: ${comicId}, skipping chapter fetch`);
+              return {
+                ...comic,
+                chapters: comic.chapters || 0,
+              };
+            }
+
             try {
               const chaptersResponse = await fetch(
-                `/api2/webtoon/comic/${comic._id || comic.id}/chapters`
+                `/api2/webtoon/comic/${comicId}/chapters`
               );
+
+              if (!chaptersResponse.ok) {
+                throw new Error(`HTTP error! status: ${chaptersResponse.status}`);
+              }
+
               const chaptersResult = await chaptersResponse.json();
+
+              if (!chaptersResult.success) {
+                throw new Error(chaptersResult.error || chaptersResult.message);
+              }
 
               const chapterCount =
                 chaptersResult.success && Array.isArray(chaptersResult.chapters)
@@ -97,7 +117,7 @@ export default function WebtoonBrowseView() {
                 chapters: chapterCount,
               };
             } catch (error) {
-              console.error(`Failed to fetch chapters for comic ${comic._id}:`, error);
+              console.error(`Failed to fetch chapters for comic ${comicId}:`, error);
               return {
                 ...comic,
                 chapters: comic.chapters || 0,

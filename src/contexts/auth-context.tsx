@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useContext, useCallback, createContext } from 'react';
+import { trackDailyLogin } from 'src/utils/achievements-api';
 
 // ----------------------------------------------------------------------
 
@@ -65,6 +66,11 @@ export function AuthProvider({ children }: Props) {
           photoURL: userData.photoURL || userData.avatarUrl,
           role: userData.role,
           isPremium: userData.premium || userData.isPremium || false,
+        });
+        
+        // Track daily login for achievements
+        trackDailyLogin().catch((err) => {
+          console.error('Failed to track daily login:', err);
         });
       } else {
         setUser(null);

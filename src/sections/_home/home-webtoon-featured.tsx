@@ -83,7 +83,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
     >
       <Container>
         <Stack spacing={4}>
-          <m.div variants={varFade().inUp}>
+        <m.div variants={varFade().inUp}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Iconify
                 icon="solar:book-bookmark-bold"
@@ -92,15 +92,15 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                   color: theme.palette.primary.main,
                 }}
               />
-              <Typography
+          <Typography
                 variant="h2"
-                sx={{
-                  fontWeight: 800,
+            sx={{
+              fontWeight: 800,
                   fontSize: { xs: '1.5rem', md: '2rem' },
-                }}
-              >
+            }}
+          >
                 Топ 10 – Их Уншсан Зохиол
-              </Typography>
+          </Typography>
             </Stack>
           </m.div>
         </Stack>
@@ -114,7 +114,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
         }}
       >
         <Box
-          sx={{
+            sx={{
             position: 'relative',
             overflow: 'visible',
             '& .slick-list': {
@@ -134,8 +134,8 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                 padding: { xs: '0 4px', md: '0 8px' },
               },
             },
-          }}
-        >
+            }}
+          >
           <CarouselArrows
             filled
             onNext={carousel.onNext}
@@ -169,7 +169,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
               },
             }}
           >
-            <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
+          <Carousel ref={carousel.carouselRef} {...carousel.carouselSettings}>
               {data.map((webtoon, index) => (
                 <Box key={webtoon._id || webtoon.id || index}>
                   <Card
@@ -231,8 +231,8 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                               fontWeight: 700,
                               fontSize: '0.65rem',
                               whiteSpace: 'nowrap',
-                            }}
-                          >
+                        }}
+                      >
                             {formatViews(webtoon.views || 0)}
                           </Typography>
                         </Stack>
@@ -260,10 +260,10 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                   </Card>
                 </Box>
               ))}
-            </Carousel>
+          </Carousel>
           </CarouselArrows>
         </Box>
-      </Container>
+    </Container>
     </Box>
   );
 }

@@ -11,3 +11,4 @@ export default function WebtoonIdRedirectPage({ params }: Props) {
   redirect(`/webtoon/comic/${params.id}`);
 }
 
+

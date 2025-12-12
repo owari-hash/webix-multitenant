@@ -6,7 +6,6 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -25,6 +24,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import Iconify from 'src/components/iconify';
 import { getUser, getAuthHeaders, isAuthenticated } from 'src/utils/auth';
 import { useBoolean } from 'src/hooks/use-boolean';
+import { ProfileBorder } from 'src/components/achievements';
 
 // ----------------------------------------------------------------------
 
@@ -52,9 +52,16 @@ interface Comment {
 interface CommentsSectionProps {
   comicId?: string;
   chapterId?: string;
+  novelId?: string;
+  novelChapterId?: string;
 }
 
-export default function CommentsSection({ comicId, chapterId }: CommentsSectionProps) {
+export default function CommentsSection({
+  comicId,
+  chapterId,
+  novelId,
+  novelChapterId,
+}: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -84,9 +91,19 @@ export default function CommentsSection({ comicId, chapterId }: CommentsSectionP
       setLoading(true);
       setError(null);
 
-      const endpoint = chapterId
-        ? `/api2/comments/chapter/${chapterId}`
-        : `/api2/comments/comic/${comicId}`;
+      let endpoint = '';
+      if (chapterId) {
+        endpoint = `/api2/comments/chapter/${chapterId}`;
+      } else if (novelChapterId) {
+        endpoint = `/api2/comments/novel-chapter/${novelChapterId}`;
+      } else if (novelId) {
+        endpoint = `/api2/comments/novel/${novelId}`;
+      } else if (comicId) {
+        endpoint = `/api2/comments/comic/${comicId}`;
+      } else {
+        setError('Invalid comment context');
+        return;
+      }
 
       const response = await fetch(`${endpoint}?page=${page}&limit=20`, {
         headers: getAuthHeaders(),
@@ -131,7 +148,7 @@ export default function CommentsSection({ comicId, chapterId }: CommentsSectionP
     } finally {
       setLoading(false);
     }
-  }, [comicId, chapterId, page]);
+  }, [comicId, chapterId, novelId, novelChapterId, page]);
 
   useEffect(() => {
     fetchComments();
@@ -157,9 +174,16 @@ export default function CommentsSection({ comicId, chapterId }: CommentsSectionP
       setSubmitting(true);
       setError(null);
 
-      const endpoint = chapterId
-        ? `/api2/comments/chapter/${chapterId}`
-        : `/api2/comments/comic/${comicId}`;
+      let endpoint = '';
+      if (novelChapterId) {
+        endpoint = `/api2/comments/novel-chapter/${novelChapterId}`;
+      } else if (novelId) {
+        endpoint = `/api2/comments/novel/${novelId}`;
+      } else if (chapterId) {
+        endpoint = `/api2/comments/chapter/${chapterId}`;
+      } else if (comicId) {
+        endpoint = `/api2/comments/comic/${comicId}`;
+      }
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -637,13 +661,7 @@ export default function CommentsSection({ comicId, chapterId }: CommentsSectionP
                   </Stack>
                 ) : (
                   <Stack direction="row" spacing={2}>
-                    <Avatar
-                      src={comment.author?.avatar}
-                      alt={comment.author?.name}
-                      sx={{ width: 40, height: 40 }}
-                    >
-                      {comment.author?.name?.charAt(0).toUpperCase() || '?'}
-                    </Avatar>
+                    <ProfileBorder userId={comment.author?.id} size={40} showLevel />
                     <Box sx={{ flex: 1 }}>
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
                         <Typography variant="subtitle2">
@@ -832,13 +850,11 @@ export default function CommentsSection({ comicId, chapterId }: CommentsSectionP
                               {comment.replies.map((reply) => (
                                 <Card key={reply._id} sx={{ p: 2, bgcolor: 'background.neutral' }}>
                                   <Stack direction="row" spacing={2}>
-                                    <Avatar
-                                      src={reply.author?.avatar}
-                                      alt={reply.author?.name}
-                                      sx={{ width: 32, height: 32 }}
-                                    >
-                                      {reply.author?.name?.charAt(0).toUpperCase() || '?'}
-                                    </Avatar>
+                                    <ProfileBorder
+                                      userId={reply.author?.id}
+                                      size={32}
+                                      showLevel={false}
+                                    />
                                     <Box sx={{ flex: 1 }}>
                                       <Stack
                                         direction="row"

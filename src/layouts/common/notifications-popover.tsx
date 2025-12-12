@@ -14,7 +14,7 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
 // utils
 import { fToNow } from 'src/utils/format-time';
-import { backendRequest } from 'src/utils/backend-api';
+import { Notification, notificationsApi } from 'src/utils/notifications-api';
 // components
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
@@ -24,15 +24,15 @@ import { useRouter } from 'src/routes/hooks';
 
 export default function NotificationsPopover() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState<HTMLButtonElement | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const response = await backendRequest('/notifications');
-      if (response.success) {
-        setNotifications(response.data);
-      }
+      const response = await notificationsApi.getNotifications({ limit: 50 });
+      setNotifications(response.notifications);
+      setUnreadCount(response.unread_count);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
@@ -45,8 +45,6 @@ export default function NotificationsPopover() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  const totalUnRead = notifications.filter((item) => item.isUnread === true).length;
-
   const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(event.currentTarget);
   };
@@ -55,19 +53,46 @@ export default function NotificationsPopover() {
     setOpen(null);
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({
-        ...notification,
-        isUnread: false,
-      }))
-    );
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationsApi.markAllAsRead();
+      setNotifications(
+        notifications.map((notification) => ({
+          ...notification,
+          is_read: true,
+        }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
   };
 
-  const handleItemClick = (notification: any) => {
+  const handleItemClick = async (notification: Notification) => {
+    // Mark as read if unread
+    if (!notification.is_read && notification.id !== 'license-expiry') {
+      try {
+        await notificationsApi.markAsRead(notification.id);
+        setNotifications(
+          notifications.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }
+
     handleClose();
     if (notification.action) {
       router.push(notification.action);
+    } else if (notification.metadata?.feedback_id) {
+      // Handle feedback notifications without explicit action
+      const isAdmin = notification.metadata?.is_admin;
+      if (isAdmin) {
+        router.push(`/cms/feedback/${notification.metadata.feedback_id}`);
+      } else {
+        router.push(`/feedback/${notification.metadata.feedback_id}`);
+      }
     }
   };
 
@@ -78,7 +103,7 @@ export default function NotificationsPopover() {
         onClick={handleOpen}
         sx={{ width: 40, height: 40 }}
       >
-        <Badge badgeContent={totalUnRead} color="error">
+        <Badge badgeContent={unreadCount} color="error">
           <Iconify icon="solar:bell-bing-bold-duotone" width={24} />
         </Badge>
       </IconButton>
@@ -101,11 +126,11 @@ export default function NotificationsPopover() {
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle1">Мэдэгдэл</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Танд {totalUnRead} уншаагүй мэдэгдэл байна
+              Танд {unreadCount} уншаагүй мэдэгдэл байна
             </Typography>
           </Box>
 
-          {totalUnRead > 0 && (
+          {unreadCount > 0 && (
             <Tooltip title=" Mark all as read">
               <IconButton color="primary" onClick={handleMarkAllAsRead}>
                 <Iconify icon="eva:done-all-fill" />
@@ -145,7 +170,7 @@ function NotificationItem({
   notification,
   onClick,
 }: {
-  notification: any;
+  notification: Notification;
   onClick: () => void;
 }) {
   const { avatar, title } = renderContent(notification);
@@ -157,7 +182,7 @@ function NotificationItem({
         py: 1.5,
         px: 2.5,
         mt: '1px',
-        ...(notification.isUnread && {
+        ...(!notification.is_read && {
           bgcolor: 'action.selected',
         }),
       }}
@@ -188,7 +213,7 @@ function NotificationItem({
 
 // ----------------------------------------------------------------------
 
-function renderContent(notification: any) {
+function renderContent(notification: Notification) {
   const title = (
     <Typography variant="subtitle2">
       {notification.title}
@@ -198,6 +223,25 @@ function renderContent(notification: any) {
     </Typography>
   );
 
+  // Feedback notification types
+  if (notification.type === 'feedback_created' || notification.type === 'feedback') {
+    return {
+      avatar: <Iconify icon="carbon:chat" sx={{ color: 'info.main' }} />,
+      title,
+    };
+  }
+  if (notification.type === 'feedback_response') {
+    return {
+      avatar: <Iconify icon="carbon:checkmark-filled" sx={{ color: 'success.main' }} />,
+      title,
+    };
+  }
+  if (notification.type === 'system') {
+    return {
+      avatar: <Iconify icon="carbon:information" sx={{ color: 'warning.main' }} />,
+      title,
+    };
+  }
   if (notification.type === 'order_placed') {
     return {
       avatar: <img alt={notification.title} src="/assets/icons/notification/ic_order.svg" />,
@@ -223,7 +267,11 @@ function renderContent(notification: any) {
     };
   }
   return {
-    avatar: notification.avatar ? <img alt={notification.title} src={notification.avatar} /> : null,
+    avatar: notification.metadata?.avatar ? (
+      <img alt={notification.title} src={notification.metadata.avatar} />
+    ) : (
+      <Iconify icon="carbon:notification" sx={{ color: 'text.secondary' }} />
+    ),
     title,
   };
 }

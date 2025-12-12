@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -27,6 +27,36 @@ import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
 
+type DashboardData = {
+  license: {
+    expiry: string;
+    expiryDate: string;
+    formatted: string;
+  };
+  statistics: {
+    total_comics: number;
+    total_chapters: number;
+    total_views: number;
+    total_likes: number;
+    ongoing_comics: number;
+    completed_comics: number;
+    total_feedback: number;
+  };
+  latest_comics: Array<{
+    id: string;
+    title: string;
+    coverImage: string;
+    status: string;
+    views: number;
+    likes: number;
+    chapters?: number;
+    genre?: string[];
+    author?: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+};
+
 export default function CMSDashboardView() {
   const [loading, setLoading] = useState(true);
   const [license, setLicense] = useState<any>(null);
@@ -39,62 +69,62 @@ export default function CMSDashboardView() {
     ongoingComics: 0,
     completedComics: 0,
   });
+  const [feedbackStats, setFeedbackStats] = useState({
+    total: 0,
+    pending: 0,
+    resolved: 0,
+  });
 
-  // Fetch comics data and license info
+  // Fetch dashboard data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch License Info
-        const licenseResponse = await backendRequest('/organizations/license');
-        if (licenseResponse.success && licenseResponse.data) {
-          setLicense(licenseResponse.data.subscription);
-        }
-
-        const response = await backendRequest('/webtoon/comics');
+        const response = await backendRequest<DashboardData>('/dashboard');
         console.log('CMS Dashboard - API Response:', response);
 
-        if (response.success) {
-          const result = response;
-          
-          // Handle both result.data and direct array response
-          let comicsData: any[] = [];
-          if (Array.isArray(result.data)) {
-            comicsData = result.data;
-          } else if (Array.isArray(result)) {
-            comicsData = result;
+        if (response.success && response.data) {
+          const { license: licenseData, statistics, latest_comics } = response.data;
+
+          // Set license info
+          if (licenseData) {
+            setLicense({
+              endDate: licenseData.expiry,
+            });
           }
 
-          console.log('CMS Dashboard - Comics Data:', comicsData);
-          setComics(comicsData);
+          // Set statistics
+          if (statistics) {
+            const {
+              total_comics,
+              total_chapters,
+              total_views,
+              total_likes,
+              ongoing_comics,
+              completed_comics,
+              total_feedback,
+            } = statistics;
 
-          // Calculate statistics
-          const totalChapters = comicsData.reduce(
-            (sum: number, comic: any) => sum + (comic.chapters || 0),
-            0
-          );
-          const totalViews = comicsData.reduce(
-            (sum: number, comic: any) => sum + (comic.views || 0),
-            0
-          );
-          const totalLikes = comicsData.reduce(
-            (sum: number, comic: any) => sum + (comic.likes || 0),
-            0
-          );
-          const ongoingComics = comicsData.filter(
-            (comic: any) => comic.status === 'ongoing'
-          ).length;
-          const completedComics = comicsData.filter(
-            (comic: any) => comic.status === 'completed'
-          ).length;
+            setStats({
+              totalComics: total_comics || 0,
+              totalChapters: total_chapters || 0,
+              totalViews: total_views || 0,
+              totalLikes: total_likes || 0,
+              ongoingComics: ongoing_comics || 0,
+              completedComics: completed_comics || 0,
+            });
 
-          setStats({
-            totalComics: comicsData.length,
-            totalChapters,
-            totalViews,
-            totalLikes,
-            ongoingComics,
-            completedComics,
-          });
+            // Set feedback stats (using total_feedback for now, pending/resolved would need separate call)
+            setFeedbackStats({
+              total: total_feedback || 0,
+              pending: 0, // Would need separate API call or include in dashboard response
+              resolved: 0, // Would need separate API call or include in dashboard response
+            });
+          }
+
+          // Set latest comics
+          if (latest_comics) {
+            setComics(latest_comics);
+          }
         } else {
           console.error('CMS Dashboard - API Error:', response.error);
         }
@@ -106,7 +136,17 @@ export default function CMSDashboardView() {
     };
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Memoize recent comics
+  const recentComics = useMemo(
+    () =>
+      [...comics]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 5),
+    [comics]
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -139,11 +179,6 @@ export default function CMSDashboardView() {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
-
-  // Get most recent comics (sorted by updatedAt)
-  const recentComics = [...comics]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
 
   if (loading) {
     return (
@@ -178,13 +213,11 @@ export default function CMSDashboardView() {
               <Chip
                 icon={<Iconify icon="solar:calendar-bold" />}
                 label={`Лиценз: ${new Date(license.endDate).toLocaleDateString('mn-MN')}`}
-                color={
-                  new Date(license.endDate) < new Date() ? 'error' : 'success'
-                }
+                color={new Date(license.endDate) < new Date() ? 'error' : 'success'}
                 variant="soft"
               />
             )}
-            
+
             <Button
               variant="outlined"
               startIcon={<Iconify icon="carbon:book" />}
@@ -192,6 +225,14 @@ export default function CMSDashboardView() {
               component={RouterLink}
             >
               Комикууд
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:document" />}
+              href={paths.webtoon.cms.novels}
+              component={RouterLink}
+            >
+              Романууд
             </Button>
             <Button
               variant="contained"
@@ -271,6 +312,37 @@ export default function CMSDashboardView() {
               </Typography>
             </Card>
           </Grid>
+
+          <Grid xs={12} sm={6} md={4} lg={2}>
+            <Card
+              sx={{
+                p: 3,
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: (theme) => theme.customShadows.z16,
+                },
+              }}
+              component={RouterLink}
+              href={paths.webtoon.cms.feedback}
+            >
+              <Iconify icon="carbon:chat" sx={{ fontSize: 48, color: 'warning.main', mb: 2 }} />
+              <Typography variant="h4">{feedbackStats.total}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Санал хүсэл гомдол
+              </Typography>
+              {feedbackStats.pending > 0 && (
+                <Chip
+                  label={`${feedbackStats.pending} хүлээгдэж буй`}
+                  color="warning"
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+              )}
+            </Card>
+          </Grid>
         </Grid>
 
         <Grid container spacing={3}>
@@ -316,7 +388,7 @@ export default function CMSDashboardView() {
                       </TableRow>
                     )}
                     {recentComics.map((comic) => (
-                      <TableRow key={comic._id || comic.id}>
+                      <TableRow key={comic.id || comic._id}>
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={2}>
                             <Avatar
@@ -354,7 +426,7 @@ export default function CMSDashboardView() {
                         <TableCell align="right">
                           <IconButton
                             component={RouterLink}
-                            href={paths.webtoon.cms.manageComic(comic._id || comic.id)}
+                            href={paths.webtoon.cms.manageComic(comic.id || comic._id)}
                             size="small"
                           >
                             <Iconify icon="carbon:settings" />
@@ -387,11 +459,20 @@ export default function CMSDashboardView() {
                 <Button
                   fullWidth
                   variant="outlined"
-                  startIcon={<Iconify icon="carbon:document" />}
+                  startIcon={<Iconify icon="carbon:book" />}
                   href={paths.webtoon.cms.comics}
                   component={RouterLink}
                 >
                   Комикуудыг харах
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Iconify icon="carbon:document" />}
+                  href={paths.webtoon.cms.novels}
+                  component={RouterLink}
+                >
+                  Романуудыг харах
                 </Button>
                 <Button
                   fullWidth
@@ -401,6 +482,18 @@ export default function CMSDashboardView() {
                   component={RouterLink}
                 >
                   Хэрэглэгчдийг харах
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<Iconify icon="carbon:chat" />}
+                  href={paths.webtoon.cms.feedback}
+                  component={RouterLink}
+                >
+                  Санал хүсэл гомдол
+                  {feedbackStats.pending > 0 && (
+                    <Chip label={feedbackStats.pending} color="error" size="small" sx={{ ml: 1 }} />
+                  )}
                 </Button>
                 <Box sx={{ mt: 3, p: 2, bgcolor: 'background.neutral', borderRadius: 1 }}>
                   <Typography

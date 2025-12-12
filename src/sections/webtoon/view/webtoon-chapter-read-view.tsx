@@ -16,7 +16,9 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
 import { useResponsive } from 'src/hooks/use-responsive';
+import { isAuthenticated } from 'src/utils/auth';
 import CommentsSection from '../components/comments-section';
+import { trackChapterRead } from 'src/utils/achievements-api';
 
 // ----------------------------------------------------------------------
 
@@ -86,6 +88,13 @@ export default function WebtoonChapterReadView({ comicId, chapterId }: Props) {
 
         if (chapterResult.success && chapterResult.chapter) {
           setChapter(chapterResult.chapter);
+
+          // Track chapter read for achievements
+          if (isAuthenticated()) {
+            trackChapterRead(chapterId, false).catch((err) => {
+              console.error('Failed to track chapter read:', err);
+            });
+          }
         } else {
           setError(chapterResult.message || 'Бүлэг олдсонгүй');
         }

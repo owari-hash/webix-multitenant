@@ -429,6 +429,15 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
                       Дуртай комикууд
                     </MenuItem>,
                     <MenuItem
+                      key="feedback"
+                      component={RouterLink}
+                      href={paths.feedback.root}
+                      onClick={handleProfileMenuClose}
+                    >
+                      <Iconify icon="carbon:chat" sx={{ mr: 2 }} />
+                      Санал хүсэл гомдол
+                    </MenuItem>,
+                    <MenuItem
                       key="payment"
                       component={RouterLink}
                       href={paths.webtoon.premium}

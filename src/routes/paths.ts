@@ -10,6 +10,10 @@ export const paths = {
     comic: (id: string) => `/webtoon/comic/${id}`,
     chapter: (comicId: string, chapterId: string) =>
       `/webtoon/comic/${comicId}/chapter/${chapterId}`,
+    novels: '/webtoon/novels',
+    novel: (id: string) => `/webtoon/novel/${id}`,
+    novelChapter: (novelId: string, chapterId: string) =>
+      `/webtoon/novel/${novelId}/chapter/${chapterId}`,
     favorites: '/webtoon/favorites',
     history: '/webtoon/history',
     trending: '/webtoon/trending',
@@ -30,9 +34,19 @@ export const paths = {
       createChapter: (comicId: string) => `/cms/comics/${comicId}/chapters/create`,
       editChapter: (comicId: string, chapterId: string) =>
         `/cms/comics/${comicId}/chapters/${chapterId}/edit`,
+      novels: '/cms/novels',
+      createNovel: '/cms/novels/create',
+      manageNovel: (id: string) => `/cms/novels/${id}`,
+      editNovel: (id: string) => `/cms/novels/${id}/edit`,
+      novelChapters: (novelId: string) => `/cms/novels/${novelId}/chapters`,
+      createNovelChapter: (novelId: string) => `/cms/novels/${novelId}/chapters/create`,
+      editNovelChapter: (novelId: string, chapterId: string) =>
+        `/cms/novels/${novelId}/chapters/${chapterId}/edit`,
       users: '/cms/users',
       createUser: '/cms/users/create',
       editUser: (id: string) => `/cms/users/${id}/edit`,
+      feedback: '/cms/feedback',
+      feedbackDetail: (id: string) => `/cms/feedback/${id}`,
       analytics: '/cms/analytics',
       settings: '/cms/settings',
     },
@@ -45,6 +59,14 @@ export const paths = {
     favorites: '/profile/favorites',
     history: '/profile/history',
     subscriptions: '/profile/subscriptions',
+    achievements: '/profile/achievements',
+  },
+  // Feedback
+  feedback: {
+    root: '/feedback',
+    create: '/feedback/create',
+    my: '/feedback/my',
+    detail: (id: string) => `/feedback/${id}`,
   },
   // Marketing
   marketing: {
