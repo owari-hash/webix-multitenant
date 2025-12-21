@@ -379,7 +379,7 @@ const OrganizationNotRegisteredPage = () => {
                 startIcon={<Iconify icon="solar:login-3-bold" />}
                 onClick={() => {
                   // Redirect to main domain or registration page
-                  const hostname = window.location.hostname;
+                  const { hostname } = window.location;
                   const parts = hostname.split('.');
                   if (parts.length > 2) {
                     // Remove subdomain

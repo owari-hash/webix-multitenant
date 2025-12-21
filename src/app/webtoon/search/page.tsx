@@ -180,7 +180,8 @@ export default function SearchPage() {
       window.history.pushState({}, '', newUrl);
     }, 500); // 500ms debounce delay
 
-    return (): void => {
+    // eslint-disable-next-line consistent-return
+    return () => {
       console.log('🧹 Cleaning up timeout');
       clearTimeout(timeoutId);
     };
