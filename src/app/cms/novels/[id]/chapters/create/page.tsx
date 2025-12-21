@@ -17,3 +17,4 @@ export default function NovelChapterCreatePage({ params }: Props) {
   return <NovelChapterCreateView novelId={params.id} />;
 }
 
+

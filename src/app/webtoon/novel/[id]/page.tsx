@@ -15,3 +15,4 @@ export default function NovelDetailPage({ params }: Props) {
   return <NovelDetailView novelId={params.id} />;
 }
 
+

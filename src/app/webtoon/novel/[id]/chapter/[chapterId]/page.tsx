@@ -19,3 +19,4 @@ export default function NovelChapterReadPage({ params }: Props) {
   return <NovelChapterReadView novelId={id} chapterId={chapterId} />;
 }
 
+

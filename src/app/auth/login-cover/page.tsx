@@ -3,7 +3,7 @@ import LoginCoverView from 'src/sections/auth/login-cover-view';
 // ----------------------------------------------------------------------
 
 export const metadata = {
-  title: 'Login Cover',
+  title: 'Нэвтрэх',
 };
 
 export default function LoginCoverPage() {

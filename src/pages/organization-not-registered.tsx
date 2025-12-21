@@ -1,49 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
-import { backendRequest } from 'src/utils/backend-api';
 
-const LicenseExpiredPage = () => {
+const OrganizationNotRegisteredPage = () => {
   const theme = useTheme();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const checkLicenseStatus = async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await backendRequest('/organizations/license');
-
-      if (response.success && response.data?.subscription) {
-        const subscription = response.data.subscription;
-        const isActive =
-          subscription.status === 'active' &&
-          (!subscription.endDate || new Date(subscription.endDate) > new Date());
-
-        if (isActive) {
-          // License is now active, redirect to home
-          window.location.href = '/';
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('License check error:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleRefresh = () => {
-    checkLicenseStatus();
-  };
 
   return (
     <Box
@@ -183,7 +151,7 @@ const LicenseExpiredPage = () => {
               }}
             />
             <Iconify
-              icon="solar:shield-warning-bold"
+              icon="solar:shield-cross-bold"
               sx={{
                 fontSize: { xs: 40, sm: 50, md: 56 },
                 color: 'error.main',
@@ -211,7 +179,7 @@ const LicenseExpiredPage = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                Лицензийн эрх дууссан байна
+                Бүртгэлгүй байгууллага байна
               </Typography>
 
               <Typography
@@ -226,7 +194,8 @@ const LicenseExpiredPage = () => {
                   px: { xs: 1, sm: 0 },
                 }}
               >
-                Уучлаарай, таны байгууллагын лиценз дууссан эсвэл идэвхгүй байна.
+                Уучлаарай, энэ дэд домэйн дээр бүртгэлтэй байгууллага олдсонгүй. Системд нэвтрэхийн
+                тулд эхлээд байгууллагаа бүртгүүлэх шаардлагатай.
               </Typography>
             </Box>
 
@@ -240,70 +209,15 @@ const LicenseExpiredPage = () => {
                 maxWidth: { xs: '100%', sm: 550 },
                 p: { xs: 2, sm: 2.5, md: 3 },
                 borderRadius: 2,
-                bgcolor: alpha(theme.palette.warning.main, 0.06),
-                border: `1.5px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                bgcolor: alpha(theme.palette.info.main, 0.06),
+                border: `1.5px solid ${alpha(theme.palette.info.main, 0.2)}`,
                 background: `linear-gradient(135deg, ${alpha(
-                  theme.palette.warning.main,
+                  theme.palette.info.main,
                   0.05
-                )} 0%, ${alpha(theme.palette.info.main, 0.03)} 100%)`,
+                )} 0%, ${alpha(theme.palette.primary.main, 0.03)} 100%)`,
               }}
             >
               <Stack spacing={{ xs: 2, sm: 2.5 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: { xs: 1.5, sm: 2 },
-                    textAlign: 'left',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      minWidth: { xs: 32, sm: 36 },
-                      height: { xs: 32, sm: 36 },
-                      borderRadius: '50%',
-                      bgcolor: alpha(theme.palette.warning.main, 0.15),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Iconify
-                      icon="solar:info-circle-bold"
-                      sx={{
-                        color: 'warning.main',
-                        width: { xs: 18, sm: 20 },
-                        height: { xs: 18, sm: 20 },
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        mb: 0.25,
-                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                      }}
-                    >
-                      Юу хийх вэ?
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        lineHeight: 1.5,
-                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                      }}
-                    >
-                      Лиценз сунгах эсвэл системийн админтай холбогдож, захиалгаа баталгаажуулах
-                      хүсэлт гаргана уу.
-                    </Typography>
-                  </Box>
-                </Box>
-
                 <Box
                   sx={{
                     display: 'flex',
@@ -325,9 +239,64 @@ const LicenseExpiredPage = () => {
                     }}
                   >
                     <Iconify
-                      icon="solar:phone-calling-bold"
+                      icon="solar:document-add-bold"
                       sx={{
                         color: 'info.main',
+                        width: { xs: 18, sm: 20 },
+                        height: { xs: 18, sm: 20 },
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        mb: 0.25,
+                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                      }}
+                    >
+                      Бүртгэл үүсгэх
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        lineHeight: 1.5,
+                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                      }}
+                    >
+                      Шинэ байгууллага бүртгүүлэхийн тулд системийн админтай холбогдох эсвэл
+                      бүртгэлийн хэсэг рүү очино уу.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: { xs: 1.5, sm: 2 },
+                    textAlign: 'left',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      minWidth: { xs: 32, sm: 36 },
+                      height: { xs: 32, sm: 36 },
+                      borderRadius: '50%',
+                      bgcolor: alpha(theme.palette.primary.main, 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Iconify
+                      icon="solar:phone-calling-bold"
+                      sx={{
+                        color: 'primary.main',
                         width: { xs: 18, sm: 20 },
                         height: { xs: 18, sm: 20 },
                       }}
@@ -384,6 +353,7 @@ const LicenseExpiredPage = () => {
                 color="inherit"
                 size="small"
                 fullWidth
+                startIcon={<Iconify icon="solar:home-bold" />}
                 onClick={() => (window.location.href = '/')}
                 sx={{
                   borderRadius: 1.5,
@@ -404,15 +374,19 @@ const LicenseExpiredPage = () => {
                 color="primary"
                 size="small"
                 fullWidth
-                disabled={isRefreshing}
-                startIcon={
-                  isRefreshing ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <Iconify icon="solar:refresh-bold" />
-                  )
-                }
-                onClick={handleRefresh}
+                startIcon={<Iconify icon="solar:login-3-bold" />}
+                onClick={() => {
+                  // Redirect to main domain or registration page
+                  const hostname = window.location.hostname;
+                  const parts = hostname.split('.');
+                  if (parts.length > 2) {
+                    // Remove subdomain
+                    const mainDomain = parts.slice(-2).join('.');
+                    window.location.href = `https://${mainDomain}`;
+                  } else {
+                    window.location.href = '/';
+                  }
+                }}
                 sx={{
                   borderRadius: 1.5,
                   py: { xs: 1, sm: 1.125 },
@@ -423,13 +397,10 @@ const LicenseExpiredPage = () => {
                     boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
                     transform: 'translateY(-1px)',
                   },
-                  '&:disabled': {
-                    boxShadow: `0 2px 6px ${alpha(theme.palette.primary.main, 0.2)}`,
-                  },
                   transition: 'all 0.3s ease',
                 }}
               >
-                {isRefreshing ? 'Шалгаж байна...' : 'Шалгах'}
+                Бүртгэл үүсгэх
               </Button>
             </Stack>
 
@@ -443,7 +414,7 @@ const LicenseExpiredPage = () => {
                 px: { xs: 1.5, sm: 0 },
               }}
             >
-              Лиценз сунгах эсвэл системийн админтай холбогдож, лиценз баталгаажуулах боломжтой.
+              Зөвхөн бүртгэлтэй байгууллагууд системд нэвтрэх боломжтой.
             </Typography>
           </Stack>
         </Box>
@@ -452,4 +423,4 @@ const LicenseExpiredPage = () => {
   );
 };
 
-export default LicenseExpiredPage;
+export default OrganizationNotRegisteredPage;

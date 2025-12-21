@@ -11,6 +11,7 @@ import { SettingsDrawer, SettingsProvider } from 'src/components/settings';
 import { TenantProvider } from 'src/contexts/tenant-context';
 import { AuthProvider } from 'src/contexts/auth-context';
 import { SnackbarProvider } from 'src/components/snackbar';
+import LicenseGuard from 'src/components/auth/license-guard';
 
 // ----------------------------------------------------------------------
 
@@ -66,11 +67,13 @@ export default function RootLayout({ children }: Props) {
             >
               <ThemeProvider>
                 <SnackbarProvider>
-                  <MotionLazy>
-                    <ProgressBar />
-                    <SettingsDrawer />
-                    {children}
-                  </MotionLazy>
+                  <LicenseGuard>
+                    <MotionLazy>
+                      <ProgressBar />
+                      <SettingsDrawer />
+                      {children}
+                    </MotionLazy>
+                  </LicenseGuard>
                 </SnackbarProvider>
               </ThemeProvider>
             </SettingsProvider>

@@ -131,6 +131,17 @@ export async function backendRequest<T = any>(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
 
+      // Handle Organization Not Registered Error
+      if (response.status === 403 && errorData.code === 'ORGANIZATION_NOT_REGISTERED') {
+        if (
+          typeof window !== 'undefined' &&
+          !window.location.pathname.includes('/organization-not-registered')
+        ) {
+          window.location.href = '/organization-not-registered';
+        }
+        return { success: false, error: 'Organization not registered', code: 'ORGANIZATION_NOT_REGISTERED' };
+      }
+
       // Handle License Expired Error
       if (response.status === 403 && errorData.code === 'LICENSE_EXPIRED') {
         if (
@@ -139,7 +150,7 @@ export async function backendRequest<T = any>(
         ) {
           window.location.href = '/license-expired';
         }
-        return { success: false, error: 'License Expired' };
+        return { success: false, error: 'License Expired', code: 'LICENSE_EXPIRED' };
       }
 
       return {

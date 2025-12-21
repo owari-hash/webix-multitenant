@@ -128,7 +128,7 @@ export const pageLinks = [
     order: '4',
     subheader: 'Common',
     items: [
-      { title: 'Login Cover', path: paths.loginCover },
+      { title: 'Нэвтрэх', path: paths.loginCover },
       { title: 'Login Illustration', path: paths.loginIllustration },
       { title: 'Login Background', path: paths.loginBackground },
       { title: 'Admin Login', path: paths.adminLogin },
