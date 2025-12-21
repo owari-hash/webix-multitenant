@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import Button from '@mui/material/Button';
@@ -18,11 +16,24 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import CircularProgress from '@mui/material/CircularProgress';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
+import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
+
+interface PremiumPlan {
+  name: string;
+  label: string;
+  price: number;
+  duration: number;
+  period: 'month' | 'year';
+  discount?: string;
+  isActive: boolean;
+  order: number;
+}
 
 type Props = {
   open: boolean;
@@ -30,14 +41,15 @@ type Props = {
   onSuccess?: VoidFunction;
 };
 
-type PlanType = 'monthly' | 'yearly';
 type PaymentMethod = 'card' | 'qpay' | 'bank';
 
 export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props) {
   const theme = useTheme();
-  const [plan, setPlan] = useState<PlanType>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qpay');
   const [processing, setProcessing] = useState(false);
+  const [premiumPlans, setPremiumPlans] = useState<PremiumPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
 
   // Card details
   const [cardNumber, setCardNumber] = useState('');
@@ -45,24 +57,68 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  const planDetails = {
-    monthly: { price: 9900, label: 'Сарын багц', period: 'сар' },
-    yearly: { price: 99000, label: 'Жилийн багц', period: 'жил', discount: '2 сар үнэгүй' },
+  // Fetch premium plans when dialog opens
+  useEffect(() => {
+    if (open) {
+      const fetchPlans = async () => {
+        try {
+          setLoadingPlans(true);
+          const response = await backendRequest<{ plans: PremiumPlan[] }>(
+            '/organizations/premium-plans'
+          );
+
+          if (response.success && response.data?.plans && Array.isArray(response.data.plans)) {
+            const activePlans = response.data.plans
+              .filter((p) => p.isActive !== false)
+              .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            setPremiumPlans(activePlans);
+            if (activePlans.length > 0) {
+              setSelectedPlan(activePlans[0].name);
+            }
+          } else {
+            setPremiumPlans([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch premium plans:', error);
+          setPremiumPlans([]);
+        } finally {
+          setLoadingPlans(false);
+        }
+      };
+
+      fetchPlans();
+    }
+  }, [open]);
+
+  const getSelectedPlanDetails = () => {
+    return premiumPlans.find((p) => p.name === selectedPlan) || premiumPlans[0];
   };
 
   const handlePayment = async () => {
+    if (!selectedPlan) {
+      alert('Багц сонгоно уу!');
+      return;
+    }
+
+    const currentPlan = getSelectedPlanDetails();
+    if (!currentPlan) {
+      alert('Багц сонгоно уу!');
+      return;
+    }
+
     setProcessing(true);
 
     try {
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // For QPay, redirect to the main premium payment page
+      if (paymentMethod === 'qpay') {
+        // Close this dialog and redirect to premium payment page
+        onClose();
+        window.location.href = '/webtoon/premium';
+        return;
+      }
 
-      // In a real implementation, you would:
-      // 1. Validate payment details
-      // 2. Call your payment API endpoint
-      // 3. Handle payment gateway response
-      // 4. Update user's premium status
-
+      // For other payment methods, process here
       const token = localStorage.getItem('token');
       const response = await fetch('/api2/payment/premium', {
         method: 'POST',
@@ -71,9 +127,9 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          plan,
+          plan: currentPlan.name,
           paymentMethod,
-          amount: planDetails[plan].price,
+          amount: currentPlan.price,
           // Include payment details based on method
           ...(paymentMethod === 'card' && {
             cardNumber,
@@ -108,40 +164,74 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
       <Typography variant="h6" sx={{ mb: 2 }}>
         Багц сонгох
       </Typography>
-      <Tabs value={plan} onChange={(_, value) => setPlan(value)} sx={{ mb: 3 }}>
-        <Tab label="Сарын" value="monthly" />
-        <Tab label="Жилийн" value="yearly" />
-      </Tabs>
-
-      <Box
-        sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: alpha(theme.palette.primary.main, 0.08),
-          border: `2px solid ${theme.palette.primary.main}`,
-        }}
-      >
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              {planDetails[plan].label}
-            </Typography>
-            {plan === 'yearly' && (
-              <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                ✨ {planDetails[plan].discount}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              ₮{planDetails[plan].price.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              / {planDetails[plan].period}
-            </Typography>
-          </Box>
+      {loadingPlans ? (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Багцууд ачааллаж байна...
+          </Typography>
+        </Box>
+      ) : premiumPlans.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body2" color="error">
+            Багц олдсонгүй
+          </Typography>
+        </Box>
+      ) : (
+        <Stack spacing={2}>
+          {premiumPlans.map((planOption) => {
+            const isSelected = selectedPlan === planOption.name;
+            return (
+              <Box
+                key={planOption.name}
+                onClick={() => setSelectedPlan(planOption.name)}
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  border: `2px solid ${
+                    isSelected ? theme.palette.primary.main : alpha(theme.palette.divider, 0.2)
+                  }`,
+                  bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  },
+                }}
+              >
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                      {planOption.label}
+                    </Typography>
+                    {planOption.discount && (
+                      <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                        ✨ {planOption.discount}
+                      </Typography>
+                    )}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.5 }}
+                    >
+                      {planOption.duration} {planOption.period === 'month' ? 'сар' : 'жил'}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      ₮{planOption.price.toLocaleString()}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      / {planOption.period === 'month' ? 'сар' : 'жил'}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            );
+          })}
         </Stack>
-      </Box>
+      )}
     </Box>
   );
 
@@ -150,7 +240,10 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
       <Typography variant="h6" sx={{ mb: 2 }}>
         Төлбөрийн хэрэгсэл
       </Typography>
-      <RadioGroup value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}>
+      <RadioGroup
+        value={paymentMethod}
+        onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+      >
         <Stack spacing={2}>
           <FormControlLabel
             value="qpay"
@@ -328,9 +421,12 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
           size="large"
           loading={processing}
           onClick={handlePayment}
+          disabled={!selectedPlan || premiumPlans.length === 0}
           startIcon={<Iconify icon="mdi:lock" />}
         >
-          ₮{planDetails[plan].price.toLocaleString()} төлөх
+          {getSelectedPlanDetails()
+            ? `₮${getSelectedPlanDetails()!.price.toLocaleString()} төлөх`
+            : 'Багц сонгоно уу'}
         </LoadingButton>
       </DialogActions>
     </Dialog>

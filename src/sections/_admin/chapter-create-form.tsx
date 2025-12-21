@@ -111,7 +111,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
   }, [nextChapterNumber, setValue]);
 
   // Batch upload for large payloads
-  const uploadInBatches = async (data: any, images: string[], batchSize: number = 15) => {
+  const uploadInBatches = async (data: any, images: string[], batchSize: number = 10) => {
     setUploadingBatch(true);
     const batches = [];
 
@@ -133,20 +133,90 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
 
       setCurrentBatchInfo(`Batch 1/${batches.length}: Бүлэг үүсгэж байна...`);
 
-      const firstResponse = await fetch(`/api2/webtoon/comic/${comicId}/chapter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(firstPayload),
-      });
+      // Helper function to retry fetch with exponential backoff
+      const fetchWithRetry = async (
+        url: string,
+        options: RequestInit,
+        maxRetries = 3
+      ): Promise<Response> => {
+        let lastError: any;
 
-      if (!firstResponse.ok) {
-        throw new Error(`Batch 1 failed: ${firstResponse.status}`);
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+            const response = await fetch(url, {
+              ...options,
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+            return response;
+          } catch (error: any) {
+            lastError = error;
+
+            // Don't retry on abort (timeout)
+            if (error?.name === 'AbortError') {
+              throw new Error('Request timeout - server took too long to respond (120s)');
+            }
+
+            // Check if it's a connection error that we should retry
+            const isRetryable =
+              error?.message?.includes('Failed to fetch') ||
+              error?.message?.includes('ERR_CONNECTION_RESET') ||
+              error?.message?.includes('network') ||
+              error?.code === 'UND_ERR_CONNECT_TIMEOUT';
+
+            if (isRetryable && attempt < maxRetries) {
+              const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff: 1s, 2s, 4s (max 10s)
+              console.log(
+                `🔄 [Batch Upload] Retry attempt ${attempt}/${maxRetries} after ${delay}ms...`
+              );
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
+
+            // If not retryable or last attempt, throw
+            throw error;
+          }
+        }
+
+        throw lastError;
+      };
+
+      // Add timeout for batch upload
+      let firstResponse: Response;
+      try {
+        firstResponse = await fetchWithRetry(`/api2/webtoon/comic/${comicId}/chapter`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify(firstPayload),
+        });
+      } catch (fetchError: any) {
+        if (fetchError?.name === 'AbortError') {
+          throw new Error('Request timeout - server took too long to respond (120s)');
+        }
+        console.error('❌ [Batch Upload] Fetch error after retries:', fetchError);
+        throw new Error(`Network error: ${fetchError?.message || 'Failed to connect to server'}`);
       }
 
-      const firstResult = await firstResponse.json();
+      if (!firstResponse.ok) {
+        const errorText = await firstResponse.text().catch(() => 'Unknown error');
+        console.error(`❌ [Batch Upload] Response error: ${firstResponse.status}`, errorText);
+        throw new Error(`Batch 1 failed: ${firstResponse.status} ${firstResponse.statusText}`);
+      }
+
+      let firstResult: any;
+      try {
+        firstResult = await firstResponse.json();
+      } catch (jsonError) {
+        console.error('❌ [Batch Upload] JSON parse error:', jsonError);
+        throw new Error('Invalid response from server');
+      }
 
       if (!firstResult.success) {
         throw new Error(firstResult.error || 'First batch failed');
@@ -191,26 +261,99 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           };
 
           // eslint-disable-next-line no-await-in-loop
-          const batchResponse = await fetch(`/api2/webtoon/chapter/${chapterId}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify(batchPayload),
-          });
+          // Helper function to retry fetch with exponential backoff
+          const fetchBatchWithRetry = async (
+            url: string,
+            options: RequestInit,
+            maxRetries = 2
+          ): Promise<Response> => {
+            let lastError: any;
+
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+                const response = await fetch(url, {
+                  ...options,
+                  signal: controller.signal,
+                });
+
+                clearTimeout(timeoutId);
+                return response;
+              } catch (error: any) {
+                lastError = error;
+
+                if (error?.name === 'AbortError') {
+                  throw new Error(`Batch ${i + 1} timeout (60s)`);
+                }
+
+                const isRetryable =
+                  error?.message?.includes('Failed to fetch') ||
+                  error?.message?.includes('ERR_CONNECTION_RESET') ||
+                  error?.message?.includes('network');
+
+                if (isRetryable && attempt < maxRetries) {
+                  const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 1s, 2s (max 5s)
+                  console.log(
+                    `🔄 [Chapter Update] Batch ${
+                      i + 1
+                    } retry ${attempt}/${maxRetries} after ${delay}ms...`
+                  );
+                  await new Promise((resolve) => setTimeout(resolve, delay));
+                  continue;
+                }
+
+                throw error;
+              }
+            }
+
+            throw lastError;
+          };
+
+          let batchResponse: Response;
+          try {
+            batchResponse = await fetchBatchWithRetry(`/api2/webtoon/chapter/${chapterId}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+              },
+              body: JSON.stringify(batchPayload),
+            });
+          } catch (fetchError: any) {
+            if (fetchError?.name === 'AbortError') {
+              throw new Error(`Batch ${i + 1} timeout (120s)`);
+            }
+            console.error(
+              `❌ [Chapter Update] Batch ${i + 1} fetch error after retries:`,
+              fetchError
+            );
+            throw new Error(`Network error: ${fetchError?.message || 'Failed to connect'}`);
+          }
 
           // eslint-disable-next-line no-await-in-loop
-          const batchResult = await batchResponse.json();
+          let batchResult: any;
+          try {
+            batchResult = await batchResponse.json();
+          } catch (jsonError) {
+            const errorText = await batchResponse.text().catch(() => 'Unknown error');
+            console.error(`❌ [Chapter Update] Batch ${i + 1} JSON parse error:`, errorText);
+            throw new Error(`Invalid response: ${batchResponse.status}`);
+          }
 
           if (!batchResponse.ok || !batchResult.success) {
-            console.error(`Batch ${i + 1} failed:`, batchResult);
+            console.error(`❌ [Chapter Update] Batch ${i + 1} failed:`, batchResult);
             failedBatches += 1;
           } else {
             successfulBatches += 1;
           }
-        } catch (error) {
-          console.error(`Batch ${i + 1} error:`, error);
+        } catch (error: any) {
+          if (error?.name === 'AbortError' || error?.message?.includes('timeout')) {
+            console.error(`⏱️ [Chapter Update] Batch ${i + 1} timeout`);
+          } else {
+            console.error(`❌ [Chapter Update] Batch ${i + 1} error:`, error?.message || error);
+          }
           failedBatches += 1;
         }
 
@@ -253,9 +396,26 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
       if (!addAnother) {
         router.push(paths.webtoon.cms.chapters(comicId));
       }
-    } catch (error) {
-      console.error('Batch upload error:', error);
-      alert(`Batch upload алдаа: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: any) {
+      console.error('❌ [Batch Upload] Error:', error);
+      console.error('❌ [Batch Upload] Error name:', error?.name);
+      console.error('❌ [Batch Upload] Error message:', error?.message);
+      console.error('❌ [Batch Upload] Error stack:', error?.stack);
+
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network error')) {
+          errorMessage =
+            'Сүлжээний алдаа - серверт холбогдох боломжгүй байна. Интернет холболтоо шалгана уу.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Хугацаа хэтэрсэн - сервер хариу өгөхгүй байна. Дахин оролдоно уу.';
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      alert(`Batch upload алдаа: ${errorMessage}`);
     } finally {
       setUploadingBatch(false);
       setBatchProgress({ current: 0, total: 0 });
@@ -284,22 +444,32 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
       const payloadMB = (payloadSize / (1024 * 1024)).toFixed(2);
       console.log(`Sending payload: ${validImages.length} images, ~${payloadMB}MB`);
 
-      // Automatically use batch upload for many images or large payloads
-      if (validImages.length > 20 || payloadSize > 40 * 1024 * 1024) {
+      // Force batch upload for many images or large payloads (lower threshold to prevent connection resets)
+      if (validImages.length >= 10 || payloadSize > 2 * 1024 * 1024) {
+        // 10+ images or >2MB
+        // For large payloads (20+ images or >5MB), force batch upload automatically
+        if (validImages.length >= 20 || payloadSize > 5 * 1024 * 1024) {
+          console.log(
+            `📦 [Auto] Using batch upload for ${validImages.length} images (~${payloadMB}MB)`
+          );
+          await uploadInBatches(data, validImages, 10); // Smaller batch size: 10 instead of 15
+          return;
+        }
+
+        // For medium payloads, ask but strongly recommend batch
         const useBatch = window.confirm(
           `📦 Batch Upload санал болгож байна:\n\n` +
             `Payload: ${payloadMB}MB (${validImages.length} зураг)\n\n` +
             `Batch upload ашиглах уу?\n` +
-            `• Тийм: Зургуудыг 15 зургийн batch-аар хуваан илгээнэ\n` +
-            `  → Илүү найдвартай, серверт ээлтэй\n` +
+            `• ТИЙМ (Зөвлөмж): Зургуудыг 10 зургийн batch-аар хуваан илгээнэ\n` +
+            `  → Илүү найдвартай, алдаагүй\n` +
             `  → 50+ зураг ч асуудалгүй\n\n` +
-            `• Үгүй: Бүгдийг зэрэг илгээх\n` +
-            `  → Том payload-д алдаа гарч болзошгүй\n\n` +
-            `Зөвлөмж: ТИЙМ сонгох`
+            `• ҮГҮЙ: Бүгдийг зэрэг илгээх\n` +
+            `  → Том payload-д алдаа гарч болзошгүй ⚠️`
         );
 
         if (useBatch) {
-          await uploadInBatches(data, validImages, 15);
+          await uploadInBatches(data, validImages, 10); // Smaller batch size
           return;
         }
       }

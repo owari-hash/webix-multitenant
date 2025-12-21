@@ -18,6 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
+import Pagination from '@mui/material/Pagination';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
@@ -50,6 +51,10 @@ export default function NovelsBrowseView() {
   const [sortBy, setSortBy] = useState('latest');
   const [status, setStatus] = useState('all');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   // Set category from URL parameter on mount
   useEffect(() => {
@@ -63,7 +68,8 @@ export default function NovelsBrowseView() {
   useEffect(() => {
     const fetchNovels = async () => {
       try {
-        const response = await fetch('/api2/novel');
+        setLoading(true);
+        const response = await fetch(`/api2/novel?page=${page}&limit=${limit}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -79,6 +85,12 @@ export default function NovelsBrowseView() {
           novelsData = result.novels;
         } else if (Array.isArray(result)) {
           novelsData = result;
+        }
+
+        // Update pagination info if available
+        if (result.success && result.total !== undefined) {
+          setTotal(result.total);
+          setTotalPages(result.pages || Math.ceil(result.total / limit));
         }
 
         // Fetch chapter counts for each novel
@@ -136,7 +148,7 @@ export default function NovelsBrowseView() {
     };
 
     fetchNovels();
-  }, []);
+  }, [page]);
 
   // Extract unique categories from novels
   const categories = useMemo(() => {
@@ -578,6 +590,24 @@ export default function NovelsBrowseView() {
             );
           })}
         </Grid>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => {
+                setPage(value);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        )}
 
         {filteredNovels.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 10 }}>

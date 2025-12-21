@@ -17,6 +17,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
+import Pagination from '@mui/material/Pagination';
 
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
@@ -47,6 +48,10 @@ export default function WebtoonBrowseView() {
   const [sortBy, setSortBy] = useState('latest');
   const [status, setStatus] = useState('all');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   // Set category from URL parameter on mount
   useEffect(() => {
@@ -60,7 +65,8 @@ export default function WebtoonBrowseView() {
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await fetch('/api2/webtoon/comics');
+        setLoading(true);
+        const response = await fetch(`/api2/webtoon/comics?page=${page}&limit=${limit}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -78,11 +84,17 @@ export default function WebtoonBrowseView() {
           comicsData = result;
         }
 
+        // Update pagination info if available
+        if (result.success && result.total !== undefined) {
+          setTotal(result.total);
+          setTotalPages(result.pages || Math.ceil(result.total / limit));
+        }
+
         // Fetch chapter counts for each comic
         const comicsWithChapters = await Promise.all(
           comicsData.map(async (comic) => {
             const comicId = comic._id || comic.id;
-            
+
             // Validate ID before making request
             if (!comicId || typeof comicId !== 'string' || comicId.length !== 24) {
               console.warn(`Invalid comic ID: ${comicId}, skipping chapter fetch`);
@@ -93,9 +105,7 @@ export default function WebtoonBrowseView() {
             }
 
             try {
-              const chaptersResponse = await fetch(
-                `/api2/webtoon/comic/${comicId}/chapters`
-              );
+              const chaptersResponse = await fetch(`/api2/webtoon/comic/${comicId}/chapters`);
 
               if (!chaptersResponse.ok) {
                 throw new Error(`HTTP error! status: ${chaptersResponse.status}`);
@@ -135,7 +145,7 @@ export default function WebtoonBrowseView() {
     };
 
     fetchComics();
-  }, []);
+  }, [page]);
 
   // Extract unique categories from comics
   const categories = useMemo(() => {
@@ -222,24 +232,6 @@ export default function WebtoonBrowseView() {
               {filteredWebtoons.length} комик олдлоо
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="carbon:grid" />}
-              size="small"
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              Grid
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="carbon:list" />}
-              size="small"
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              List
-            </Button>
-          </Stack>
         </Stack>
 
         {/* Filters */}
@@ -599,12 +591,21 @@ export default function WebtoonBrowseView() {
           })}
         </Grid>
 
-        {/* Load More */}
-        {filteredWebtoons.length > 0 && (
-          <Box sx={{ textAlign: 'center' }}>
-            <Button variant="outlined" size="large">
-              Илүү ачаалах
-            </Button>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, value) => {
+                setPage(value);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
           </Box>
         )}
 

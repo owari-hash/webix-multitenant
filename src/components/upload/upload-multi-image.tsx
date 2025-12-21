@@ -74,7 +74,7 @@ export default function UploadMultiImage({
   onUpload,
   helperText,
   maxSize = 20971520, // 20MB per file
-  maxFiles = 50, // Max 50 images
+  maxFiles = 100, // Max 100 images
 }: Props) {
   const theme = useTheme();
   const [uploading, setUploading] = useState(false);

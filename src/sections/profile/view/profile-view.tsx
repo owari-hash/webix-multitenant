@@ -31,6 +31,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  premium?: boolean;
   subdomain?: string;
   createdAt?: string;
   lastLogin?: string;
@@ -281,9 +282,33 @@ export default function ProfileView() {
             <ProfileBorder userId={user.id} size={120} showLevel />
 
             <Stack spacing={2} sx={{ flex: 1 }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
                 <Typography variant="h4">{displayUser.name}</Typography>
                 <Chip label={getRoleLabel()} color="primary" size="small" />
+                {user.premium ? (
+                  <Chip
+                    icon={<Iconify icon="solar:crown-bold" width={16} />}
+                    label="Premium"
+                    color="warning"
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      bgcolor: 'warning.main',
+                      color: 'warning.contrastText',
+                      '& .MuiChip-icon': {
+                        color: 'warning.contrastText',
+                      },
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    icon={<Iconify icon="solar:user-bold" width={16} />}
+                    label="Энгийн"
+                    color="default"
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
 
               <Typography variant="body1" color="text.secondary">
@@ -292,15 +317,21 @@ export default function ProfileView() {
 
               <Typography variant="body2" color="text.secondary">
                 Нэгдсэн огноо: {new Date(displayUser.joinDate).toLocaleDateString('mn-MN')}
-                {user.subdomain && (
-                  <Chip
-                    label={`Subdomain: ${user.subdomain}`}
-                    size="small"
-                    variant="outlined"
-                    sx={{ ml: 1 }}
-                  />
-                )}
               </Typography>
+
+              {!user.premium && (
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  size="small"
+                  startIcon={<Iconify icon="solar:crown-bold" />}
+                  component={RouterLink}
+                  href={paths.webtoon.premium}
+                  sx={{ alignSelf: 'flex-start', mt: 1 }}
+                >
+                  Premium эрх авах
+                </Button>
+              )}
 
               {/* Badges */}
               <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -350,7 +381,7 @@ export default function ProfileView() {
               <Iconify icon="carbon:time" sx={{ fontSize: 48, color: 'warning.main', mb: 2 }} />
               <Typography variant="h4">{displayUser.stats.readingHours}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Цаг унших
+                Уншсан цаг
               </Typography>
             </Card>
           </Grid>

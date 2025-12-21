@@ -18,6 +18,9 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
 import CommentsSection from '../components/comments-section';
+import { backendRequest } from 'src/utils/backend-api';
+import { isAuthenticated } from 'src/utils/auth';
+import { useSnackbar } from 'src/components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -36,10 +39,13 @@ const STATUS_MAP: Record<
 
 export default function WebtoonComicDetailView({ comicId }: Props) {
   const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
   const [comic, setComic] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     const fetchComicData = async () => {
@@ -59,6 +65,42 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
         if (chaptersResult.success && chaptersResult.chapters) {
           setChapters(chaptersResult.chapters);
         }
+
+        // Check if comic is in favorites (only if user is authenticated)
+        if (isAuthenticated() && comicResult.success && comicResult.comic) {
+          try {
+            const favoritesResponse = await backendRequest<{
+              favorites?: Array<{ _id: string; comicId?: string; novelId?: string }>;
+            }>('/webtoon/user/favorites?limit=1000');
+
+            if (favoritesResponse.success && (favoritesResponse as any).favorites) {
+              const favorites = (favoritesResponse as any).favorites as Array<{
+                _id: string;
+                comicId?: string | any;
+                novelId?: string | any;
+                comic?: any;
+              }>;
+              const targetComicId = String(comicId || comicResult.comic._id);
+              const favorite = favorites.find((fav: any) => {
+                // Check if comicId matches (handle both string and ObjectId)
+                if (fav.comicId) {
+                  return String(fav.comicId) === targetComicId;
+                }
+                // Check if comic._id matches
+                if (fav.comic && fav.comic._id) {
+                  return String(fav.comic._id) === targetComicId;
+                }
+                return false;
+              });
+              if (favorite) {
+                setIsFavorite(true);
+                setFavoriteId(favorite._id);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to check favorite status:', error);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch comic data:', error);
       } finally {
@@ -69,9 +111,53 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
     fetchComicData();
   }, [comicId]);
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // TODO: Implement API call to add/remove favorite
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated()) {
+      enqueueSnackbar('Та эхлээд нэвтэрнэ үү!', { variant: 'warning' });
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      if (isFavorite && favoriteId) {
+        // Remove from favorites
+        const response = await backendRequest(`/webtoon/user/favorites/${favoriteId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.success) {
+          setIsFavorite(false);
+          setFavoriteId(null);
+          enqueueSnackbar('Дуртай жагсаалтаас хасагдлаа', { variant: 'success' });
+        } else {
+          enqueueSnackbar(response.message || 'Хасахад алдаа гарлаа', { variant: 'error' });
+        }
+      } else {
+        // Add to favorites
+        const response = await backendRequest('/webtoon/user/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            comicId: comicId || comic?._id,
+          }),
+        });
+
+        if (response.success && (response as any).favorite) {
+          setIsFavorite(true);
+          setFavoriteId((response as any).favorite._id);
+          enqueueSnackbar('Дуртай жагсаалтад нэмэгдлээ', { variant: 'success' });
+        } else {
+          enqueueSnackbar(response.message || 'Нэмэхэд алдаа гарлаа', { variant: 'error' });
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle favorite:', error);
+      enqueueSnackbar(error.message || 'Алдаа гарлаа', { variant: 'error' });
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   if (loading) {
@@ -175,10 +261,10 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                 {/* Author */}
                 {comic.author && (
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <Iconify icon="carbon:user" sx={{ fontSize: 20, color: 'text.secondary' }} />
-                    <Typography variant="subtitle1" color="text.secondary">
+                    {/* <Iconify icon="carbon:user" sx={{ fontSize: 20, color: 'text.secondary' }} /> */}
+                    {/* <Typography variant="subtitle1" color="text.secondary">
                       {comic.author}
-                    </Typography>
+                    </Typography> */}
                   </Stack>
                 )}
 
@@ -298,8 +384,13 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                     variant="outlined"
                     size="large"
                     fullWidth
+                    disabled={favoriteLoading}
                     startIcon={
-                      <Iconify icon={isFavorite ? 'carbon:favorite-filled' : 'carbon:favorite'} />
+                      favoriteLoading ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <Iconify icon={isFavorite ? 'carbon:favorite-filled' : 'carbon:favorite'} />
+                      )
                     }
                     onClick={handleToggleFavorite}
                     sx={{
@@ -316,7 +407,11 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                       },
                     }}
                   >
-                    {isFavorite ? 'Дуртай' : 'Дуртайд нэмэх'}
+                    {favoriteLoading
+                      ? 'Хүлээгдэж байна...'
+                      : isFavorite
+                      ? 'Дуртай'
+                      : 'Дуртайд нэмэх'}
                   </Button>
                 </Stack>
               </Stack>

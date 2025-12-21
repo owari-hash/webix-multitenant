@@ -6,7 +6,7 @@ import { getAuthToken } from 'src/utils/auth';
  * Get backend URL dynamically based on the current subdomain
  * Since zevtabs is a wildcard domain, we use the same hostname for backend
  */
-function getBackendUrl(): string {
+export function getBackendUrl(): string {
   // For client-side, use window.location
   if (typeof window !== 'undefined') {
     const { hostname } = window.location;
@@ -100,13 +100,22 @@ export async function backendRequest<T = any>(
         detectedSubdomain = parts[0];
       }
     }
-
-    // Prepare headers
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }), // Add Authorization header if token exists
-      ...options.headers,
-    });
+    
+    // Prepare headers - merge carefully to ensure Authorization is not overridden
+    const headers = new Headers(options.headers || {});
+    
+    // Set Content-Type if not already set
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    
+    // Set Authorization header if token exists (this should not be overridden)
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      console.log('🔐 Adding Authorization header with token');
+    } else {
+      console.warn('⚠️ No authentication token found');
+    }
 
     // Forward subdomain to backend via X-Original-Host header
     // The backend will detect it from this header
@@ -153,9 +162,24 @@ export async function backendRequest<T = any>(
         return { success: false, error: 'License Expired', code: 'LICENSE_EXPIRED' };
       }
 
+      // Handle Rate Limit (429) - include status and retry-after header
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After');
+        const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : null;
+        return {
+          success: false,
+          error: errorData.message || 'Too many upload requests, please try again later.',
+          status: 429,
+          retryAfter: retryAfterSeconds,
+          code: 'RATE_LIMIT_EXCEEDED',
+          ...errorData,
+        };
+      }
+
       return {
         success: false,
         error: errorData.message || `HTTP error! status: ${response.status}`,
+        status: response.status,
         ...errorData,
       };
     }

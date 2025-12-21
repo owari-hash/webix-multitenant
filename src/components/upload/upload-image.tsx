@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import Iconify from '../iconify';
+import { uploadImageFile, uploadBase64AsFile } from 'src/utils/image-upload';
 
 // ----------------------------------------------------------------------
 
@@ -50,12 +51,14 @@ export default function UploadImage({
           const url = await onUpload(file);
           onChange(url);
         } else {
-          // Convert to base64 or use a default upload service
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            onChange(reader.result as string);
-          };
-          reader.readAsDataURL(file);
+          // Upload to server using file upload (not base64)
+          try {
+            const url = await uploadImageFile(file);
+            onChange(url);
+          } catch (uploadError) {
+            console.error('File upload failed:', uploadError);
+            setError('Зураг байршуулахад алдаа гарлаа. Дахин оролдоно уу.');
+          }
         }
       } catch (err) {
         console.error('Upload error:', err);

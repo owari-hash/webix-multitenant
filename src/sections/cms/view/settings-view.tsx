@@ -144,17 +144,17 @@ export default function SettingsView() {
   const TABS = [
     {
       value: 'general',
-      label: 'General',
+      label: 'Ерөнхий',
       icon: <Iconify icon="solar:user-id-bold" width={24} />,
     },
     {
       value: 'billing',
-      label: 'Billing',
+      label: 'Төлбөр тооцоо',
       icon: <Iconify icon="solar:bill-list-bold" width={24} />,
     },
     {
       value: 'notifications',
-      label: 'Notifications',
+      label: 'Мэдэгдэл',
       icon: <Iconify icon="solar:bell-bing-bold" width={24} />,
     },
   ];
@@ -162,10 +162,10 @@ export default function SettingsView() {
   return (
     <Container maxWidth="lg">
       <CustomBreadcrumbs
-        heading="Settings"
+        heading="Тохиргоо"
         links={[
-          { name: 'Dashboard', href: '/cms' },
-          { name: 'Settings' },
+          { name: 'Хяналтын самбар', href: '/cms' },
+          { name: 'Тохиргоо' },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />
@@ -186,7 +186,7 @@ export default function SettingsView() {
         <Box>
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 3, color: 'text.secondary' }}>
-              Organization Details
+              Байгууллагын мэдээлэл
             </Typography>
             
             <Box
@@ -200,41 +200,56 @@ export default function SettingsView() {
             >
               <TextField
                 name="displayName"
-                label="Display Name"
+                label="Харагдах нэр"
                 value={formData.displayName}
                 onChange={(e) => handleInputChange('displayName', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="email"
-                label="Email"
+                label="Имэйл"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="phone"
-                label="Phone Number"
+                label="Утасны дугаар"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="address"
-                label="Address"
+                label="Хаяг"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="description"
-                label="Description"
+                label="Тайлбар"
                 multiline
                 rows={3}
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 sx={{ gridColumn: { sm: 'span 2' } }}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
             </Box>
 
             <Typography variant="h6" sx={{ mb: 3, mt: 5, color: 'text.secondary' }}>
-              Bank Account Information
+              Банкны мэдээлэл
             </Typography>
             
             <Box
@@ -248,29 +263,38 @@ export default function SettingsView() {
             >
               <TextField
                 name="bankName"
-                label="Bank Name"
-                placeholder="e.g. Khan Bank"
+                label="Банкны нэр"
+                placeholder="Жишээ: Хаан банк"
                 value={formData.bankAccount.bankName}
                 onChange={(e) => handleBankAccountChange('bankName', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="accountNumber"
-                label="Account Number"
+                label="Дансны дугаар"
                 value={formData.bankAccount.accountNumber}
                 onChange={(e) => handleBankAccountChange('accountNumber', e.target.value)}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
               <TextField
                 name="accountName"
-                label="Account Name"
+                label="Дансны нэр"
                 value={formData.bankAccount.accountName}
                 onChange={(e) => handleBankAccountChange('accountName', e.target.value)}
                 sx={{ gridColumn: { sm: 'span 2' } }}
+                InputProps={{
+                  readOnly: true,
+                }}
               />
             </Box>
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <LoadingButton type="submit" variant="contained" loading={saving} onClick={handleSave}>
-                Save Changes
+                Өөрчлөлт хадгалах
               </LoadingButton>
             </Stack>
           </Card>
@@ -282,10 +306,10 @@ export default function SettingsView() {
       {currentTab === 'notifications' && (
         <Card sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ mb: 3 }}>
-            Notification Settings
+            Мэдэгдлийн тохиргоо
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Notification settings coming soon...
+            Мэдэгдлийн тохиргоо удахгүй нэмэгдэнэ...
           </Typography>
         </Card>
       )}

@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Get backend URL dynamically based on the current subdomain
- * Always uses the main production domain (anzaidev.fun) with the same subdomain
+ * ALWAYS uses the production domain (anzaidev.fun) with the same subdomain
+ * Never uses localhost - always forwards to production backend
  */
 function getBackendUrl(host: string): string {
   // Extract subdomain from hostname
@@ -14,13 +15,14 @@ function getBackendUrl(host: string): string {
   // Determine subdomain
   let subdomain = '';
   if (parts.length > 1) {
-    // Check if it's a subdomain (e.g., zevtabs.localhost or zevtabs.anzaidev.fun)
+    // Check if it's a subdomain (e.g., yujoteam.localhost or yujoteam.anzaidev.fun)
+    // For localhost, extract subdomain from yujoteam.localhost -> yujoteam
     if (parts[0] !== 'www' && parts[0] !== 'localhost') {
       subdomain = parts[0];
     }
   }
 
-  // Always use the main production domain
+  // ALWAYS use the production domain (anzaidev.fun)
   const mainDomain = 'anzaidev.fun';
   const protocol = 'https';
 
@@ -121,26 +123,112 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }, me
       headers.Authorization = authHeader;
     }
 
+    // Log the proxy request for debugging (only for POST/PATCH/PUT to reduce noise)
+    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
+      console.log(`🔄 [API2 Proxy] ${method} ${originalHost}${request.nextUrl.pathname} -> ${fullUrl}`);
+    }
+
+    // Create AbortController for timeout
+    // Longer timeout for POST/PATCH/PUT (batch uploads) vs GET requests
+    const timeout = ['POST', 'PATCH', 'PUT'].includes(method) ? 120000 : 30000; // 120s for uploads, 30s for GET
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     // Forward request to backend
     // The backend will automatically detect subdomain from the Host header
     // (which is set automatically by fetch based on the URL)
-    const response = await fetch(fullUrl, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: 'include',
-    });
+    let response: Response;
+    try {
+      response = await fetch(fullUrl, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      // Handle timeout specifically
+      if (fetchError.name === 'AbortError' || fetchError.code === 'UND_ERR_CONNECT_TIMEOUT') {
+        const timeoutSeconds = timeout / 1000;
+        console.error(`⏱️ [API2 Proxy] Timeout for ${fullUrl} (${timeoutSeconds}s)`);
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Request timeout - backend took too long to respond (${timeoutSeconds}s)`,
+            details: {
+              backendUrl: fullUrl,
+              timeout: `${timeoutSeconds}s`,
+            },
+          },
+          { status: 504 }
+        );
+      }
+      
+      console.error(`❌ [API2 Proxy] Fetch failed for ${fullUrl}:`, fetchError.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to connect to backend: ${fetchError.message}`,
+          details: {
+            backendUrl: fullUrl,
+            originalHost,
+            method,
+          },
+        },
+        { status: 502 }
+      );
+    }
 
-    const data = await response.json();
+    // Try to parse JSON response
+    let data: any;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error(`❌ [API2 Proxy] Non-JSON response from ${fullUrl}:`, text.substring(0, 200));
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid response from backend',
+            status: response.status,
+          },
+          { status: response.status }
+        );
+      }
+    } catch (parseError) {
+      console.error(`❌ [API2 Proxy] Failed to parse response from ${fullUrl}:`, parseError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to parse backend response',
+          status: response.status,
+        },
+        { status: response.status }
+      );
+    }
+
+    // Only log success for non-GET requests to reduce console noise
+    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
+      console.log(`✅ [API2 Proxy] ${method} ${fullUrl} -> ${response.status}`);
+    }
 
     return NextResponse.json(data, {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
+        // Add cache headers for GET requests to reduce duplicate calls
+        ...(method === 'GET' ? {
+          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+        } : {}),
       },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('❌ [API2 Proxy] Unexpected error:', error);
     return NextResponse.json(
       {
         success: false,

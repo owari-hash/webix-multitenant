@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -21,13 +22,16 @@ import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { RouterLink } from 'src/routes/components';
-import FormProvider, { RHFCheckbox, RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import TermsPrivacyDialog from 'src/components/dialog/terms-privacy-dialog';
 
 // ----------------------------------------------------------------------
 
 export default function RegisterCoverView() {
   const theme = useTheme();
   const passwordShow = useBoolean();
+  const termsDialogOpen = useBoolean();
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const RegisterSchema = Yup.object().shape({
     name: Yup.string()
@@ -41,7 +45,6 @@ export default function RegisterCoverView() {
     confirmPassword: Yup.string()
       .required('Нууц үгээ баталгаажуулах шаардлагатай')
       .oneOf([Yup.ref('password')], 'Нууц үг таарахгүй байна'),
-    terms: Yup.boolean().oneOf([true], 'Та үйлчилгээний нөхцөлд зөвшөөрөх ёстой'),
   });
 
   const defaultValues = {
@@ -49,7 +52,6 @@ export default function RegisterCoverView() {
     email: '',
     password: '',
     confirmPassword: '',
-    terms: false,
   };
 
   const methods = useForm({
@@ -63,7 +65,22 @@ export default function RegisterCoverView() {
     formState: { isSubmitting },
   } = methods;
 
+  const handleAcceptTerms = () => {
+    setTermsAccepted(true);
+    termsDialogOpen.onFalse();
+  };
+
+  const handleCancelTerms = () => {
+    setTermsAccepted(false);
+    termsDialogOpen.onFalse();
+  };
+
   const onSubmit = handleSubmit(async (data) => {
+    if (!termsAccepted) {
+      termsDialogOpen.onTrue();
+      return;
+    }
+
     try {
       const response = await fetch('/api2/auth/register', {
         method: 'POST',
@@ -88,6 +105,7 @@ export default function RegisterCoverView() {
           localStorage.setItem('user', JSON.stringify(result.user));
         }
         reset();
+        setTermsAccepted(false);
         if (typeof window !== 'undefined') {
           window.location.href = '/';
         }
@@ -305,98 +323,6 @@ export default function RegisterCoverView() {
                 </Typography>
               </Stack>
 
-              {/* Social Login */}
-              <Stack spacing={2}>
-                <Button
-                  fullWidth
-                  size="large"
-                  variant="outlined"
-                  startIcon={<Iconify icon="logos:google-icon" width={20} />}
-                  sx={{
-                    py: 1.5,
-                    borderRadius: 2,
-                    borderColor: alpha(theme.palette.grey[500], 0.3),
-                    color: 'text.primary',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    bgcolor: alpha(theme.palette.grey[500], 0.04),
-                    '&:hover': {
-                      borderColor: theme.palette.primary.main,
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                >
-                  Google-аар бүртгүүлэх
-                </Button>
-
-                <Stack direction="row" spacing={1.5}>
-                  <Button
-                    fullWidth
-                    size="large"
-                    variant="outlined"
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      borderColor: alpha(theme.palette.grey[500], 0.3),
-                      color: '#1877F2',
-                      bgcolor: alpha('#1877F2', 0.04),
-                      '&:hover': {
-                        borderColor: '#1877F2',
-                        bgcolor: alpha('#1877F2', 0.1),
-                        transform: 'translateY(-2px)',
-                      },
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  >
-                    <Iconify icon="carbon:logo-facebook" width={20} />
-                  </Button>
-
-                  <Button
-                    fullWidth
-                    size="large"
-                    variant="outlined"
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      borderColor: alpha(theme.palette.grey[500], 0.3),
-                      color: 'text.primary',
-                      bgcolor: alpha(theme.palette.grey[500], 0.04),
-                      '&:hover': {
-                        borderColor: theme.palette.grey[800],
-                        bgcolor: alpha(theme.palette.grey[800], 0.08),
-                        transform: 'translateY(-2px)',
-                      },
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  >
-                    <Iconify icon="carbon:logo-github" width={20} />
-                  </Button>
-                </Stack>
-              </Stack>
-
-              <Divider
-                sx={{
-                  '&::before, &::after': {
-                    borderColor: alpha(theme.palette.divider, 0.1),
-                  },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    px: 2,
-                    color: 'text.secondary',
-                    bgcolor: 'background.paper',
-                    fontWeight: 500,
-                  }}
-                >
-                  ЭСВЭЛ
-                </Typography>
-              </Divider>
-
               {/* Register Form */}
               <FormProvider methods={methods} onSubmit={onSubmit}>
                 <Stack spacing={2.5}>
@@ -554,47 +480,47 @@ export default function RegisterCoverView() {
                     }}
                   />
 
-                  <RHFCheckbox
-                    name="terms"
-                    label={
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        }}
-                      >
-                        Би зөвшөөрч байна{' '}
-                        <Link
-                          href="#"
-                          underline="hover"
-                          sx={{
-                            color: 'primary.main',
-                            fontWeight: 600,
-                            '&:hover': {
-                              textDecoration: 'underline',
-                            },
-                          }}
-                        >
-                          Үйлчилгээний нөхцөл
-                        </Link>
-                        {' болон '}
-                        <Link
-                          href="#"
-                          underline="hover"
-                          sx={{
-                            color: 'primary.main',
-                            fontWeight: 600,
-                            '&:hover': {
-                              textDecoration: 'underline',
-                            },
-                          }}
-                        >
-                          Нууцлалын бодлого
-                        </Link>
-                      </Typography>
+                  <Button
+                    fullWidth
+                    variant={termsAccepted ? 'outlined' : 'text'}
+                    color={termsAccepted ? 'success' : 'primary'}
+                    onClick={termsDialogOpen.onTrue}
+                    startIcon={
+                      termsAccepted ? (
+                        <Iconify icon="solar:check-circle-bold" />
+                      ) : (
+                        <Iconify icon="solar:document-text-bold" />
+                      )
                     }
-                  />
+                    sx={{
+                      py: 1.5,
+                      borderRadius: 2,
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      borderColor: termsAccepted ? 'success.main' : 'divider',
+                      bgcolor: termsAccepted
+                        ? alpha(theme.palette.success.main, 0.08)
+                        : 'transparent',
+                      '&:hover': {
+                        bgcolor: termsAccepted
+                          ? alpha(theme.palette.success.main, 0.12)
+                          : alpha(theme.palette.primary.main, 0.08),
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: termsAccepted ? 'success.main' : 'text.secondary',
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        textAlign: 'left',
+                      }}
+                    >
+                      {termsAccepted
+                        ? 'Үйлчилгээний нөхцөл болон Нууцлалын бодлогод зөвшөөрсөн'
+                        : 'Үйлчилгээний нөхцөл болон Нууцлалын бодлого унших'}
+                    </Typography>
+                  </Button>
 
                   <LoadingButton
                     fullWidth
@@ -730,6 +656,13 @@ export default function RegisterCoverView() {
           </Typography>
         </Stack>
       </Box>
+
+      {/* Terms and Privacy Dialog */}
+      <TermsPrivacyDialog
+        open={termsDialogOpen.value}
+        onClose={handleCancelTerms}
+        onAccept={handleAcceptTerms}
+      />
     </Box>
   );
 }

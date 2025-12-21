@@ -196,7 +196,7 @@ export default function CMSDashboardView() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 5, md: 8 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
       <Stack spacing={5}>
         {/* Header */}
         <Stack
@@ -233,6 +233,14 @@ export default function CMSDashboardView() {
               component={RouterLink}
             >
               Романууд
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="carbon:settings" />}
+              href={paths.webtoon.cms.settings}
+              component={RouterLink}
+            >
+              Тохиргоо
             </Button>
             <Button
               variant="contained"

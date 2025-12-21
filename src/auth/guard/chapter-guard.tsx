@@ -15,8 +15,20 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { paths } from 'src/routes/paths';
 import { useAuthContext } from 'src/contexts/auth-context';
 import PremiumPaymentDialog from 'src/components/premium-payment-dialog';
+import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
+
+interface PremiumPlan {
+  name: string;
+  label: string;
+  price: number;
+  duration: number;
+  period: 'month' | 'year';
+  discount?: string;
+  isActive: boolean;
+  order: number;
+}
 
 type Props = {
   children: React.ReactNode;
@@ -27,14 +39,60 @@ export default function ChapterGuard({ children }: Props) {
   const { user, loading, authenticated } = useAuthContext();
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [premiumPlans, setPremiumPlans] = useState<PremiumPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+
+  // Fetch premium plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoadingPlans(true);
+        const response = await backendRequest<{ plans: PremiumPlan[] }>(
+          '/organizations/premium-plans'
+        );
+        if (response.success && response.data?.plans) {
+          setPremiumPlans(response.data.plans);
+        } else {
+          // Fallback to default plan
+          const defaultPlan: PremiumPlan = {
+            name: 'monthly',
+            label: 'Сарын багц',
+            price: 9900,
+            duration: 1,
+            period: 'month',
+            isActive: true,
+            order: 0,
+          };
+          setPremiumPlans([defaultPlan]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch premium plans:', error);
+        // Fallback to default plan
+        const defaultPlan: PremiumPlan = {
+          name: 'monthly',
+          label: 'Сарын багц',
+          price: 9900,
+          duration: 1,
+          period: 'month',
+          isActive: true,
+          order: 0,
+        };
+        setPremiumPlans([defaultPlan]);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !loadingPlans) {
       if (authenticated && !user?.isPremium) {
         setShowPremiumModal(true);
       }
     }
-  }, [loading, authenticated, user]);
+  }, [loading, loadingPlans, authenticated, user]);
 
   if (loading) {
     return (
@@ -119,21 +177,55 @@ export default function ChapterGuard({ children }: Props) {
                   💎 Онцгой контентод хандах
                 </Typography>
               </Box>
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: 'primary.lighter',
-                  borderRadius: 2,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
-                  ₮9,900 / сар
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Эсвэл ₮99,000 / жил (2 сар үнэгүй)
-                </Typography>
-              </Box>
+              {loadingPlans ? (
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : premiumPlans.length > 0 ? (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'primary.lighter',
+                    borderRadius: 2,
+                    textAlign: 'center',
+                  }}
+                >
+                  {premiumPlans
+                    .filter((p) => p.isActive !== false)
+                    .sort((a, b) => (a.order || 0) - (b.order || 0))
+                    .slice(0, 2)
+                    .map((plan, index) => (
+                      <Box key={plan.name} sx={{ mb: index === 0 ? 1 : 0 }}>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
+                          ₮{plan.price.toLocaleString()} / {plan.period === 'month' ? 'сар' : 'жил'}
+                        </Typography>
+                        {plan.discount && (
+                          <Typography variant="caption" color="success.main" sx={{ display: 'block', mb: 0.5 }}>
+                            {plan.discount}
+                          </Typography>
+                        )}
+                        {index === 0 && premiumPlans.length > 1 && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            Эсвэл
+                          </Typography>
+                        )}
+                      </Box>
+                    ))}
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'primary.lighter',
+                    borderRadius: 2,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
+                    Багц ачааллаж байна...
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>

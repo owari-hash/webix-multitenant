@@ -1,3 +1,5 @@
+import React from 'react';
+import { useRouter } from 'next/navigation';
 import Slide from '@mui/material/Slide';
 import Input from '@mui/material/Input';
 import Button from '@mui/material/Button';
@@ -8,6 +10,7 @@ import { Theme, alpha, styled, SxProps } from '@mui/material/styles';
 
 import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
+import { paths } from 'src/routes/paths';
 
 import { HEADER } from '../config-layout';
 
@@ -40,7 +43,23 @@ type SearchbarProps = {
 };
 
 export default function Searchbar({ sx }: SearchbarProps) {
+  const router = useRouter();
   const searchOpen = useBoolean();
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`${paths.webtoon.search}?q=${encodeURIComponent(searchQuery.trim())}`);
+      searchOpen.onFalse();
+      setSearchQuery('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
     <ClickAwayListener onClickAway={searchOpen.onFalse}>
@@ -55,7 +74,10 @@ export default function Searchbar({ sx }: SearchbarProps) {
               autoFocus
               fullWidth
               disableUnderline
-              placeholder="Search…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Комик, роман, бүлэг хайх..."
               startAdornment={
                 <InputAdornment position="start">
                   <Iconify icon="carbon:search" sx={{ color: 'text.disabled' }} />
@@ -63,8 +85,8 @@ export default function Searchbar({ sx }: SearchbarProps) {
               }
               sx={{ mr: 1, fontWeight: 'fontWeightBold' }}
             />
-            <Button variant="contained" onClick={searchOpen.onFalse}>
-              Search
+            <Button variant="contained" onClick={handleSearch}>
+              Хайх
             </Button>
           </StyledSearchbar>
         </Slide>

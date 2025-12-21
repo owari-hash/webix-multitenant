@@ -37,10 +37,27 @@ export default function QPayPaymentStatus({
   const [polling, setPolling] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingRef = useRef(false);
+  const statusRef = useRef<'PENDING' | 'PAID' | 'CANCELLED'>(invoice?.status || 'PENDING');
+
+  // Update statusRef whenever status changes
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   // Poll payment status every 3 seconds if pending
   useEffect(() => {
     if (!invoice) {
+      return;
+    }
+
+    // Stop polling if status is already PAID or CANCELLED
+    if (status === 'PAID' || status === 'CANCELLED') {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      isPollingRef.current = false;
+      setPolling(false);
       return;
     }
 
@@ -50,8 +67,22 @@ export default function QPayPaymentStatus({
 
       intervalRef.current = setInterval(async () => {
         try {
+          // Check current status before making API call using ref
+          if (statusRef.current === 'PAID' || statusRef.current === 'CANCELLED') {
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            isPollingRef.current = false;
+            setPolling(false);
+            return;
+          }
+
           const result = await qpayApi.checkPayment(invoice.invoice_id);
-          if (result.status === 'PAID') {
+          const newStatus = result.status || result.payment_status;
+          
+          if (newStatus === 'PAID' || newStatus === 'paid') {
+            statusRef.current = 'PAID';
             setStatus('PAID');
             setPolling(false);
             isPollingRef.current = false;
@@ -64,7 +95,8 @@ export default function QPayPaymentStatus({
             if (onPaymentComplete) {
               await onPaymentComplete();
             }
-          } else if (result.status === 'CANCELLED') {
+          } else if (newStatus === 'CANCELLED' || newStatus === 'cancelled') {
+            statusRef.current = 'CANCELLED';
             setStatus('CANCELLED');
             setPolling(false);
             isPollingRef.current = false;

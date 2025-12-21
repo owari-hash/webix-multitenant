@@ -19,7 +19,7 @@ export const pageLinks = [
   },
   {
     order: '2',
-    subheader: 'Хувийн кабинет',
+    subheader: 'Хувийн мэдээлэл',
     cover: '/assets/images/menu/menu_career.jpg',
     items: [
       { title: 'Миний профайл', path: paths.profile.root },

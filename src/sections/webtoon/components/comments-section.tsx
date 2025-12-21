@@ -665,7 +665,11 @@ export default function CommentsSection({
                     <Box sx={{ flex: 1 }}>
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
                         <Typography variant="subtitle2">
-                          {comment.author?.name || 'Нэргүй хэрэглэгч'}
+                          {comment.author?.name || 
+                           comment.author?.displayName || 
+                           comment.author?.username || 
+                           comment.author?.email?.split('@')[0] || 
+                           'Нэргүй хэрэглэгч'}
                         </Typography>
                         {comment.isEdited && (
                           <Typography variant="caption" color="text.secondary">
@@ -863,7 +867,11 @@ export default function CommentsSection({
                                         sx={{ mb: 0.5 }}
                                       >
                                         <Typography variant="caption" fontWeight={600}>
-                                          {reply.author?.name || 'Нэргүй хэрэглэгч'}
+                                          {reply.author?.name || 
+                                           reply.author?.displayName || 
+                                           reply.author?.username || 
+                                           reply.author?.email?.split('@')[0] || 
+                                           'Нэргүй хэрэглэгч'}
                                         </Typography>
                                         {reply.isEdited && (
                                           <Typography variant="caption" color="text.secondary">

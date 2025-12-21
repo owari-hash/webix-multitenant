@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, type ChangeEvent, type SyntheticEvent } from 'react';
+import { useState, useEffect, type ChangeEvent, type SyntheticEvent } from 'react';
 
 import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
@@ -24,21 +22,34 @@ import { useAuthContext } from 'src/contexts/auth-context';
 import { useSnackbar } from 'src/components/snackbar';
 import { qpayApi, InvoiceResponse } from 'src/utils/qpay-api';
 import QPayPaymentStatus from 'src/sections/payment/qpay-payment-status';
+import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
 
-type PlanType = 'monthly' | 'yearly';
 type PaymentMethod = 'card' | 'qpay' | 'bank';
+
+interface PremiumPlan {
+  name: string;
+  label: string;
+  price: number;
+  duration: number;
+  period: 'month' | 'year';
+  discount?: string;
+  isActive: boolean;
+  order: number;
+}
 
 export default function PremiumPaymentView() {
   const theme = useTheme();
   const router = useRouter();
   const { user, authenticated, checkUser } = useAuthContext();
   const { enqueueSnackbar } = useSnackbar();
-  const [plan, setPlan] = useState<PlanType>('monthly');
+  const [plans, setPlans] = useState<PremiumPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qpay');
   const [processing, setProcessing] = useState(false);
   const [qpayInvoice, setQpayInvoice] = useState<InvoiceResponse | null>(null);
+  const [loadingPlans, setLoadingPlans] = useState(true);
 
   // Card details
   const [cardNumber, setCardNumber] = useState('');
@@ -46,13 +57,50 @@ export default function PremiumPaymentView() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
 
-  const planDetails: Record<PlanType, { price: number; label: string; period: string; discount?: string }> = {
-    monthly: { price: 200, label: 'Сарын багц', period: 'сар' },
-    yearly: { price: 2000, label: 'Жилийн багц', period: 'жил', discount: '2 сар үнэгүй' },
-  } as const;
+  // Fetch premium plans on mount
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoadingPlans(true);
+        console.log('Fetching premium plans...');
+        const response = await backendRequest<{ plans: PremiumPlan[] }>(
+          '/organizations/premium-plans'
+        );
+        console.log('Premium plans response:', response);
 
-  // Type-safe helper to get plan details
-  const getPlanDetails = (planKey: PlanType) => planDetails[planKey];
+        if (response.success && response.data?.plans && Array.isArray(response.data.plans)) {
+          const activePlans = response.data.plans
+            .filter((p) => p.isActive !== false)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+          console.log('Active premium plans:', activePlans);
+
+          if (activePlans.length > 0) {
+            setPlans(activePlans);
+            setSelectedPlan(activePlans[0].name);
+          } else {
+            console.warn('No active plans found');
+            setPlans([]);
+          }
+        } else {
+          console.warn('Invalid response format or no plans:', response);
+          setPlans([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch premium plans:', error);
+        setPlans([]);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+  // Get selected plan details
+  const getSelectedPlanDetails = () => {
+    return plans.find((p) => p.name === selectedPlan) || plans[0];
+  };
 
   const handlePayment = async () => {
     if (!authenticated) {
@@ -60,16 +108,28 @@ export default function PremiumPaymentView() {
       return;
     }
 
+    if (!selectedPlan) {
+      enqueueSnackbar('Багц сонгоно уу!', { variant: 'warning' });
+      return;
+    }
+
     // If QPay, create invoice
     if (paymentMethod === 'qpay') {
       setProcessing(true);
       try {
-        const currentPlan = getPlanDetails(plan);
+        const currentPlan = getSelectedPlanDetails();
+        if (!currentPlan) {
+          enqueueSnackbar('Багц сонгоно уу!', { variant: 'warning' });
+          setProcessing(false);
+          return;
+        }
         const invoiceData = {
           amount: currentPlan.price,
           currency: 'MNT',
-          description: `Premium ${currentPlan.label} - ${user?.email || ''}`,
-          sender_invoice_no: `PREMIUM-${plan}-${Date.now()}`,
+          description: `Premium ${currentPlan.label} - ${currentPlan.duration} ${
+            currentPlan.period === 'month' ? 'сар' : 'жил'
+          } - ${user?.email || ''}`,
+          sender_invoice_no: `PREMIUM-${currentPlan.name}-${Date.now()}`,
         };
 
         const result = await qpayApi.createInvoice(invoiceData);
@@ -160,7 +220,7 @@ export default function PremiumPaymentView() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const token = localStorage.getItem('token');
-      const currentPlan = getPlanDetails(plan);
+      const currentPlan = getSelectedPlanDetails();
       const response = await fetch('/api2/payment/premium', {
         method: 'POST',
         headers: {
@@ -168,7 +228,7 @@ export default function PremiumPaymentView() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          plan,
+          plan: currentPlan.name,
           paymentMethod,
           amount: currentPlan.price,
           ...(paymentMethod === 'card' && {
@@ -205,7 +265,7 @@ export default function PremiumPaymentView() {
     try {
       // Update premium status on backend
       const token = localStorage.getItem('token');
-      const currentPlan = getPlanDetails(plan);
+      const currentPlan = getSelectedPlanDetails();
       const response = await fetch('/api2/payment/premium', {
         method: 'POST',
         headers: {
@@ -213,7 +273,7 @@ export default function PremiumPaymentView() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          plan,
+          plan: currentPlan.name,
           paymentMethod: 'qpay',
           amount: currentPlan.price,
           invoiceId: qpayInvoice?.invoice_id,
@@ -225,12 +285,16 @@ export default function PremiumPaymentView() {
       if (result.success) {
         // Refresh user data to update premium status
         await checkUser();
-        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', { variant: 'success' });
+        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', {
+          variant: 'success',
+        });
         setTimeout(() => {
           router.push('/webtoon');
         }, 2000);
       } else {
-        enqueueSnackbar(result.message || 'Premium эрх шинэчлэхэд алдаа гарлаа', { variant: 'error' });
+        enqueueSnackbar(result.message || 'Premium эрх шинэчлэхэд алдаа гарлаа', {
+          variant: 'error',
+        });
       }
     } catch (error) {
       console.error('Premium status update error:', error);
@@ -281,7 +345,7 @@ export default function PremiumPaymentView() {
             { icon: 'mdi:advertisements-off', text: 'Зар сурталчилгаагүй' },
             { icon: 'mdi:diamond-stone', text: 'Онцгой контентод хандах' },
             { icon: 'mdi:download', text: 'Оффлайн уншихаар татах' },
-            { icon: 'mdi:quality-high', text: 'HD чанарын зураг' },
+            { icon: 'mdi:quality-high', text: 'HD зураг' },
           ].map((benefit, index) => (
             <Stack key={index} direction="row" spacing={2} alignItems="center">
               <Iconify icon={benefit.icon} width={28} sx={{ color: 'primary.main' }} />
@@ -306,45 +370,87 @@ export default function PremiumPaymentView() {
             <Typography variant="h6" sx={{ mb: 2 }}>
               Багц сонгох
             </Typography>
-            <Tabs value={plan} onChange={(_: SyntheticEvent, value: PlanType) => setPlan(value)} sx={{ mb: 3 }}>
-              <Tab label="Сарын" value="monthly" />
-              <Tab label="Жилийн" value="yearly" />
-            </Tabs>
-
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.08),
-                border: `2px solid ${theme.palette.primary.main}`,
-              }}
-            >
-              {(() => {
-                const currentPlan = getPlanDetails(plan);
-                return (
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                        {currentPlan.label}
-                      </Typography>
-                      {plan === 'yearly' && currentPlan.discount && (
-                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                          ✨ {currentPlan.discount}
-                        </Typography>
-                      )}
-                    </Box>
-                    <Box sx={{ textAlign: 'right' }}>
-                      <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                        ₮{currentPlan.price.toLocaleString()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        / {currentPlan.period}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                );
-              })()}
-            </Box>
+            {loadingPlans ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Багцууд ачааллаж байна...
+                </Typography>
+              </Box>
+            ) : plans.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body2" color="error">
+                  Багц олдсонгүй
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={2}>
+                {plans
+                  .filter((plan) => plan.isActive !== false)
+                  .sort((a, b) => (a.order || 0) - (b.order || 0))
+                  .map((planOption) => {
+                    const isSelected = selectedPlan === planOption.name;
+                    return (
+                      <Box
+                        key={planOption.name}
+                        onClick={() => setSelectedPlan(planOption.name)}
+                        sx={{
+                          p: 3,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          border: `2px solid ${
+                            isSelected
+                              ? theme.palette.primary.main
+                              : alpha(theme.palette.divider, 0.2)
+                          }`,
+                          bgcolor: isSelected
+                            ? alpha(theme.palette.primary.main, 0.08)
+                            : 'transparent',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            bgcolor: alpha(theme.palette.primary.main, 0.04),
+                          },
+                        }}
+                      >
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                              {planOption.label}
+                            </Typography>
+                            {planOption.discount && (
+                              <Typography
+                                variant="caption"
+                                color="success.main"
+                                sx={{ fontWeight: 600 }}
+                              >
+                                ✨ {planOption.discount}
+                              </Typography>
+                            )}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: 'block', mt: 0.5 }}
+                            >
+                              {planOption.duration} {planOption.period === 'month' ? 'сар' : 'жил'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant="h5"
+                              sx={{ fontWeight: 700, color: 'primary.main' }}
+                            >
+                              ₮{planOption.price.toLocaleString()}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              / {planOption.period === 'month' ? 'сар' : 'жил'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+              </Stack>
+            )}
           </Card>
 
           {/* Payment Method */}
@@ -354,7 +460,9 @@ export default function PremiumPaymentView() {
             </Typography>
             <RadioGroup
               value={paymentMethod}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setPaymentMethod(e.target.value as PaymentMethod)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setPaymentMethod(e.target.value as PaymentMethod)
+              }
             >
               <Stack spacing={2}>
                 <FormControlLabel
@@ -440,7 +548,9 @@ export default function PremiumPaymentView() {
                   label="Картын эзэмшигчийн нэр"
                   placeholder="JOHN DOE"
                   value={cardName}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setCardName(e.target.value.toUpperCase())}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setCardName(e.target.value.toUpperCase())
+                  }
                 />
                 <Stack direction="row" spacing={2}>
                   <TextField
@@ -544,7 +654,8 @@ export default function PremiumPaymentView() {
 
           <Stack spacing={2} divider={<Divider />}>
             {(() => {
-              const currentPlan = getPlanDetails(plan);
+              const currentPlan = getSelectedPlanDetails();
+              if (!currentPlan) return null;
               return (
                 <>
                   <Box>
