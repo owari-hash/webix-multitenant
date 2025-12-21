@@ -53,7 +53,7 @@ export default function NovelsBrowseView() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [, setTotal] = useState(0);
   const limit = 20;
 
   // Set category from URL parameter on mount

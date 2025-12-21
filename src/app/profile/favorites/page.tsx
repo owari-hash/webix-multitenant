@@ -55,10 +55,10 @@ export default function FavoritesPage() {
           pages?: number;
         }>(`/webtoon/user/favorites?page=${page}&limit=20`);
 
-        if (response.success && response.favorites) {
-          setFavorites(response.favorites);
-          setTotal(response.total || 0);
-          setTotalPages(response.pages || 1);
+        if (response.success && response.data) {
+          setFavorites(response.data.favorites || []);
+          setTotal(response.data.total || 0);
+          setTotalPages(response.data.pages || 1);
         } else {
           setFavorites([]);
         }
@@ -148,11 +148,12 @@ export default function FavoritesPage() {
         </Button>
       </Stack>
 
-      {loading ? (
+      {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress size={48} />
         </Box>
-      ) : favorites.length === 0 ? (
+      )}
+      {!loading && favorites.length === 0 && (
         <Box
           sx={{
             textAlign: 'center',
@@ -179,7 +180,8 @@ export default function FavoritesPage() {
             Комик хайх
           </Button>
         </Box>
-      ) : (
+      )}
+      {!loading && favorites.length > 0 && (
         <>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Нийт <strong>{total}</strong> дуртай зүйл олдлоо

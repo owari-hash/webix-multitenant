@@ -23,7 +23,7 @@ const LicenseExpiredPage = () => {
       const response = await backendRequest('/organizations/license');
 
       if (response.success && response.data?.subscription) {
-        const subscription = response.data.subscription;
+        const { subscription } = response.data;
         const isActive =
           subscription.status === 'active' &&
           (!subscription.endDate || new Date(subscription.endDate) > new Date());
@@ -31,7 +31,6 @@ const LicenseExpiredPage = () => {
         if (isActive) {
           // License is now active, redirect to home
           window.location.href = '/';
-          return;
         }
       }
     } catch (error) {
@@ -384,7 +383,9 @@ const LicenseExpiredPage = () => {
                 color="inherit"
                 size="small"
                 fullWidth
-                onClick={() => (window.location.href = '/')}
+                onClick={() => {
+                  window.location.href = '/';
+                }}
                 sx={{
                   borderRadius: 1.5,
                   py: { xs: 1, sm: 1.125 },

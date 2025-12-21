@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { backendRequest } from 'src/utils/backend-api';
 
@@ -31,7 +31,7 @@ export default function LicenseGuard({ children }: Props) {
         const response = await backendRequest('/organizations/license');
         
         if (response.success && response.data?.subscription) {
-          const subscription = response.data.subscription;
+          const { subscription } = response.data;
           const isActive =
             subscription.status === 'active' &&
             (!subscription.endDate || new Date(subscription.endDate) > new Date());
@@ -39,7 +39,6 @@ export default function LicenseGuard({ children }: Props) {
           if (!isActive) {
             // License is expired, redirect to license-expired page
             window.location.href = '/license-expired';
-            return;
           }
         }
       } catch (error: any) {

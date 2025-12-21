@@ -20,7 +20,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import Iconify from 'src/components/iconify';
 import { paths } from 'src/routes/paths';
 import { backendRequest } from 'src/utils/backend-api';
-import { fDate, fToNow } from 'src/utils/format-time';
+import { fToNow } from 'src/utils/format-time';
 import { isAuthenticated } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
@@ -59,10 +59,10 @@ export default function HistoryPage() {
           pages?: number;
         }>(`/webtoon/user/history?page=${page}&limit=20`);
 
-        if (response.success && response.history) {
-          setHistory(response.history);
-          setTotal(response.total || 0);
-          setTotalPages(response.pages || 1);
+        if (response.success && response.data) {
+          setHistory(response.data.history || []);
+          setTotal(response.data.total || 0);
+          setTotalPages(response.data.pages || 1);
         } else {
           setHistory([]);
         }
@@ -155,11 +155,12 @@ export default function HistoryPage() {
         </Button>
       </Stack>
 
-      {loading ? (
+      {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress size={48} />
         </Box>
-      ) : history.length === 0 ? (
+      )}
+      {!loading && history.length === 0 && (
         <Box
           sx={{
             textAlign: 'center',
@@ -167,11 +168,7 @@ export default function HistoryPage() {
             px: 2,
           }}
         >
-          <Iconify
-            icon="solar:history-bold"
-            width={80}
-            sx={{ color: 'text.disabled', mb: 2 }}
-          />
+          <Iconify icon="solar:history-bold" width={80} sx={{ color: 'text.disabled', mb: 2 }} />
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
             Уншсан түүх байхгүй
           </Typography>
@@ -186,7 +183,8 @@ export default function HistoryPage() {
             Комик хайх
           </Button>
         </Box>
-      ) : (
+      )}
+      {!loading && history.length > 0 && (
         <>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Нийт <strong>{total}</strong> уншсан зүйл олдлоо
@@ -207,10 +205,7 @@ export default function HistoryPage() {
                     },
                   }}
                 >
-                  <Box
-                    onClick={() => router.push(getItemLink(item))}
-                    sx={{ position: 'relative' }}
-                  >
+                  <Box onClick={() => router.push(getItemLink(item))} sx={{ position: 'relative' }}>
                     <Box
                       component="img"
                       src={getItemCover(item) || '/assets/images/placeholder.jpg'}
@@ -286,11 +281,20 @@ export default function HistoryPage() {
 
                     {item.progress > 0 && (
                       <Box sx={{ mb: 1.5 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{ mb: 0.5 }}
+                        >
                           <Typography variant="caption" color="text.secondary">
                             Уншсан хувь
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontWeight: 600 }}
+                          >
                             {item.progress}%
                           </Typography>
                         </Stack>
@@ -307,7 +311,11 @@ export default function HistoryPage() {
                     )}
 
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <Iconify icon="solar:clock-circle-bold" width={16} sx={{ color: 'text.secondary' }} />
+                      <Iconify
+                        icon="solar:clock-circle-bold"
+                        width={16}
+                        sx={{ color: 'text.secondary' }}
+                      />
                       <Typography variant="caption" color="text.secondary">
                         {fToNow(item.lastReadAt)}
                       </Typography>
@@ -334,4 +342,3 @@ export default function HistoryPage() {
     </Container>
   );
 }
-

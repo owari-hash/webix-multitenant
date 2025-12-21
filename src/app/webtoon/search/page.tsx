@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -21,7 +21,6 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
-import { fDate } from 'src/utils/format-time';
 import { backendRequest } from 'src/utils/backend-api';
 
 // ----------------------------------------------------------------------
@@ -71,55 +70,45 @@ export default function SearchPage() {
     novelChapters: 0,
   });
 
-  const performSearch = useCallback(
-    async (searchQuery: string, type: string = 'all') => {
-      if (!searchQuery.trim()) {
-        setResults([]);
-        setHasSearched(false);
-        setTotal(0);
-        return;
-      }
+  const performSearch = useCallback(async (searchQuery: string, type: string = 'all') => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      setHasSearched(false);
+      setTotal(0);
+      return;
+    }
 
-      console.log('🚀 Performing search:', { searchQuery, type });
-      setLoading(true);
-      setHasSearched(true);
+    console.log('🚀 Performing search:', { searchQuery, type });
+    setLoading(true);
+    setHasSearched(true);
 
-      try {
-        const response = await backendRequest<{
-          results?: SearchResult[];
-          total?: number;
-          breakdown?: {
-            comics: number;
-            novels: number;
-            chapters: number;
-            novelChapters: number;
-          };
-        }>(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${type}&limit=50`);
+    try {
+      const response = await backendRequest<{
+        results?: SearchResult[];
+        total?: number;
+        breakdown?: {
+          comics: number;
+          novels: number;
+          chapters: number;
+          novelChapters: number;
+        };
+      }>(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${type}&limit=50`);
 
-        console.log('✅ Search response:', response);
+      console.log('✅ Search response:', response);
 
-        if (response.success && response.results) {
-          setResults(response.results || []);
-          setTotal(response.total || 0);
-          setBreakdown(response.breakdown || {
+      if (response.success && response.data) {
+        setResults(response.data.results || []);
+        setTotal(response.data.total || 0);
+        setBreakdown(
+          response.data.breakdown || {
             comics: 0,
             novels: 0,
             chapters: 0,
             novelChapters: 0,
-          });
-        } else {
-          console.warn('⚠️ Search failed:', response);
-          setResults([]);
-          setTotal(0);
-          setBreakdown({
-            comics: 0,
-            novels: 0,
-            chapters: 0,
-            novelChapters: 0,
-          });
-        }
-      } catch (error) {
-        console.error('❌ Search error:', error);
+          }
+        );
+      } else {
+        console.warn('⚠️ Search failed:', response);
         setResults([]);
         setTotal(0);
         setBreakdown({
@@ -128,12 +117,21 @@ export default function SearchPage() {
           chapters: 0,
           novelChapters: 0,
         });
-      } finally {
-        setLoading(false);
       }
-    },
-    []
-  );
+    } catch (error) {
+      console.error('❌ Search error:', error);
+      setResults([]);
+      setTotal(0);
+      setBreakdown({
+        comics: 0,
+        novels: 0,
+        chapters: 0,
+        novelChapters: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Perform search when query changes from URL (only on initial load or URL change)
   useEffect(() => {
@@ -182,7 +180,7 @@ export default function SearchPage() {
       window.history.pushState({}, '', newUrl);
     }, 500); // 500ms debounce delay
 
-    return () => {
+    return (): void => {
       console.log('🧹 Cleaning up timeout');
       clearTimeout(timeoutId);
     };
@@ -491,13 +489,11 @@ export default function SearchPage() {
                               label={getStatusLabel(result.status)}
                               size="small"
                               variant="outlined"
-                              color={
-                                result.status === 'completed'
-                                  ? 'success'
-                                  : result.status === 'ongoing'
-                                  ? 'primary'
-                                  : 'default'
-                              }
+                              color={(() => {
+                                if (result.status === 'completed') return 'success';
+                                if (result.status === 'ongoing') return 'primary';
+                                return 'default';
+                              })()}
                             />
                           )}
                           {result.views !== undefined && (
@@ -541,7 +537,7 @@ export default function SearchPage() {
                 Үр дүн олдсонгүй
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                "{query}" хайлтад тохирох зүйл олдсонгүй. Өөр үг ашиглаж үзнэ үү.
+                &quot;{query}&quot; хайлтад тохирох зүйл олдсонгүй. Өөр үг ашиглаж үзнэ үү.
               </Typography>
             </Box>
           )}
@@ -572,4 +568,3 @@ export default function SearchPage() {
     </Container>
   );
 }
-

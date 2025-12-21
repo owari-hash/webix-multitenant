@@ -36,6 +36,8 @@ interface Comment {
     name: string;
     email: string;
     avatar?: string;
+    displayName?: string;
+    username?: string;
   } | null;
   likes: number;
   unLikes?: number;
@@ -868,8 +870,6 @@ export default function CommentsSection({
                                       >
                                         <Typography variant="caption" fontWeight={600}>
                                           {reply.author?.name || 
-                                           reply.author?.displayName || 
-                                           reply.author?.username || 
                                            reply.author?.email?.split('@')[0] || 
                                            'Нэргүй хэрэглэгч'}
                                         </Typography>

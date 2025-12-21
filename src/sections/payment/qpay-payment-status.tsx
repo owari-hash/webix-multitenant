@@ -79,9 +79,10 @@ export default function QPayPaymentStatus({
           }
 
           const result = await qpayApi.checkPayment(invoice.invoice_id);
-          const newStatus = result.status || result.payment_status;
-          
-          if (newStatus === 'PAID' || newStatus === 'paid') {
+          const newStatus = (result.status || result.payment_status || '') as string;
+          const statusUpper = newStatus.toUpperCase();
+
+          if (statusUpper === 'PAID') {
             statusRef.current = 'PAID';
             setStatus('PAID');
             setPolling(false);
@@ -95,7 +96,7 @@ export default function QPayPaymentStatus({
             if (onPaymentComplete) {
               await onPaymentComplete();
             }
-          } else if (newStatus === 'CANCELLED' || newStatus === 'cancelled') {
+          } else if (statusUpper === 'CANCELLED') {
             statusRef.current = 'CANCELLED';
             setStatus('CANCELLED');
             setPolling(false);

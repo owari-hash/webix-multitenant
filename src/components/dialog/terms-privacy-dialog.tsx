@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -122,7 +122,7 @@ export default function TermsPrivacyDialog({ open, onClose, onAccept }: Props) {
                   </Typography>
                   <Typography variant="body1" sx={{ textAlign: 'justify' }}>
                     Манай компани нь үйлчилгээний чанар, найдвартай байдал, эсвэл үйлчилгээний
-                    тасралтгүй байдлыг баталгаажуулахгүй. Манай үйлчилгээг "ямар ч баталгаагүй"
+                    тасралтгүй байдлыг баталгаажуулахгүй. Манай үйлчилгээг &quot;ямар ч баталгаагүй&quot;
                     байдлаар өгч байна.
                   </Typography>
                   <Typography variant="body1" sx={{ textAlign: 'justify' }}>
@@ -192,8 +192,8 @@ export default function TermsPrivacyDialog({ open, onClose, onAccept }: Props) {
                 }}
               >
                 <Typography variant="body2" sx={{ textAlign: 'justify', fontWeight: 500 }}>
-                  Дээрх бүх нөхцөлийг уншиж, ойлгосны дараа л "Зөвшөөрч байна" товчийг дараарай.
-                  Хэрэв та эдгээр нөхцөлд зөвшөөрөхгүй бол "Цуцлах" товчийг дараад бүртгэл
+                  Дээрх бүх нөхцөлийг уншиж, ойлгосны дараа л &quot;Зөвшөөрч байна&quot; товчийг дараарай.
+                  Хэрэв та эдгээр нөхцөлд зөвшөөрөхгүй бол &quot;Цуцлах&quot; товчийг дараад бүртгэл
                   үүсгэхгүй байх хэрэгтэй.
                 </Typography>
               </Box>

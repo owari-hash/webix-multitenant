@@ -7,8 +7,8 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
+import { uploadImageFile } from 'src/utils/image-upload';
 import Iconify from '../iconify';
-import { uploadImageFile, uploadBase64AsFile } from 'src/utils/image-upload';
 
 // ----------------------------------------------------------------------
 

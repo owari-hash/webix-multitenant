@@ -16,11 +16,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
-import { RouterLink } from 'src/routes/components';
-import CommentsSection from '../components/comments-section';
-import { backendRequest } from 'src/utils/backend-api';
 import { isAuthenticated } from 'src/utils/auth';
+import { RouterLink } from 'src/routes/components';
 import { useSnackbar } from 'src/components/snackbar';
+import { backendRequest } from 'src/utils/backend-api';
+import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
 
@@ -407,11 +407,11 @@ export default function WebtoonComicDetailView({ comicId }: Props) {
                       },
                     }}
                   >
-                    {favoriteLoading
-                      ? 'Хүлээгдэж байна...'
-                      : isFavorite
-                      ? 'Дуртай'
-                      : 'Дуртайд нэмэх'}
+                    {(() => {
+                      if (favoriteLoading) return 'Хүлээгдэж байна...';
+                      if (isFavorite) return 'Дуртай';
+                      return 'Дуртайд нэмэх';
+                    })()}
                   </Button>
                 </Stack>
               </Stack>

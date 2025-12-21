@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, type ChangeEvent, type SyntheticEvent } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -98,9 +98,7 @@ export default function PremiumPaymentView() {
   }, []);
 
   // Get selected plan details
-  const getSelectedPlanDetails = () => {
-    return plans.find((p) => p.name === selectedPlan) || plans[0];
-  };
+  const getSelectedPlanDetails = () => plans.find((p) => p.name === selectedPlan) || plans[0];
 
   const handlePayment = async () => {
     if (!authenticated) {
@@ -370,19 +368,21 @@ export default function PremiumPaymentView() {
             <Typography variant="h6" sx={{ mb: 2 }}>
               Багц сонгох
             </Typography>
-            {loadingPlans ? (
+            {loadingPlans && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body2" color="text.secondary">
                   Багцууд ачааллаж байна...
                 </Typography>
               </Box>
-            ) : plans.length === 0 ? (
+            )}
+            {!loadingPlans && plans.length === 0 && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body2" color="error">
                   Багц олдсонгүй
                 </Typography>
               </Box>
-            ) : (
+            )}
+            {!loadingPlans && plans.length > 0 && (
               <Stack spacing={2}>
                 {plans
                   .filter((plan) => plan.isActive !== false)

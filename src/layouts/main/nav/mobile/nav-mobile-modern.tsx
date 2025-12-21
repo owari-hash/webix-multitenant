@@ -22,7 +22,7 @@ import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import { RouterLink } from 'src/routes/components';
 import { paths } from 'src/routes/paths';
-import { getUser, isAuthenticated, logout } from 'src/utils/auth';
+import { logout, getUser, isAuthenticated } from 'src/utils/auth';
 import NotificationsPopover from '../../../common/notifications-popover';
 
 // ----------------------------------------------------------------------

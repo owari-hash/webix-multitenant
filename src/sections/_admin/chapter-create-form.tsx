@@ -111,7 +111,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
   }, [nextChapterNumber, setValue]);
 
   // Batch upload for large payloads
-  const uploadInBatches = async (data: any, images: string[], batchSize: number = 10) => {
+  const uploadInBatches = async (data: any, images: string[], batchSize: number = 5) => {
     setUploadingBatch(true);
     const batches = [];
 
@@ -141,11 +141,12 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
       ): Promise<Response> => {
         let lastError: any;
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 120000);
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // Reduced to 30s to prevent hangs
 
+            // eslint-disable-next-line no-await-in-loop
             const response = await fetch(url, {
               ...options,
               signal: controller.signal,
@@ -169,11 +170,13 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
               error?.code === 'UND_ERR_CONNECT_TIMEOUT';
 
             if (isRetryable && attempt < maxRetries) {
-              const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff: 1s, 2s, 4s (max 10s)
+              const delay = Math.min(1000 * 2 ** (attempt - 1), 10000); // Exponential backoff: 1s, 2s, 4s (max 10s)
               console.log(
                 `🔄 [Batch Upload] Retry attempt ${attempt}/${maxRetries} after ${delay}ms...`
               );
+              // eslint-disable-next-line no-await-in-loop
               await new Promise((resolve) => setTimeout(resolve, delay));
+              // eslint-disable-next-line no-continue
               continue;
             }
 
@@ -269,11 +272,12 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           ): Promise<Response> => {
             let lastError: any;
 
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
               try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout - fail fast
 
+                // eslint-disable-next-line no-await-in-loop
                 const response = await fetch(url, {
                   ...options,
                   signal: controller.signal,
@@ -285,7 +289,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                 lastError = error;
 
                 if (error?.name === 'AbortError') {
-                  throw new Error(`Batch ${i + 1} timeout (60s)`);
+                  throw new Error(`Batch ${i + 1} timeout (15s)`);
                 }
 
                 const isRetryable =
@@ -294,13 +298,15 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                   error?.message?.includes('network');
 
                 if (isRetryable && attempt < maxRetries) {
-                  const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // 1s, 2s (max 5s)
+                  const delay = Math.min(1000 * 2 ** (attempt - 1), 5000); // 1s, 2s (max 5s)
                   console.log(
                     `🔄 [Chapter Update] Batch ${
                       i + 1
                     } retry ${attempt}/${maxRetries} after ${delay}ms...`
                   );
+                  // eslint-disable-next-line no-await-in-loop
                   await new Promise((resolve) => setTimeout(resolve, delay));
+                  // eslint-disable-next-line no-continue
                   continue;
                 }
 
@@ -313,6 +319,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
 
           let batchResponse: Response;
           try {
+            // eslint-disable-next-line no-await-in-loop
             batchResponse = await fetchBatchWithRetry(`/api2/webtoon/chapter/${chapterId}`, {
               method: 'PATCH',
               headers: {
@@ -323,7 +330,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
             });
           } catch (fetchError: any) {
             if (fetchError?.name === 'AbortError') {
-              throw new Error(`Batch ${i + 1} timeout (120s)`);
+              throw new Error(`Batch ${i + 1} timeout (15s)`);
             }
             console.error(
               `❌ [Chapter Update] Batch ${i + 1} fetch error after retries:`,
@@ -335,8 +342,10 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           // eslint-disable-next-line no-await-in-loop
           let batchResult: any;
           try {
+            // eslint-disable-next-line no-await-in-loop
             batchResult = await batchResponse.json();
           } catch (jsonError) {
+            // eslint-disable-next-line no-await-in-loop
             const errorText = await batchResponse.text().catch(() => 'Unknown error');
             console.error(`❌ [Chapter Update] Batch ${i + 1} JSON parse error:`, errorText);
             throw new Error(`Invalid response: ${batchResponse.status}`);
@@ -350,11 +359,15 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           }
         } catch (error: any) {
           if (error?.name === 'AbortError' || error?.message?.includes('timeout')) {
-            console.error(`⏱️ [Chapter Update] Batch ${i + 1} timeout`);
+            console.error(`⏱️ [Chapter Update] Batch ${i + 1} timeout - skipping`);
           } else {
-            console.error(`❌ [Chapter Update] Batch ${i + 1} error:`, error?.message || error);
+            console.error(
+              `❌ [Chapter Update] Batch ${i + 1} error - skipping:`,
+              error?.message || error
+            );
           }
           failedBatches += 1;
+          // Continue with next batch instead of stopping
         }
 
         setBatchProgress({ current: i + 1, total: batches.length });
@@ -452,7 +465,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
           console.log(
             `📦 [Auto] Using batch upload for ${validImages.length} images (~${payloadMB}MB)`
           );
-          await uploadInBatches(data, validImages, 10); // Smaller batch size: 10 instead of 15
+          await uploadInBatches(data, validImages, 5); // Very small batch size to prevent hangs: 10 instead of 15
           return;
         }
 
@@ -469,7 +482,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
         );
 
         if (useBatch) {
-          await uploadInBatches(data, validImages, 10); // Smaller batch size
+          await uploadInBatches(data, validImages, 5); // Very small batch size to prevent hangs
           return;
         }
       }
@@ -486,7 +499,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // Reduced to 30s to prevent hangs // 2 minute timeout
 
       const response = await fetch(`/api2/webtoon/comic/${comicId}/chapter`, {
         method: 'POST',
@@ -789,7 +802,7 @@ export default function ChapterCreateForm({ comicId, comicTitle }: Props) {
                     variant="caption"
                     sx={{ color: 'text.secondary', fontStyle: 'italic' }}
                   >
-                    💡 Хаалгыг бүү хаа, upload дуустал хүлээнэ үү
+                    Upload дуустал хүлээнэ үү
                   </Typography>
                 </Stack>
               </Card>

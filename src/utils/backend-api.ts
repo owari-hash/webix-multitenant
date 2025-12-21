@@ -62,6 +62,7 @@ export interface BackendResponse<T = any> {
   collections?: string[];
   timestamp?: string;
   error?: string;
+  code?: string;
   data?: T;
 }
 

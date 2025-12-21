@@ -1,4 +1,4 @@
-import { backendRequest, getBackendUrl } from './backend-api';
+import { backendRequest } from './backend-api';
 import { getAuthToken } from './auth';
 
 /**
@@ -112,8 +112,7 @@ export function isBase64Image(str: string): boolean {
  * Convert base64 image to file and upload
  */
 export async function uploadBase64AsFile(base64Image: string, filename = 'image.jpg'): Promise<string> {
-  // Extract base64 data and mime type
-  let base64Data = base64Image;
+  // Extract mime type and extension
   let mimeType = 'image/jpeg';
   let ext = '.jpg';
 
@@ -121,7 +120,6 @@ export async function uploadBase64AsFile(base64Image: string, filename = 'image.
     const matches = base64Image.match(/^data:([^;]+);base64,(.+)$/);
     if (matches) {
       mimeType = matches[1];
-      base64Data = matches[2];
       
       if (mimeType.includes('png')) ext = '.png';
       else if (mimeType.includes('gif')) ext = '.gif';

@@ -177,11 +177,12 @@ export default function ChapterGuard({ children }: Props) {
                   💎 Онцгой контентод хандах
                 </Typography>
               </Box>
-              {loadingPlans ? (
+              {loadingPlans && (
                 <Box sx={{ textAlign: 'center', py: 2 }}>
                   <CircularProgress size={24} />
                 </Box>
-              ) : premiumPlans.length > 0 ? (
+              )}
+              {!loadingPlans && premiumPlans.length > 0 && (
                 <Box
                   sx={{
                     p: 2,
@@ -212,7 +213,8 @@ export default function ChapterGuard({ children }: Props) {
                       </Box>
                     ))}
                 </Box>
-              ) : (
+              )}
+              {!loadingPlans && premiumPlans.length === 0 && (
                 <Box
                   sx={{
                     p: 2,

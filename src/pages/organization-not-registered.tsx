@@ -354,7 +354,9 @@ const OrganizationNotRegisteredPage = () => {
                 size="small"
                 fullWidth
                 startIcon={<Iconify icon="solar:home-bold" />}
-                onClick={() => (window.location.href = '/')}
+                onClick={() => {
+                  window.location.href = '/';
+                }}
                 sx={{
                   borderRadius: 1.5,
                   py: { xs: 1, sm: 1.125 },

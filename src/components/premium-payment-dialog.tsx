@@ -91,9 +91,8 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
     }
   }, [open]);
 
-  const getSelectedPlanDetails = () => {
-    return premiumPlans.find((p) => p.name === selectedPlan) || premiumPlans[0];
-  };
+  const getSelectedPlanDetails = () =>
+    premiumPlans.find((p) => p.name === selectedPlan) || premiumPlans[0];
 
   const handlePayment = async () => {
     if (!selectedPlan) {
@@ -164,20 +163,22 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
       <Typography variant="h6" sx={{ mb: 2 }}>
         Багц сонгох
       </Typography>
-      {loadingPlans ? (
+      {loadingPlans && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <CircularProgress size={24} />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
             Багцууд ачааллаж байна...
           </Typography>
         </Box>
-      ) : premiumPlans.length === 0 ? (
+      )}
+      {!loadingPlans && premiumPlans.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="body2" color="error">
             Багц олдсонгүй
           </Typography>
         </Box>
-      ) : (
+      )}
+      {!loadingPlans && premiumPlans.length > 0 && (
         <Stack spacing={2}>
           {premiumPlans.map((planOption) => {
             const isSelected = selectedPlan === planOption.name;
