@@ -55,12 +55,22 @@ export default function FavoritesPage() {
           pages?: number;
         }>(`/webtoon/user/favorites?page=${page}&limit=20`);
 
-        if (response.success && response.data) {
-          setFavorites(response.data.favorites || []);
-          setTotal(response.data.total || 0);
-          setTotalPages(response.data.pages || 1);
+        // backendRequest returns backend JSON at the top-level (not nested under `data`)
+        if (response.success) {
+          const favoritesList =
+            // new/expected shape from backend: { favorites, total, pages }
+            (response as any).favorites ||
+            // fallback: some older callers use { data: { favorites } }
+            (response as any).data?.favorites ||
+            [];
+
+          setFavorites(Array.isArray(favoritesList) ? favoritesList : []);
+          setTotal((response as any).total ?? (response as any).data?.total ?? 0);
+          setTotalPages((response as any).pages ?? (response as any).data?.pages ?? 1);
         } else {
           setFavorites([]);
+          setTotal(0);
+          setTotalPages(1);
         }
       } catch (error) {
         console.error('Failed to fetch favorites:', error);

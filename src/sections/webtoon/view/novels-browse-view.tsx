@@ -24,6 +24,9 @@ import { alpha, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
+import { backendRequest } from 'src/utils/backend-api';
+import { isAuthenticated } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
@@ -45,13 +48,18 @@ const STATUS_OPTIONS = [
 export default function NovelsBrowseView() {
   const theme = useTheme();
   const searchParams = useSearchParams();
+  const { enqueueSnackbar } = useSnackbar();
   const [novels, setNovels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
   const [status, setStatus] = useState('all');
+  // favorites contains novelIds that are favorited
   const [favorites, setFavorites] = useState<string[]>([]);
+  // maps novelId -> favorite document id (needed for DELETE)
+  const [favoriteIdMap, setFavoriteIdMap] = useState<Record<string, string>>({});
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [, setTotal] = useState(0);
@@ -64,6 +72,51 @@ export default function NovelsBrowseView() {
       setSelectedCategory(categoryParam);
     }
   }, [searchParams]);
+
+  // Load user's favorite novels (persisted in backend)
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!isAuthenticated()) {
+        setFavorites([]);
+        setFavoriteIdMap({});
+        return;
+      }
+
+      try {
+        const resp = await backendRequest<{
+          favorites?: Array<{ _id: string; novelId?: any; novel?: any }>;
+        }>('/webtoon/user/favorites?limit=1000');
+
+        const favs = (resp as any)?.favorites as Array<any> | undefined;
+        if (!resp.success || !Array.isArray(favs)) {
+          return;
+        }
+
+        const nextIds: string[] = [];
+        const nextMap: Record<string, string> = {};
+
+        favs.forEach((fav) => {
+          // Backend may return novelId or populated novel._id
+          let novelId = '';
+          if (fav?.novelId) {
+            novelId = String(fav.novelId);
+          } else if (fav?.novel?._id) {
+            novelId = String(fav.novel._id);
+          }
+          if (!novelId) return;
+          nextIds.push(novelId);
+          if (fav?._id) nextMap[novelId] = String(fav._id);
+        });
+
+        setFavorites(nextIds);
+        setFavoriteIdMap(nextMap);
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   // Fetch novels from API with chapter counts
   useEffect(() => {
@@ -78,7 +131,6 @@ export default function NovelsBrowseView() {
         }
 
         const result = await response.json();
-        console.log('Novels API response:', result);
 
         // Handle different response formats
         let novelsData: any[] = [];
@@ -91,8 +143,6 @@ export default function NovelsBrowseView() {
         } else if (result.success && result.data && Array.isArray(result.data.novels)) {
           novelsData = result.data.novels;
         }
-
-        console.log('Extracted novels data:', novelsData.length, 'novels');
 
         // Update pagination info if available
         if (result.success && result.total !== undefined) {
@@ -164,11 +214,70 @@ export default function NovelsBrowseView() {
     return Array.from(new Set(allGenres));
   }, [novels]);
 
-  const handleToggleFavorite = useCallback((novelId: string) => {
-    setFavorites((prev) =>
-      prev.includes(novelId) ? prev.filter((id) => id !== novelId) : [...prev, novelId]
-    );
-  }, []);
+  const handleToggleFavorite = useCallback(
+    async (novelId: string) => {
+      if (!isAuthenticated()) {
+        enqueueSnackbar('Та эхлээд нэвтэрнэ үү!', { variant: 'warning' });
+        return;
+      }
+
+      if (!novelId) return;
+
+      // prevent spamming the same item
+      if (favoriteLoadingId === novelId) return;
+      setFavoriteLoadingId(novelId);
+
+      try {
+        const isFav = favorites.includes(novelId);
+
+        if (isFav) {
+          const favoriteDocId = favoriteIdMap[novelId];
+          if (!favoriteDocId) {
+            // fallback: refresh favorites and try again later
+            enqueueSnackbar('Алдаа гарлаа. Дахин оролдоно уу.', { variant: 'error' });
+            return;
+          }
+
+          const resp = await backendRequest(`/webtoon/user/favorites/${favoriteDocId}`, {
+            method: 'DELETE',
+          });
+
+          if (resp.success) {
+            setFavorites((prev) => prev.filter((id) => id !== novelId));
+            setFavoriteIdMap((prev) => {
+              const next = { ...prev };
+              delete next[novelId];
+              return next;
+            });
+            enqueueSnackbar('Дуртай жагсаалтаас хасагдлаа', { variant: 'success' });
+          } else {
+            enqueueSnackbar(resp.message || 'Хасахад алдаа гарлаа', { variant: 'error' });
+          }
+        } else {
+          const resp = await backendRequest('/webtoon/user/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ novelId }),
+          });
+
+          const created = (resp as any)?.favorite;
+          if (resp.success && created?._id) {
+            setFavorites((prev) => [...prev, novelId]);
+            setFavoriteIdMap((prev) => ({ ...prev, [novelId]: String(created._id) }));
+            enqueueSnackbar('Дуртай жагсаалтад нэмэгдлээ', { variant: 'success' });
+          } else {
+            enqueueSnackbar(resp.message || 'Нэмэхэд алдаа гарлаа', { variant: 'error' });
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to toggle favorite:', err);
+        enqueueSnackbar(err?.message || 'Алдаа гарлаа', { variant: 'error' });
+      } finally {
+        setFavoriteLoadingId(null);
+      }
+    },
+    [enqueueSnackbar, favorites, favoriteIdMap, favoriteLoadingId]
+  );
 
   // Filter, sort, and search novels
   const filteredNovels = useMemo(() => {
@@ -443,17 +552,6 @@ export default function NovelsBrowseView() {
             const id = novel._id || novel.id;
             const coverImage = novel.coverImage || novel.cover || '';
 
-            // Debug logging
-            if (coverImage) {
-              console.log('Novel cover image:', {
-                id,
-                title: novel.title,
-                coverImage: coverImage.substring(0, 50) + (coverImage.length > 50 ? '...' : ''),
-                isBase64: coverImage.startsWith('data:image'),
-                isUrl: coverImage.startsWith('http') || coverImage.startsWith('/'),
-              });
-            }
-
             return (
               <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={id}>
                 <Card
@@ -508,7 +606,6 @@ export default function NovelsBrowseView() {
                         }
                       }}
                       onLoad={(e) => {
-                        console.log('Image loaded successfully for novel:', novel.title);
                         // Hide placeholder when image loads successfully
                         const card = (e.target as HTMLElement).closest('.MuiCard-root');
                         if (card) {
@@ -591,6 +688,7 @@ export default function NovelsBrowseView() {
                         e.stopPropagation();
                         handleToggleFavorite(id);
                       }}
+                      disabled={favoriteLoadingId === id}
                       size="small"
                       sx={{
                         bgcolor: alpha(theme.palette.common.white, 0.12),

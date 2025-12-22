@@ -30,6 +30,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
 import { RouterLink } from 'src/routes/components';
+import { useSnackbar } from 'src/components/snackbar';
+import { backendRequest } from 'src/utils/backend-api';
+import { isAuthenticated } from 'src/utils/auth';
 import CommentsSection from '../components/comments-section';
 
 // ----------------------------------------------------------------------
@@ -49,10 +52,13 @@ const STATUS_MAP: Record<
 
 export default function NovelDetailView({ novelId }: Props) {
   const theme = useTheme();
+  const { enqueueSnackbar } = useSnackbar();
   const [novel, setNovel] = useState<any>(null);
   const [chapters, setChapters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [activeSort, setActiveSort] = useState<'asc' | 'desc'>('asc');
   const [tab, setTab] = useState<'overview' | 'chapters' | 'comments'>('chapters');
   const [chapterQuery, setChapterQuery] = useState('');
@@ -129,6 +135,33 @@ export default function NovelDetailView({ novelId }: Props) {
         if (chaptersResult.success && chaptersResult.chapters) {
           setChapters(chaptersResult.chapters);
         }
+
+        // Check favorite status (only if user is authenticated)
+        if (isAuthenticated() && novelResult.success && novelResult.novel) {
+          try {
+            const favoritesResponse = await backendRequest<{
+              favorites?: Array<{ _id: string; novelId?: string | any; novel?: any }>;
+            }>('/webtoon/user/favorites?limit=1000');
+
+            if (favoritesResponse.success && (favoritesResponse as any).favorites) {
+              const favorites = (favoritesResponse as any).favorites as Array<any>;
+              const targetNovelId = String(novelId || novelResult.novel._id);
+
+              const favorite = favorites.find((fav: any) => {
+                if (fav.novelId) return String(fav.novelId) === targetNovelId;
+                if (fav.novel && fav.novel._id) return String(fav.novel._id) === targetNovelId;
+                return false;
+              });
+
+              if (favorite) {
+                setIsFavorite(true);
+                setFavoriteId(String(favorite._id));
+              }
+            }
+          } catch (error) {
+            console.error('Failed to check favorite status:', error);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch novel data:', error);
       } finally {
@@ -139,9 +172,50 @@ export default function NovelDetailView({ novelId }: Props) {
     fetchNovelData();
   }, [novelId]);
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // TODO: Implement API call to add/remove favorite
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated()) {
+      enqueueSnackbar('Та эхлээд нэвтэрнэ үү!', { variant: 'warning' });
+      return;
+    }
+
+    if (favoriteLoading) return;
+    setFavoriteLoading(true);
+
+    try {
+      if (isFavorite && favoriteId) {
+        const resp = await backendRequest(`/webtoon/user/favorites/${favoriteId}`, {
+          method: 'DELETE',
+        });
+
+        if (resp.success) {
+          setIsFavorite(false);
+          setFavoriteId(null);
+          enqueueSnackbar('Дуртай жагсаалтаас хасагдлаа', { variant: 'success' });
+        } else {
+          enqueueSnackbar(resp.message || 'Хасахад алдаа гарлаа', { variant: 'error' });
+        }
+      } else {
+        const resp = await backendRequest('/webtoon/user/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ novelId: novelId || novel?._id }),
+        });
+
+        const created = (resp as any)?.favorite;
+        if (resp.success && created?._id) {
+          setIsFavorite(true);
+          setFavoriteId(String(created._id));
+          enqueueSnackbar('Дуртай жагсаалтад нэмэгдлээ', { variant: 'success' });
+        } else {
+          enqueueSnackbar(resp.message || 'Нэмэхэд алдаа гарлаа', { variant: 'error' });
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle favorite:', error);
+      enqueueSnackbar(error?.message || 'Алдаа гарлаа', { variant: 'error' });
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -340,6 +414,7 @@ export default function NovelDetailView({ novelId }: Props) {
                       <Iconify icon={isFavorite ? 'carbon:favorite-filled' : 'carbon:favorite'} />
                     }
                     onClick={handleToggleFavorite}
+                    disabled={favoriteLoading}
                     sx={{ borderRadius: 999, px: 3, py: 1.5, fontWeight: 950, borderWidth: 2 }}
                   >
                     {isFavorite ? 'Дуртай' : 'Дуртайд нэмэх'}

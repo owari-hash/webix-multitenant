@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -20,6 +21,9 @@ import Pagination from '@mui/material/Pagination';
 
 import { paths } from 'src/routes/paths';
 import Iconify from 'src/components/iconify';
+import { useSnackbar } from 'src/components/snackbar';
+import { backendRequest } from 'src/utils/backend-api';
+import { isAuthenticated } from 'src/utils/auth';
 
 // ----------------------------------------------------------------------
 
@@ -40,13 +44,18 @@ const STATUS_OPTIONS = [
 
 export default function WebtoonBrowseView() {
   const searchParams = useSearchParams();
+  const { enqueueSnackbar } = useSnackbar();
   const [comics, setComics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('latest');
   const [status, setStatus] = useState('all');
+  // favorites contains comicIds that are favorited
   const [favorites, setFavorites] = useState<string[]>([]);
+  // maps comicId -> favorite document id (needed for DELETE)
+  const [favoriteIdMap, setFavoriteIdMap] = useState<Record<string, string>>({});
+  const [favoriteLoadingId, setFavoriteLoadingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [, setTotal] = useState(0);
@@ -59,6 +68,48 @@ export default function WebtoonBrowseView() {
       setSelectedCategory(categoryParam);
     }
   }, [searchParams]);
+
+  // Load user's favorite comics (persisted in backend)
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!isAuthenticated()) {
+        setFavorites([]);
+        setFavoriteIdMap({});
+        return;
+      }
+
+      try {
+        const resp = await backendRequest<{
+          favorites?: Array<{ _id: string; comicId?: any; comic?: any }>;
+        }>('/webtoon/user/favorites?limit=1000');
+
+        const favs = (resp as any)?.favorites as Array<any> | undefined;
+        if (!resp.success || !Array.isArray(favs)) return;
+
+        const nextIds: string[] = [];
+        const nextMap: Record<string, string> = {};
+
+        favs.forEach((fav) => {
+          let comicId = '';
+          if (fav?.comicId) {
+            comicId = String(fav.comicId);
+          } else if (fav?.comic?._id) {
+            comicId = String(fav.comic._id);
+          }
+          if (!comicId) return;
+          nextIds.push(comicId);
+          if (fav?._id) nextMap[comicId] = String(fav._id);
+        });
+
+        setFavorites(nextIds);
+        setFavoriteIdMap(nextMap);
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   // Fetch comics from API with chapter counts
   useEffect(() => {
@@ -152,11 +203,67 @@ export default function WebtoonBrowseView() {
     return Array.from(new Set(allGenres));
   }, [comics]);
 
-  const handleToggleFavorite = useCallback((webtoonId: string) => {
-    setFavorites((prev) =>
-      prev.includes(webtoonId) ? prev.filter((id) => id !== webtoonId) : [...prev, webtoonId]
-    );
-  }, []);
+  const handleToggleFavorite = useCallback(
+    async (comicId: string) => {
+      if (!isAuthenticated()) {
+        enqueueSnackbar('Та эхлээд нэвтэрнэ үү!', { variant: 'warning' });
+        return;
+      }
+
+      if (!comicId) return;
+      if (favoriteLoadingId === comicId) return;
+      setFavoriteLoadingId(comicId);
+
+      try {
+        const isFav = favorites.includes(comicId);
+
+        if (isFav) {
+          const favoriteDocId = favoriteIdMap[comicId];
+          if (!favoriteDocId) {
+            enqueueSnackbar('Алдаа гарлаа. Дахин оролдоно уу.', { variant: 'error' });
+            return;
+          }
+
+          const resp = await backendRequest(`/webtoon/user/favorites/${favoriteDocId}`, {
+            method: 'DELETE',
+          });
+
+          if (resp.success) {
+            setFavorites((prev) => prev.filter((id) => id !== comicId));
+            setFavoriteIdMap((prev) => {
+              const next = { ...prev };
+              delete next[comicId];
+              return next;
+            });
+            enqueueSnackbar('Дуртай жагсаалтаас хасагдлаа', { variant: 'success' });
+          } else {
+            enqueueSnackbar(resp.message || 'Хасахад алдаа гарлаа', { variant: 'error' });
+          }
+        } else {
+          const resp = await backendRequest('/webtoon/user/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comicId }),
+          });
+
+          const created = (resp as any)?.favorite;
+          if (resp.success && created?._id) {
+            setFavorites((prev) => [...prev, comicId]);
+            setFavoriteIdMap((prev) => ({ ...prev, [comicId]: String(created._id) }));
+            enqueueSnackbar('Дуртай жагсаалтад нэмэгдлээ', { variant: 'success' });
+          } else {
+            enqueueSnackbar(resp.message || 'Нэмэхэд алдаа гарлаа', { variant: 'error' });
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to toggle favorite:', err);
+        enqueueSnackbar(err?.message || 'Алдаа гарлаа', { variant: 'error' });
+      } finally {
+        setFavoriteLoadingId(null);
+      }
+    },
+    [enqueueSnackbar, favorites, favoriteIdMap, favoriteLoadingId]
+  );
 
   // Filter, sort, and search comics
   const filteredWebtoons = useMemo(() => {
@@ -361,13 +468,8 @@ export default function WebtoonBrowseView() {
                       boxShadow: (theme) => theme.customShadows.z24,
                     },
                   }}
-                  component="a"
+                  component={Link}
                   href={paths.webtoon.comic(webtoon._id || webtoon.id)}
-                  onClick={(e: any) => {
-                    if (e.target.closest('button') || e.target.closest('.MuiIconButton-root')) {
-                      e.preventDefault();
-                    }
-                  }}
                 >
                   <Box
                     sx={{
@@ -401,6 +503,7 @@ export default function WebtoonBrowseView() {
                         e.stopPropagation();
                         handleToggleFavorite(webtoon._id || webtoon.id);
                       }}
+                      disabled={favoriteLoadingId === (webtoon._id || webtoon.id)}
                       size="small"
                       sx={{
                         position: 'absolute',
