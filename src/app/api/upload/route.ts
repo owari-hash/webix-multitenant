@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // ----------------------------------------------------------------------
 
+// Route segment config
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 /**
  * Get backend URL dynamically based on the current subdomain
  * Same logic as api2/[...path]/route.ts - always uses production domain
@@ -161,4 +165,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Health check endpoint
+export async function GET() {
+  return NextResponse.json({ success: true, message: 'Upload API is available' });
 }

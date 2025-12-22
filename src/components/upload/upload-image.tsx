@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { uploadImageFile } from 'src/utils/image-upload';
 import Iconify from '../iconify';
 
 // ----------------------------------------------------------------------
@@ -33,6 +32,22 @@ export default function UploadImage({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
+  const fileToBase64 = useCallback(
+    (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+        reader.onerror = (readError) => {
+          reject(readError);
+        };
+        reader.readAsDataURL(file);
+      }),
+    []
+  );
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       try {
@@ -51,13 +66,13 @@ export default function UploadImage({
           const url = await onUpload(file);
           onChange(url);
         } else {
-          // Upload to server using file upload (not base64)
+          // Convert to base64 instead of uploading to server
           try {
-            const url = await uploadImageFile(file);
-            onChange(url);
-          } catch (uploadError) {
-            console.error('File upload failed:', uploadError);
-            setError('Зураг байршуулахад алдаа гарлаа. Дахин оролдоно уу.');
+            const base64 = await fileToBase64(file);
+            onChange(base64);
+          } catch (convertError) {
+            console.error('Base64 conversion failed:', convertError);
+            setError('Зураг хөрвүүлэхэд алдаа гарлаа. Дахин оролдоно уу.');
           }
         }
       } catch (err) {
@@ -67,7 +82,7 @@ export default function UploadImage({
         setUploading(false);
       }
     },
-    [onChange, onUpload, maxSize]
+    [onChange, onUpload, maxSize, fileToBase64]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -94,9 +109,7 @@ export default function UploadImage({
             borderRadius: 2,
             cursor: 'pointer',
             border: `2px dashed ${
-              isDragActive
-                ? theme.palette.primary.main
-                : alpha(theme.palette.grey[500], 0.3)
+              isDragActive ? theme.palette.primary.main : alpha(theme.palette.grey[500], 0.3)
             }`,
             bgcolor: isDragActive
               ? alpha(theme.palette.primary.main, 0.08)
@@ -158,9 +171,6 @@ export default function UploadImage({
               component="img"
               src={value}
               alt="Preview"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/assets/images/placeholder.jpg';
-              }}
               sx={{
                 width: '100%',
                 maxWidth: 300,
@@ -204,4 +214,3 @@ export default function UploadImage({
     </Box>
   );
 }
-
