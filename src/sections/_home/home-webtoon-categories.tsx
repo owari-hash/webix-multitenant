@@ -29,7 +29,7 @@ export default function HomeWebtoonCategories() {
   const getCategoryIcon = (categoryName: string) => {
     const iconMap: Record<string, string> = {
       Экшн: 'carbon:flash',
-      Романс: 'carbon:favorite',
+      Зохиолс: 'carbon:favorite',
       Фэнтэзи: 'carbon:magic-wand',
       Комеди: 'carbon:face-satisfied',
       Драма: 'carbon:theater',
@@ -43,7 +43,7 @@ export default function HomeWebtoonCategories() {
   const translateCategoryName = (name: string) => {
     const translations: Record<string, string> = {
       Action: 'Экшн',
-      Romance: 'Романс',
+      Romance: 'Зохиолс',
       Fantasy: 'Фэнтэзи',
       Comedy: 'Комеди',
       Drama: 'Драма',

@@ -50,7 +50,7 @@ export default function NovelCreateView() {
                 color="inherit"
                 sx={{ minWidth: 'auto' }}
               >
-                Романууд
+                Зохиолууд
               </Button>
               <Typography color="text.primary">Шинэ нэмэх</Typography>
             </Breadcrumbs>
@@ -75,10 +75,10 @@ export default function NovelCreateView() {
 
               <Box>
                 <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                  Шинэ роман нэмэх
+                  Шинэ зохиол нэмэх
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                  Платформд шинэ роман нэмж, уншигчидтай хуваалцаарай
+                  Платформд шинэ зохиол нэмж, уншигчидтай хуваалцаарай
                 </Typography>
               </Box>
             </Stack>
@@ -93,5 +93,3 @@ export default function NovelCreateView() {
     </>
   );
 }
-
-

@@ -170,7 +170,7 @@ export default function FavoritesPage() {
             Дуртай зүйлс байхгүй
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Та одоогоор дуртай комик эсвэл роман нэмээгүй байна
+            Та одоогоор дуртай комик эсвэл зохиол нэмээгүй байна
           </Typography>
           <Button
             variant="contained"
@@ -249,7 +249,7 @@ export default function FavoritesPage() {
                         fontWeight: 600,
                       }}
                     >
-                      {favorite.type === 'comic' ? 'Комик' : 'Роман'}
+                      {favorite.type === 'comic' ? 'Комик' : 'Зохиол'}
                     </Box>
                   </Box>
 

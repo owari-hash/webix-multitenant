@@ -232,7 +232,7 @@ export default function CMSDashboardView() {
               href={paths.webtoon.cms.novels}
               component={RouterLink}
             >
-              Романууд
+              Зохиолууд
             </Button>
             <Button
               variant="outlined"
@@ -480,7 +480,7 @@ export default function CMSDashboardView() {
                   href={paths.webtoon.cms.novels}
                   component={RouterLink}
                 >
-                  Романуудыг харах
+                  Зохиолуудыг харах
                 </Button>
                 <Button
                   fullWidth

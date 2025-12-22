@@ -24,7 +24,7 @@ import FormProvider, { RHFSelect, RHFTextField, RHFAutocomplete } from 'src/comp
 
 const GENRES = [
   { value: 'action', label: 'Акшн' },
-  { value: 'romance', label: 'Романтик' },
+  { value: 'romance', label: 'Зохиолтик' },
   { value: 'comedy', label: 'Инээдмийн' },
   { value: 'drama', label: 'Драм' },
   { value: 'fantasy', label: 'Уран зөгнөлт' },

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -72,10 +73,12 @@ export default function NovelsBrowseView() {
         const response = await fetch(`/api2/novel?page=${page}&limit=${limit}`);
 
         if (!response.ok) {
+          console.error('Novels API error:', response.status, response.statusText);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
+        console.log('Novels API response:', result);
 
         // Handle different response formats
         let novelsData: any[] = [];
@@ -85,7 +88,11 @@ export default function NovelsBrowseView() {
           novelsData = result.novels;
         } else if (Array.isArray(result)) {
           novelsData = result;
+        } else if (result.success && result.data && Array.isArray(result.data.novels)) {
+          novelsData = result.data.novels;
         }
+
+        console.log('Extracted novels data:', novelsData.length, 'novels');
 
         // Update pagination info if available
         if (result.success && result.total !== undefined) {
@@ -142,6 +149,7 @@ export default function NovelsBrowseView() {
         setNovels(novelsWithChapters);
       } catch (error) {
         console.error('Failed to fetch novels:', error);
+        setNovels([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -269,7 +277,7 @@ export default function NovelsBrowseView() {
                 >
                   Уншигчийн горимтой
                   <br />
-                  романууд
+                  зохиолууд
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 560 }}>
                   Хайлт, ангилал, төлөвөөр шүүж — дуртай зохиолоо сонгоод шууд уншаарай.
@@ -287,7 +295,7 @@ export default function NovelsBrowseView() {
                 >
                   <TextField
                     fullWidth
-                    placeholder="Роман хайх... (гарчиг / тайлбар)"
+                    placeholder="Зохиол хайх... (гарчиг / тайлбар)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     InputProps={{
@@ -414,10 +422,10 @@ export default function NovelsBrowseView() {
         <Stack spacing={2.5} sx={{ mb: 3 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Сайжруулсан роман жагсаалт
+              Жагсаалт
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {filteredNovels.length} роман
+              {filteredNovels.length} зохиол
             </Typography>
           </Box>
         </Stack>
@@ -433,20 +441,29 @@ export default function NovelsBrowseView() {
             if (novel.status === 'hiatus') statusColor = 'warning';
 
             const id = novel._id || novel.id;
+            const coverImage = novel.coverImage || novel.cover || '';
+
+            // Debug logging
+            if (coverImage) {
+              console.log('Novel cover image:', {
+                id,
+                title: novel.title,
+                coverImage: coverImage.substring(0, 50) + (coverImage.length > 50 ? '...' : ''),
+                isBase64: coverImage.startsWith('data:image'),
+                isUrl: coverImage.startsWith('http') || coverImage.startsWith('/'),
+              });
+            }
 
             return (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={id}>
+              <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={id}>
                 <Card
-                  component="a"
+                  component={Link}
                   href={paths.webtoon.novel(id)}
-                  onClick={(e: any) => {
-                    if (e.target.closest('button') || e.target.closest('.MuiIconButton-root')) {
-                      e.preventDefault();
-                    }
-                  }}
                   sx={{
+                    display: 'block',
                     position: 'relative',
-                    height: 260,
+                    height: { xs: 280, sm: 300, md: 320, lg: 360 },
+                    width: '100%',
                     borderRadius: 3,
                     overflow: 'hidden',
                     textDecoration: 'none',
@@ -466,23 +483,85 @@ export default function NovelsBrowseView() {
                     },
                   }}
                 >
-                  {/* Background */}
+                  {/* Background Image */}
+                  {coverImage && (
+                    <Box
+                      component="img"
+                      src={coverImage}
+                      alt={novel.title || 'Novel cover'}
+                      onError={(e) => {
+                        console.error(
+                          'Image failed to load for novel:',
+                          novel.title,
+                          coverImage.substring(0, 100)
+                        );
+                        // Hide image on error and show placeholder
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const card = (e.target as HTMLElement).closest('.MuiCard-root');
+                        if (card) {
+                          const placeholder = card.querySelector(
+                            '[data-placeholder]'
+                          ) as HTMLElement;
+                          if (placeholder) {
+                            placeholder.style.display = 'flex';
+                          }
+                        }
+                      }}
+                      onLoad={(e) => {
+                        console.log('Image loaded successfully for novel:', novel.title);
+                        // Hide placeholder when image loads successfully
+                        const card = (e.target as HTMLElement).closest('.MuiCard-root');
+                        if (card) {
+                          const placeholder = card.querySelector(
+                            '[data-placeholder]'
+                          ) as HTMLElement;
+                          if (placeholder) {
+                            placeholder.style.display = 'none';
+                          }
+                        }
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        zIndex: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        filter: 'saturate(1.05) contrast(1.02)',
+                        transform: 'scale(1.02)',
+                      }}
+                    />
+                  )}
+                  {/* Placeholder Icon - show when no image or image fails */}
                   <Box
+                    data-placeholder
                     sx={{
                       position: 'absolute',
                       inset: 0,
-                      backgroundImage: `url(${novel.coverImage || '/assets/placeholder.jpg'})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      filter: 'saturate(1.05) contrast(1.02)',
-                      transform: 'scale(1.02)',
+                      zIndex: 0,
+                      display: coverImage ? 'none' : 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: `linear-gradient(135deg, ${alpha(
+                        theme.palette.primary.main,
+                        0.15
+                      )} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`,
                     }}
-                  />
+                  >
+                    <Iconify
+                      icon="carbon:document-text"
+                      sx={{
+                        fontSize: 100,
+                        color: alpha(theme.palette.primary.main, 0.4),
+                      }}
+                    />
+                  </Box>
                   {/* Overlay */}
                   <Box
                     sx={{
                       position: 'absolute',
                       inset: 0,
+                      zIndex: 1,
                       background: `linear-gradient(180deg, ${alpha(
                         theme.palette.common.black,
                         0.15
@@ -498,7 +577,7 @@ export default function NovelsBrowseView() {
                     direction="row"
                     alignItems="center"
                     justifyContent="space-between"
-                    sx={{ position: 'absolute', top: 10, left: 10, right: 10 }}
+                    sx={{ position: 'absolute', top: 10, left: 10, right: 10, zIndex: 2 }}
                   >
                     <Chip
                       size="small"
@@ -529,7 +608,7 @@ export default function NovelsBrowseView() {
                   </Stack>
 
                   {/* Content */}
-                  <Box sx={{ position: 'absolute', left: 14, right: 14, bottom: 14 }}>
+                  <Box sx={{ position: 'absolute', left: 14, right: 14, bottom: 14, zIndex: 2 }}>
                     <Typography
                       variant="h6"
                       sx={{
@@ -542,19 +621,21 @@ export default function NovelsBrowseView() {
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
+                        textShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.8)}`,
                       }}
                     >
-                      {novel.title}
+                      {novel.title || 'Нэргүй зохиол'}
                     </Typography>
                     <Typography
                       variant="caption"
                       sx={{
-                        color: alpha(theme.palette.common.white, 0.78),
+                        color: alpha(theme.palette.common.white, 0.9),
                         display: 'block',
                         mb: 1,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        textShadow: `0 1px 4px ${alpha(theme.palette.common.black, 0.8)}`,
                       }}
                     >
                       {novel.author || 'Unknown Author'} • {novel.chapters || 0} бүлэг
@@ -562,23 +643,40 @@ export default function NovelsBrowseView() {
 
                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                       <Stack direction="row" alignItems="center" spacing={0.75}>
-                        <Rating value={rating} precision={0.5} size="small" readOnly />
+                        <Rating
+                          value={rating}
+                          precision={0.5}
+                          size="small"
+                          readOnly
+                          sx={{
+                            '& .MuiRating-iconFilled': {
+                              color: theme.palette.warning.main,
+                            },
+                            '& .MuiRating-iconEmpty': {
+                              color: alpha(theme.palette.common.white, 0.3),
+                            },
+                          }}
+                        />
                         <Typography
                           variant="caption"
-                          sx={{ color: alpha(theme.palette.common.white, 0.9), fontWeight: 800 }}
+                          sx={{
+                            color: 'common.white',
+                            fontWeight: 800,
+                            textShadow: `0 1px 4px ${alpha(theme.palette.common.black, 0.8)}`,
+                          }}
                         >
                           {rating.toFixed(1)}
                         </Typography>
                       </Stack>
                       <Stack direction="row" alignItems="center" spacing={0.75}>
-                        <Iconify
-                          icon="carbon:view"
-                          width={16}
-                          sx={{ color: alpha(theme.palette.common.white, 0.85) }}
-                        />
+                        <Iconify icon="carbon:view" width={16} sx={{ color: 'common.white' }} />
                         <Typography
                           variant="caption"
-                          sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 800 }}
+                          sx={{
+                            color: 'common.white',
+                            fontWeight: 800,
+                            textShadow: `0 1px 4px ${alpha(theme.palette.common.black, 0.8)}`,
+                          }}
                         >
                           {novel.views || 0}
                         </Typography>
@@ -592,7 +690,7 @@ export default function NovelsBrowseView() {
         </Grid>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {totalPages > 1 && filteredNovels.length > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
             <Pagination
               count={totalPages}
@@ -609,11 +707,23 @@ export default function NovelsBrowseView() {
           </Box>
         )}
 
-        {filteredNovels.length === 0 && (
+        {!loading && novels.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 10 }}>
             <Iconify icon="carbon:document" sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h5" color="text.secondary" sx={{ mb: 1, fontWeight: 800 }}>
-              Роман олдсонгүй
+              Зохиол олдсонгүй
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Одоогоор зохиол байхгүй байна.
+            </Typography>
+          </Box>
+        )}
+
+        {!loading && novels.length > 0 && filteredNovels.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 10 }}>
+            <Iconify icon="carbon:document" sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h5" color="text.secondary" sx={{ mb: 1, fontWeight: 800 }}>
+              Зохиол олдсонгүй
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Өөр түлхүүр үг эсвэл шүүлтүүр ашиглаад дахин хайж үзээрэй.

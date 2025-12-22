@@ -280,7 +280,7 @@ export default function NovelChapterReadView({ novelId, chapterId }: Props) {
             startIcon={<Iconify icon="carbon:arrow-left" />}
             sx={{ mt: 3 }}
           >
-            Роман руу буцах
+            Зохиол руу буцах
           </Button>
         </Box>
       </Container>
@@ -322,7 +322,7 @@ export default function NovelChapterReadView({ novelId, chapterId }: Props) {
         <Container maxWidth="md">
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
             <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0, flex: 1 }}>
-              <Tooltip title="Роман руу буцах">
+              <Tooltip title="Зохиол руу буцах">
                 <IconButton component={RouterLink} href={paths.webtoon.novel(novelId)} size="small">
                   <Iconify icon="carbon:arrow-left" />
                 </IconButton>
@@ -489,7 +489,7 @@ export default function NovelChapterReadView({ novelId, chapterId }: Props) {
               startIcon={<Iconify icon="carbon:document" />}
               sx={{ minWidth: { xs: '100%', sm: 200 }, borderWidth: 2, fontWeight: 900 }}
             >
-              Роман руу буцах
+              Зохиол руу буцах
             </Button>
 
             <Button

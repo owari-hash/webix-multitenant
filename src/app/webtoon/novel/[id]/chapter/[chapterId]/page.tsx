@@ -4,7 +4,7 @@ import NovelChapterReadView from 'src/sections/webtoon/view/novel-chapter-read-v
 
 export const metadata = {
   title: 'Бүлэг унших | Веб комик платформ',
-  description: 'Романы бүлэг унших хуудас',
+  description: 'Зохиолы бүлэг унших хуудас',
 };
 
 type Props = {
@@ -18,5 +18,3 @@ export default function NovelChapterReadPage({ params }: Props) {
   const { id, chapterId } = params;
   return <NovelChapterReadView novelId={id} chapterId={chapterId} />;
 }
-
-

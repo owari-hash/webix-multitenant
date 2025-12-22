@@ -37,7 +37,7 @@ export const pageLinks = [
     items: [
       { title: 'Хяналтын самбар', path: paths.webtoon.cms.dashboard },
       { title: 'Комикууд', path: paths.webtoon.cms.comics },
-      { title: 'Романууд', path: paths.webtoon.cms.novels },
+      { title: 'Зохиолууд', path: paths.webtoon.cms.novels },
       { title: 'Хэрэглэгчид', path: paths.webtoon.cms.users },
       { title: 'Санал хүсэл гомдол', path: paths.webtoon.cms.feedback },
       { title: 'Статистик', path: paths.webtoon.cms.analytics },

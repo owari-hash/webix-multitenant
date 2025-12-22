@@ -28,7 +28,7 @@ import FormProvider, { RHFSelect, RHFTextField, RHFAutocomplete } from 'src/comp
 
 const GENRES = [
   { value: 'action', label: 'Акшн' },
-  { value: 'romance', label: 'Романтик' },
+  { value: 'romance', label: 'Зохиолтик' },
   { value: 'comedy', label: 'Инээдмийн' },
   { value: 'drama', label: 'Драм' },
   { value: 'fantasy', label: 'Уран зөгнөлт' },
@@ -203,7 +203,7 @@ export default function NovelCreateForm() {
         const novelId = result.novel?.id || result.novel?._id;
 
         // Ask if they want to add chapters
-        const addChapters = window.confirm('Роман амжилттай нэмэгдлээ! Одоо бүлэг нэмэх үү?');
+        const addChapters = window.confirm('Зохиол амжилттай нэмэгдлээ! Одоо бүлэг нэмэх үү?');
 
         reset();
 
@@ -236,14 +236,14 @@ export default function NovelCreateForm() {
               <Stack spacing={3}>
                 <RHFTextField
                   name="title"
-                  label="Романы гарчиг"
+                  label="Зохиолы гарчиг"
                   placeholder="Жишээ нь: The Great Novel"
                 />
 
                 <RHFTextField
                   name="description"
                   label="Тайлбар"
-                  placeholder="Романы товч агуулга..."
+                  placeholder="Зохиолы товч агуулга..."
                   multiline
                   rows={4}
                 />
@@ -468,4 +468,3 @@ export default function NovelCreateForm() {
     </FormProvider>
   );
 }
-

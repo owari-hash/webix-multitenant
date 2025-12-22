@@ -351,7 +351,7 @@ export default function NovelChapterCreateForm({ novelId, novelTitle }: Props) {
                     <RichTextEditor
                       value={field.value || ''}
                       onChange={field.onChange}
-                      placeholder="Романы бүлгийн агуулгыг энд бичнэ үү... Гарчиг, догол мөр, жагсаалт зэрэг формат ашиглана уу."
+                      placeholder="Зохиолы бүлгийн агуулгыг энд бичнэ үү... Гарчиг, догол мөр, жагсаалт зэрэг формат ашиглана уу."
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message || 'Багадаа 100 тэмдэгт байх ёстой'}
                       minHeight={600}
@@ -453,7 +453,7 @@ export default function NovelChapterCreateForm({ novelId, novelTitle }: Props) {
                     sx={{ color: theme.palette.primary.main, fontSize: 24 }}
                   />
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    Роман
+                    Зохиол
                   </Typography>
                 </Stack>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>

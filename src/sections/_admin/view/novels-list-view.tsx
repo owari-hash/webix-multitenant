@@ -164,7 +164,7 @@ export default function NovelsListView() {
               >
                 Хяналтын самбар
               </Button>
-              <Typography color="text.primary">Романууд</Typography>
+              <Typography color="text.primary">Зохиолууд</Typography>
             </Breadcrumbs>
 
             <Stack
@@ -193,10 +193,10 @@ export default function NovelsListView() {
 
                 <Box>
                   <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    Романууд
+                    Зохиолууд
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                    {filteredNovels.length} / {novels.length} роман
+                    {filteredNovels.length} / {novels.length} зохиол
                   </Typography>
                 </Box>
               </Box>
@@ -208,7 +208,7 @@ export default function NovelsListView() {
                 href={paths.webtoon.cms.createNovel}
                 startIcon={<Iconify icon="carbon:add" />}
               >
-                Шинэ роман
+                Шинэ зохиол
               </Button>
             </Stack>
           </Stack>
@@ -222,12 +222,15 @@ export default function NovelsListView() {
           <Grid container spacing={2}>
             <Grid item xs={6} sm={4} md={2}>
               <Card sx={{ p: 2, textAlign: 'center' }}>
-                <Iconify icon="carbon:document" sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
+                <Iconify
+                  icon="carbon:document"
+                  sx={{ fontSize: 32, color: 'primary.main', mb: 1 }}
+                />
                 <Typography variant="h5" sx={{ fontWeight: 700 }}>
                   {stats.total}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Нийт роман
+                  Нийт зохиол
                 </Typography>
               </Card>
             </Grid>
@@ -304,7 +307,7 @@ export default function NovelsListView() {
                 {/* Search */}
                 <TextField
                   fullWidth
-                  placeholder="Роман эсвэл зохиолч хайх..."
+                  placeholder="Зохиол эсвэл зохиолч хайх..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -386,7 +389,7 @@ export default function NovelsListView() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Роман</TableCell>
+                    <TableCell>Зохиол</TableCell>
                     <TableCell>Төрөл</TableCell>
                     <TableCell>Төлөв</TableCell>
                     <TableCell align="center">Бүлгүүд</TableCell>
@@ -402,7 +405,7 @@ export default function NovelsListView() {
                       <TableCell colSpan={8} align="center" sx={{ py: 10 }}>
                         <CircularProgress size={40} />
                         <Typography variant="body2" sx={{ mt: 2 }}>
-                          Романууд уншиж байна...
+                          Зохиолууд уншиж байна...
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -416,10 +419,10 @@ export default function NovelsListView() {
                           sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
                         />
                         <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                          Одоогоор роман байхгүй байна
+                          Одоогоор зохиол байхгүй байна
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-                          Эхний романоо нэмж эхлээрэй!
+                          Эхний зохиолоо нэмж эхлээрэй!
                         </Typography>
                         <Button
                           variant="contained"
@@ -427,7 +430,7 @@ export default function NovelsListView() {
                           href={paths.webtoon.cms.createNovel}
                           startIcon={<Iconify icon="carbon:add" />}
                         >
-                          Эхний роман нэмэх
+                          Эхний зохиол нэмэх
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -441,7 +444,7 @@ export default function NovelsListView() {
                           sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }}
                         />
                         <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1 }}>
-                          Роман олдсонгүй
+                          Зохиол олдсонгүй
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                           Өөр хайлтаар оролдоно уу
@@ -487,7 +490,7 @@ function NovelTableRow({ novel }: NovelTableRowProps) {
   const handleDelete = async () => {
     handleClose();
 
-    if (!window.confirm(`"${novel.title}" романыг устгах уу?`)) {
+    if (!window.confirm(`"${novel.title}" зохиолыг устгах уу?`)) {
       return;
     }
 
@@ -502,7 +505,7 @@ function NovelTableRow({ novel }: NovelTableRowProps) {
       const result = await response.json();
 
       if (result.success) {
-        alert('Роман амжилттай устгагдлаа!');
+        alert('Зохиол амжилттай устгагдлаа!');
         window.location.reload();
       } else {
         alert(result.error || result.message || 'Устгахад алдаа гарлаа');
@@ -656,4 +659,3 @@ function NovelTableRow({ novel }: NovelTableRowProps) {
     </TableRow>
   );
 }
-

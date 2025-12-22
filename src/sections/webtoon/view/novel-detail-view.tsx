@@ -186,7 +186,7 @@ export default function NovelDetailView({ novelId }: Props) {
       <Container maxWidth="lg" sx={{ py: { xs: 5, md: 8 } }}>
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h4" color="text.secondary">
-            Роман олдсонгүй
+            Зохиол олдсонгүй
           </Typography>
         </Box>
       </Container>
@@ -251,7 +251,7 @@ export default function NovelDetailView({ novelId }: Props) {
                     startIcon={<Iconify icon="carbon:arrow-left" />}
                     sx={{ fontWeight: 900, borderRadius: 999 }}
                   >
-                    Романууд
+                    Зохиолууд
                   </Button>
                   <Tooltip title={copyHint || 'Холбоос хуулах'}>
                     <IconButton onClick={handleCopyLink} size="small">

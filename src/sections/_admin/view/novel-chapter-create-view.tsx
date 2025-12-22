@@ -92,7 +92,7 @@ export default function NovelChapterCreateView({ novelId }: Props) {
                 color="inherit"
                 sx={{ minWidth: 'auto' }}
               >
-                Романууд
+                Зохиолууд
               </Button>
               <Button
                 component={RouterLink}
@@ -128,7 +128,7 @@ export default function NovelChapterCreateView({ novelId }: Props) {
                   Шинэ бүлэг нэмэх
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                  {novelTitle ? `"${novelTitle}" романд бүлэг нэмэх` : 'Романд шинэ бүлэг нэмэх'}
+                  {novelTitle ? `"${novelTitle}" зохиолд бүлэг нэмэх` : 'Зохиолд шинэ бүлэг нэмэх'}
                 </Typography>
               </Box>
             </Stack>
@@ -143,4 +143,3 @@ export default function NovelChapterCreateView({ novelId }: Props) {
     </>
   );
 }
-

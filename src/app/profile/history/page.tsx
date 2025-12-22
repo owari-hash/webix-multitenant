@@ -173,7 +173,7 @@ export default function HistoryPage() {
             Уншсан түүх байхгүй
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Та одоогоор уншсан комик эсвэл роман байхгүй байна
+            Та одоогоор уншсан комик эсвэл зохиол байхгүй байна
           </Typography>
           <Button
             variant="contained"
@@ -249,7 +249,7 @@ export default function HistoryPage() {
                         fontWeight: 600,
                       }}
                     >
-                      {item.type === 'comic' ? 'Комик' : 'Роман'}
+                      {item.type === 'comic' ? 'Комик' : 'Зохиол'}
                     </Box>
                   </Box>
 

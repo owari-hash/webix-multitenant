@@ -77,7 +77,7 @@ export default function Searchbar({ sx }: SearchbarProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Комик, роман, бүлэг хайх..."
+              placeholder="Комик, зохиол, бүлэг хайх..."
               startAdornment={
                 <InputAdornment position="start">
                   <Iconify icon="carbon:search" sx={{ color: 'text.disabled' }} />

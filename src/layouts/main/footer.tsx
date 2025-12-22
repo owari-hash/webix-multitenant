@@ -71,7 +71,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            © 2024 WebtoonHub. Бүх эрх хуулиар хамгаалагдсан.
+            © 2025 Webix. Бүх эрх хуулиар хамгаалагдсан.
           </Typography>
         </Stack>
       </Container>

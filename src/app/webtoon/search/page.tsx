@@ -49,7 +49,7 @@ interface SearchResult {
 const SEARCH_TYPES = [
   { value: 'all', label: 'Бүгд', icon: 'solar:widget-5-bold' },
   { value: 'comic', label: 'Комик', icon: 'solar:book-2-bold' },
-  { value: 'novel', label: 'Роман', icon: 'solar:document-text-bold' },
+  { value: 'novel', label: 'Зохиол', icon: 'solar:document-text-bold' },
   { value: 'chapter', label: 'Бүлэг', icon: 'solar:bookmark-bold' },
 ];
 
@@ -231,7 +231,7 @@ export default function SearchPage() {
       return `${result.comicTitle || 'Комик'} - ${result.title}`;
     }
     if (result.type === 'novel-chapter') {
-      return `${result.novelTitle || 'Роман'} - ${result.title}`;
+      return `${result.novelTitle || 'Зохиол'} - ${result.title}`;
     }
     return result.title;
   };
@@ -249,9 +249,9 @@ export default function SearchPage() {
   const getTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
       comic: 'Комик',
-      novel: 'Роман',
+      novel: 'Зохиол',
       chapter: 'Бүлэг',
-      'novel-chapter': 'Романы бүлэг',
+      'novel-chapter': 'Зохиолы бүлэг',
     };
     return typeMap[type] || type;
   };
@@ -304,7 +304,7 @@ export default function SearchPage() {
                 }
               }}
               onKeyPress={handleKeyPress}
-              placeholder="Комик, роман, бүлэг хайх..."
+              placeholder="Комик, зохиол, бүлэг хайх..."
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -406,7 +406,7 @@ export default function SearchPage() {
                 <Typography variant="body2" color="text.secondary">
                   <strong>{total}</strong> үр дүн олдлоо
                   {breakdown.comics > 0 && ` • ${breakdown.comics} комик`}
-                  {breakdown.novels > 0 && ` • ${breakdown.novels} роман`}
+                  {breakdown.novels > 0 && ` • ${breakdown.novels} зохиол`}
                   {breakdown.chapters > 0 && ` • ${breakdown.chapters} бүлэг`}
                 </Typography>
               </Box>
