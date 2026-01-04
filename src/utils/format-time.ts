@@ -1,5 +1,7 @@
+// eslint-disable-next-line import/no-duplicates
 import { format, getTime, formatDistanceToNow } from 'date-fns';
-import mn from 'date-fns/locale/mn';
+// eslint-disable-next-line import/no-duplicates
+import { mn } from 'date-fns/locale';
 
 // ----------------------------------------------------------------------
 
