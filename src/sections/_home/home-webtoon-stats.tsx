@@ -37,37 +37,37 @@ export default function HomeWebtoonStats({ comics }: Props) {
       label: 'Нийт Веб Комик',
       value: totalComics.toString(),
       icon: 'carbon:book',
-      color: '#ff6b6b',
+      color: theme.palette.primary.main,
     },
     {
       label: 'Нийт Үзэлт',
       value: formatNumber(totalViews),
       icon: 'carbon:view',
-      color: '#4ecdc4',
+      color: theme.palette.secondary.main,
     },
     {
       label: 'Нийт Лайк',
       value: formatNumber(totalLikes),
       icon: 'carbon:favorite',
-      color: '#45b7d1',
+      color: theme.palette.error.main,
     },
     {
       label: 'Нийт Бүлэг',
       value: formatNumber(totalChapters),
       icon: 'carbon:page-break',
-      color: '#96ceb4',
+      color: theme.palette.info.main,
     },
     {
       label: 'Дундаж Үнэлгээ',
       value: averageRating,
       icon: 'carbon:star',
-      color: '#feca57',
+      color: theme.palette.warning.main,
     },
     {
       label: 'Идэвхтэй Уншигчид',
-      value: formatNumber(totalViews / 100), // Estimated active readers
+      value: formatNumber(totalViews / 100),
       icon: 'carbon:user-multiple',
-      color: '#ff9ff3',
+      color: theme.palette.success.main,
     },
   ];
 
@@ -84,7 +84,20 @@ export default function HomeWebtoonStats({ comics }: Props) {
       <Container component={MotionViewport}>
         <Stack spacing={5}>
           <m.div variants={varFade().inUp}>
-            <Typography variant="h2" sx={{ textAlign: 'center', mb: 2 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                textAlign: 'center',
+                mb: 2,
+                fontWeight: 800,
+                background: `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(
+                  theme.palette.text.primary,
+                  0.5
+                )} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               Платформын Статистик
             </Typography>
             <Typography
@@ -94,6 +107,8 @@ export default function HomeWebtoonStats({ comics }: Props) {
                 color: 'text.secondary',
                 maxWidth: 600,
                 mx: 'auto',
+                fontSize: '1.1rem',
+                lineHeight: 1.6,
               }}
             >
               Манай платформ дээр гайхамшигтай түүхүүдийг олж мэдсэн олон мянган уншигчидтай
@@ -117,56 +132,66 @@ export default function HomeWebtoonStats({ comics }: Props) {
               <m.div key={stat.label} variants={varFade().inUp}>
                 <Card
                   sx={{
-                    p: 3,
+                    p: 4,
                     textAlign: 'center',
-                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    background: alpha(theme.palette.background.paper, 0.8),
+                    backdropFilter: 'blur(10px)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: (t) => t.customShadows.z20,
+                      transform: 'translateY(-8px)',
+                      boxShadow: (t) => `0 24px 48px ${alpha(t.palette.common.black, 0.08)}`,
+                      borderColor: alpha(stat.color, 0.3),
+                      '& .stat-icon-container': {
+                        transform: 'scale(1.1) rotate(5deg)',
+                        bgcolor: alpha(stat.color, 0.15),
+                      },
                     },
                   }}
                 >
-                  <Stack spacing={2} alignItems="center">
+                  <Stack spacing={2.5} alignItems="center">
                     <Box
+                      className="stat-icon-container"
                       sx={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: '50%',
+                        width: 64,
+                        height: 64,
+                        borderRadius: 2,
                         bgcolor: alpha(stat.color, 0.1),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        transition: 'all 0.3s ease',
                       }}
                     >
-                      <Iconify icon={stat.icon} sx={{ color: stat.color, fontSize: 28 }} />
+                      <Iconify icon={stat.icon} sx={{ color: stat.color, fontSize: 32 }} />
                     </Box>
 
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        fontWeight: 'bold',
-                        color: stat.color,
-                        background: `linear-gradient(135deg, ${stat.color} 0%, ${alpha(
-                          stat.color,
-                          0.7
-                        )} 100%)`,
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                      }}
-                    >
-                      {stat.value}
-                    </Typography>
+                    <Stack spacing={0.5}>
+                      <Typography
+                        variant="h3"
+                        sx={{
+                          fontWeight: 800,
+                          letterSpacing: -0.5,
+                        }}
+                      >
+                        {stat.value}
+                      </Typography>
 
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'text.secondary',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {stat.label}
-                    </Typography>
+                      <Typography
+                        variant="overline"
+                        sx={{
+                          color: 'text.disabled',
+                          fontWeight: 700,
+                          letterSpacing: 1.2,
+                          fontSize: '0.75rem',
+                        }}
+                      >
+                        {stat.label}
+                      </Typography>
+                    </Stack>
                   </Stack>
                 </Card>
               </m.div>

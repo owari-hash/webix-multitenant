@@ -26,17 +26,16 @@ export default function SupportHero() {
       }}
     >
       <Typography variant="h2" sx={{ textAlign: 'center', color: 'common.white', mb: 5 }}>
-        Welcome to <br />
-        <Box component="span" sx={{ color: 'primary.main' }}>
-          {`ZONE `}
+        Тусламжийн төвд <br />
+        <Box component="span" sx={{ color: 'primary.main', mr: 1 }}>
+          Тавтай морил
         </Box>
-        Support
       </Typography>
 
       <TextField
         fullWidth
         hiddenLabel
-        placeholder="Search..."
+        placeholder="Хайх..."
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

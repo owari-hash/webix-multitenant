@@ -81,7 +81,7 @@ export default function HomeWebtoonFeatured({ data }: Props) {
         overflow: 'visible',
       }}
     >
-      <Container>
+      <Container sx={{ mb: { xs: 4, md: 6 } }}>
         <Stack spacing={4}>
         <m.div variants={varFade().inUp}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -175,14 +175,8 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                   <Card
                     sx={{
                       cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
                       maxWidth: { xs: 140, sm: 160, md: 180 },
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: theme.customShadows.z16,
-                        borderColor: theme.palette.primary.main,
-                      },
                     }}
                     onClick={() => router.push(paths.webtoon.comic(webtoon._id || webtoon.id))}
                   >
@@ -193,10 +187,6 @@ export default function HomeWebtoonFeatured({ data }: Props) {
                         ratio="3/4"
                         sx={{
                           borderRadius: '6px 6px 0 0',
-                          transition: 'transform 0.3s ease',
-                          '&:hover': {
-                            transform: 'scale(1.03)',
-                          },
                         }}
                       />
 

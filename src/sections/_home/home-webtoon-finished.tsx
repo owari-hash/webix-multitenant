@@ -32,24 +32,8 @@ export default function HomeWebtoonFinished({ data }: Props) {
     <Box
       sx={{
         position: 'relative',
-        background: `linear-gradient(180deg,
-          ${alpha(theme.palette.grey[900], 0.95)} 0%,
-          ${theme.palette.grey[800]} 50%,
-          ${theme.palette.grey[900]} 100%)`,
-        py: { xs: 5, md: 8 },
+        py: { xs: 8, md: 12 },
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `radial-gradient(ellipse at top,
-            ${alpha(theme.palette.secondary.main, 0.08)} 0%,
-            transparent 50%)`,
-          pointerEvents: 'none',
-        },
       }}
     >
       <Container>
@@ -65,7 +49,7 @@ export default function HomeWebtoonFinished({ data }: Props) {
             <Typography
               variant="h3"
               sx={{
-                color: 'common.white',
+                color: 'text.primary',
                 fontWeight: 800,
                 fontSize: { xs: '1.5rem', md: '2rem' },
               }}
@@ -104,12 +88,8 @@ export default function HomeWebtoonFinished({ data }: Props) {
                   width: { xs: 140, sm: 160, md: 180 },
                   flexShrink: 0,
                   cursor: 'pointer',
-                  bgcolor: alpha(theme.palette.common.white, 0.05),
-                  border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    borderColor: alpha(theme.palette.primary.main, 0.5),
-                  },
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
                 }}
                 onClick={() => router.push(paths.webtoon.comic(comic._id || comic.id))}
               >
@@ -143,23 +123,23 @@ export default function HomeWebtoonFinished({ data }: Props) {
                 </Box>
 
                 <Box sx={{ p: 1.5 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: 'common.white',
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      fontSize: { xs: '0.75rem', md: '0.875rem' },
-                      lineHeight: 1.3,
-                      minHeight: { xs: 36, md: 40 },
-                    }}
-                  >
-                    {comic.title}
-                  </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: 'text.primary',
+                        fontWeight: 700,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        fontSize: { xs: '0.75rem', md: '0.875rem' },
+                        lineHeight: 1.3,
+                        minHeight: { xs: 36, md: 40 },
+                      }}
+                    >
+                      {comic.title}
+                    </Typography>
                 </Box>
               </Card>
             ))}

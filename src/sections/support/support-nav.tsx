@@ -92,30 +92,30 @@ export default function SupportNav({ topic, data, onChangeTopic, open, onClose }
         }}
       >
         <Typography variant="h4" paragraph>
-          Do you still need help?
+          Танд тусламж хэрэгтэй байна уу?
         </Typography>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
-          Always support whenever you need (24/7).
+          Бид танд 24/7 цагийн турш туслахад бэлэн байна.
         </Typography>
 
         <Stack spacing={2}>
           <StyledButton>
             <Iconify icon="carbon:email" width={24} />
-            <Typography variant="subtitle2">Email</Typography>
+            <Typography variant="subtitle2">Имэйл илгээх</Typography>
           </StyledButton>
 
           <StyledButton>
             <Iconify icon="carbon:chat" width={24} />
-            <Typography variant="subtitle2">Chat Now</Typography>
+            <Typography variant="subtitle2">Чатлах</Typography>
           </StyledButton>
 
           <StyledButton>
             <Iconify icon="carbon:mobile" width={24} />
             <Typography variant="subtitle2">
-              {`Call `}
+              {`Утас: `}
               <Box component="span" sx={{ color: 'primary.main' }}>
-                552-917-1454
+                7700-0000
               </Box>
             </Typography>
           </StyledButton>

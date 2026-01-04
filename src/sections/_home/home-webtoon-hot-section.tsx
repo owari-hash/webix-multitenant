@@ -35,12 +35,14 @@ export default function HomeWebtoonHotSection({ data }: Props) {
       sx: {
         mt: 4,
         '& .dot': {
-          width: 12,
-          height: 12,
-          bgcolor: alpha(theme.palette.common.white, 0.3),
+          width: 8,
+          height: 8,
+          bgcolor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.15) : alpha(theme.palette.common.white, 0.15),
+          transition: 'all 0.3s ease',
           '&.active': {
-            bgcolor: theme.palette.error.main,
+            bgcolor: theme.palette.primary.main,
             width: 24,
+            borderRadius: 4,
           },
         },
       },
@@ -63,25 +65,9 @@ export default function HomeWebtoonHotSection({ data }: Props) {
     <Box
       sx={{
         position: 'relative',
-        background: `linear-gradient(180deg,
-          ${theme.palette.grey[900]} 0%,
-          ${theme.palette.grey[800]} 50%,
-          ${alpha(theme.palette.grey[900], 0.95)} 100%)`,
         pt: { xs: 8, md: 12 },
         pb: { xs: 5, md: 8 },
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `radial-gradient(ellipse at top,
-            ${alpha(theme.palette.primary.main, 0.1)} 0%,
-            transparent 50%)`,
-          pointerEvents: 'none',
-        },
       }}
     >
       <Container>
@@ -94,22 +80,22 @@ export default function HomeWebtoonHotSection({ data }: Props) {
               leftButtonProps={{
                 sx: {
                   left: { xs: 8, md: -20 },
-                  bgcolor: alpha(theme.palette.common.black, 0.5),
-                  backdropFilter: 'blur(10px)',
-                  color: 'common.white',
+                  bgcolor: 'transparent',
+                  color: 'text.primary',
                   '&:hover': {
-                    bgcolor: theme.palette.error.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    color: 'primary.main',
                   },
                 },
               }}
               rightButtonProps={{
                 sx: {
                   right: { xs: 8, md: -20 },
-                  bgcolor: alpha(theme.palette.common.black, 0.5),
-                  backdropFilter: 'blur(10px)',
-                  color: 'common.white',
+                  bgcolor: 'transparent',
+                  color: 'text.primary',
                   '&:hover': {
-                    bgcolor: theme.palette.error.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    color: 'primary.main',
                   },
                 },
               }}
@@ -120,11 +106,7 @@ export default function HomeWebtoonHotSection({ data }: Props) {
                     <Box
                       sx={{
                         position: 'relative',
-                        cursor: 'pointer',
-                        transition: 'transform 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-8px)',
-                        },
+                        cursor: 'default',
                       }}
                       onClick={() => router.push(paths.webtoon.comic(comic._id || comic.id))}
                     >
@@ -134,7 +116,8 @@ export default function HomeWebtoonHotSection({ data }: Props) {
                           borderRadius: 3,
                           overflow: 'hidden',
                           mb: 2,
-                          boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`,
+                          bgcolor: 'transparent',
+                          boxShadow: (_theme) => `0 4px 12px ${alpha(_theme.palette.common.black, 0.1)}`,
                         }}
                       >
                         <Image
@@ -143,9 +126,8 @@ export default function HomeWebtoonHotSection({ data }: Props) {
                           ratio="3/4"
                           sx={{
                             borderRadius: 3,
-                            transition: 'transform 0.3s ease',
-                            '&:hover': {
-                              transform: 'scale(1.05)',
+                            '& img': {
+                              objectFit: 'cover',
                             },
                           }}
                         />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as Yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -23,6 +23,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { RouterLink } from 'src/routes/components';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import TermsPrivacyDialog from 'src/components/dialog/terms-privacy-dialog';
+import { useSnackbar } from 'src/components/snackbar';
 
 // ----------------------------------------------------------------------
 
@@ -30,7 +31,40 @@ export default function RegisterCoverView() {
   const theme = useTheme();
   const passwordShow = useBoolean();
   const termsDialogOpen = useBoolean();
+  const { enqueueSnackbar } = useSnackbar();
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
+  const [organizationName, setOrganizationName] = useState<string>('');
+
+  useEffect(() => {
+    const fetchOrgData = async () => {
+      try {
+        // Fetch Logo
+        const logoResponse = await fetch('/api2/organizations/logo');
+        if (logoResponse.ok) {
+          const logoResult = await logoResponse.json();
+          if (logoResult.success && logoResult.data?.logo) {
+            setOrganizationLogo(logoResult.data.logo);
+          }
+        }
+
+        // Fetch License/Name
+        const licenseResponse = await fetch('/api2/organizations/license');
+        if (licenseResponse.ok) {
+          const licenseResult = await licenseResponse.json();
+          if (licenseResult.success && licenseResult.data?.displayName) {
+            setOrganizationName(licenseResult.data.displayName);
+          } else if (licenseResult.success && licenseResult.data?.name) {
+            setOrganizationName(licenseResult.data.name);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch organization data:', error);
+      }
+    };
+
+    fetchOrgData();
+  }, []);
 
   const RegisterSchema = Yup.object().shape({
     name: Yup.string()
@@ -109,12 +143,12 @@ export default function RegisterCoverView() {
           window.location.href = '/';
         }
       } else {
-        console.error('Бүртгэлд алдаа:', result.error || result.message);
-        alert(result.error || result.message || 'Бүртгэлд алдаа гарлаа');
+        enqueueSnackbar(result.error || result.message || 'Бүртгэлд алдаа гарлаа', {
+          variant: 'error',
+        });
       }
     } catch (error) {
-      console.error('Бүртгэл алдаа:', error);
-      alert('Сүлжээний алдаа. Дахин оролдоно уу.');
+      enqueueSnackbar('Сүлжээний алдаа. Дахин оролдоно уу.', { variant: 'error' });
     }
   });
 
@@ -239,42 +273,157 @@ export default function RegisterCoverView() {
         }}
       />
       {/* Left Side - Form */}
+      {/* Left Side - Hero Content */}
       <Box
         sx={{
-          width: { xs: '100%', lg: '50%' },
+          display: { xs: 'none', lg: 'flex' },
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flex: '1 1 55%',
+          p: 8,
+          zIndex: 3,
+          position: 'relative',
+        }}
+      >
+        <Link
+          component={RouterLink}
+          href="/"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4,
+            textDecoration: 'none',
+            '&:hover': {
+              opacity: 0.8,
+            },
+            transition: 'opacity 0.2s ease',
+          }}
+        >
+          <Box
+            sx={{
+              p: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {organizationLogo ? (
+              <Box
+                component="img"
+                src={organizationLogo}
+                alt="Logo"
+                sx={{ width: 48, height: 48, borderRadius: '12px', objectFit: 'cover' }}
+              />
+            ) : (
+              <Logo sx={{ width: 48, filter: 'brightness(0) invert(1)' }} />
+            )}
+          </Box>
+          <Typography variant="h5" sx={{ color: 'common.white', fontWeight: 800, letterSpacing: -1 }}>
+            {organizationName || 'Байгууллагын нэр'}
+          </Typography>
+        </Link>
+
+        <Box sx={{ maxWidth: 700 }}>
+          <Typography
+            variant="h1"
+            sx={{
+              color: 'common.white',
+              fontWeight: 900,
+              fontSize: { lg: '4.5rem', xl: '5.5rem' },
+              lineHeight: 1,
+              mb: 3,
+              letterSpacing: -2,
+            }}
+          >
+            Өөрийн <br />
+            <Box component="span" sx={{ 
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>түүхийг эхэл</Box>
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              color: alpha('#fff', 0.6),
+              fontWeight: 400,
+              lineHeight: 1.6,
+              maxWidth: 500,
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              pl: 3,
+            }}
+          >
+            Өөрийн бүртгэлийг үүсгэж, шилдэг вебтүүнүүдийг цаг алдалгүй уншиж эхлээрэй.
+          </Typography>
+        </Box>
+
+        <Box>
+          <Stack direction="row" spacing={3} alignItems="center">
+            <Typography variant="caption" sx={{ color: alpha('#fff', 0.3) }}>
+              © 2026 Webix
+            </Typography>
+            <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: alpha('#fff', 0.2) }} />
+            <Link
+              component={RouterLink}
+              href={paths.support}
+              sx={{
+                color: alpha('#fff', 0.5),
+                fontSize: '0.75rem',
+                textDecoration: 'none',
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              Тусламж
+            </Link>
+            <Link
+              component="button"
+              onClick={termsDialogOpen.onTrue}
+              sx={{
+                color: alpha('#fff', 0.5),
+                fontSize: '0.75rem',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                border: 'none',
+                bgcolor: 'transparent',
+                p: 0,
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              Нууцлал
+            </Link>
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* Right Side - Form Container */}
+      <Box
+        sx={{
+          width: { xs: '100%', lg: '45%' },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
           zIndex: 3,
-          py: { xs: 3, sm: 4 },
-          px: { xs: 2, sm: 4 },
+          p: { xs: 2, md: 4, lg: 6 },
         }}
       >
         <Card
           sx={{
             width: '100%',
-            maxWidth: 520,
+            maxWidth: 400,
             maxHeight: { xs: 'calc(100vh - 32px)', sm: 'calc(100vh - 48px)' },
-            p: { xs: 3, sm: 4, md: 5 },
-            borderRadius: 4,
-            bgcolor: alpha(theme.palette.background.paper, 0.95),
-            backdropFilter: 'blur(20px)',
-            boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.3)}`,
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            p: '40px',
+            borderRadius: '16px',
+            bgcolor: 'transparent',
+            backgroundClip: 'padding-box',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
-            },
           }}
         >
           <Box
@@ -284,17 +433,7 @@ export default function RegisterCoverView() {
               display: 'flex',
               flexDirection: 'column',
               '&::-webkit-scrollbar': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: alpha(theme.palette.grey[500], 0.2),
-                borderRadius: '3px',
-                '&:hover': {
-                  background: alpha(theme.palette.grey[500], 0.3),
-                },
+                display: 'none',
               },
             }}
           >
@@ -302,23 +441,32 @@ export default function RegisterCoverView() {
               {/* Header */}
               <Stack spacing={1} alignItems="center">
                 <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 1 }}>
-                  <Logo />
+                  {organizationLogo ? (
+                    <Link
+                      component={RouterLink}
+                      href="/"
+                      sx={{ display: 'inline-flex' }}
+                    >
+                      <Box
+                        component="img"
+                        src={organizationLogo}
+                        alt="Logo"
+                        sx={{ width: 48, height: 48, borderRadius: '12px', objectFit: 'cover' }}
+                      />
+                    </Link>
+                  ) : (
+                    <Logo />
+                  )}
                 </Box>
                 <Typography
                   variant="h4"
                   sx={{
                     fontWeight: 800,
-                    background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    color: 'common.white',
                     textAlign: 'center',
                   }}
                 >
                   Бүртгэл үүсгэх
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-                  Шинэ бүртгэл үүсгэж эхлэх
                 </Typography>
               </Stack>
 
@@ -328,25 +476,30 @@ export default function RegisterCoverView() {
                   <RHFTextField
                     name="name"
                     label="Бүтэн нэр"
-                    placeholder="Жон Доу"
+                    placeholder="Батаа"
+                    variant="standard"
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.grey[500], 0.04),
-                        transition: 'all 0.3s ease',
-                        '& fieldset': {
-                          borderColor: alpha(theme.palette.grey[500], 0.2),
-                        },
-                        '&:hover fieldset': {
-                          borderColor: alpha(theme.palette.primary.main, 0.4),
-                        },
+                      '& .MuiInput-underline:before': {
+                        borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                      },
+                      '& .MuiInput-underline:after': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'common.white',
                         '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                          '& fieldset': {
-                            borderWidth: 2,
-                            borderColor: theme.palette.primary.main,
-                          },
-                          boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                          color: 'common.white',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'common.white',
+                        '&:-webkit-autofill': {
+                          WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                          WebkitTextFillColor: '#fff !important',
+                          transition: 'background-color 5000s ease-in-out 0s',
                         },
                       },
                     }}
@@ -356,24 +509,29 @@ export default function RegisterCoverView() {
                     name="email"
                     label="Имэйл хаяг"
                     placeholder="name@example.com"
+                    variant="standard"
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.grey[500], 0.04),
-                        transition: 'all 0.3s ease',
-                        '& fieldset': {
-                          borderColor: alpha(theme.palette.grey[500], 0.2),
-                        },
-                        '&:hover fieldset': {
-                          borderColor: alpha(theme.palette.primary.main, 0.4),
-                        },
+                      '& .MuiInput-underline:before': {
+                        borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                      },
+                      '& .MuiInput-underline:after': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'common.white',
                         '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                          '& fieldset': {
-                            borderWidth: 2,
-                            borderColor: theme.palette.primary.main,
-                          },
-                          boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                          color: 'common.white',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'common.white',
+                        '&:-webkit-autofill': {
+                          WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                          WebkitTextFillColor: '#fff !important',
+                          transition: 'background-color 5000s ease-in-out 0s',
                         },
                       },
                     }}
@@ -384,24 +542,29 @@ export default function RegisterCoverView() {
                     label="Нууц үг"
                     type={passwordShow.value ? 'text' : 'password'}
                     placeholder="••••••••"
+                    variant="standard"
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.grey[500], 0.04),
-                        transition: 'all 0.3s ease',
-                        '& fieldset': {
-                          borderColor: alpha(theme.palette.grey[500], 0.2),
-                        },
-                        '&:hover fieldset': {
-                          borderColor: alpha(theme.palette.primary.main, 0.4),
-                        },
+                      '& .MuiInput-underline:before': {
+                        borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                      },
+                      '& .MuiInput-underline:after': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'common.white',
                         '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                          '& fieldset': {
-                            borderWidth: 2,
-                            borderColor: theme.palette.primary.main,
-                          },
-                          boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                          color: 'common.white',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'common.white',
+                        '&:-webkit-autofill': {
+                          WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                          WebkitTextFillColor: '#fff !important',
+                          transition: 'background-color 5000s ease-in-out 0s',
                         },
                       },
                     }}
@@ -434,24 +597,29 @@ export default function RegisterCoverView() {
                     label="Нууц үг баталгаажуулах"
                     type={passwordShow.value ? 'text' : 'password'}
                     placeholder="••••••••"
+                    variant="standard"
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.grey[500], 0.04),
-                        transition: 'all 0.3s ease',
-                        '& fieldset': {
-                          borderColor: alpha(theme.palette.grey[500], 0.2),
-                        },
-                        '&:hover fieldset': {
-                          borderColor: alpha(theme.palette.primary.main, 0.4),
-                        },
+                      '& .MuiInput-underline:before': {
+                        borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                      },
+                      '& .MuiInput-underline:after': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                        borderBottomColor: 'common.white',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'common.white',
                         '&.Mui-focused': {
-                          bgcolor: 'background.paper',
-                          '& fieldset': {
-                            borderWidth: 2,
-                            borderColor: theme.palette.primary.main,
-                          },
-                          boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                          color: 'common.white',
+                        },
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'common.white',
+                        '&:-webkit-autofill': {
+                          WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                          WebkitTextFillColor: '#fff !important',
+                          transition: 'background-color 5000s ease-in-out 0s',
                         },
                       },
                     }}
@@ -510,7 +678,7 @@ export default function RegisterCoverView() {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: termsAccepted ? 'success.main' : 'text.secondary',
+                        color: termsAccepted ? 'success.main' : alpha(theme.palette.common.white, 0.7),
                         fontSize: { xs: '0.75rem', sm: '0.875rem' },
                         textAlign: 'left',
                       }}
@@ -528,21 +696,21 @@ export default function RegisterCoverView() {
                     variant="contained"
                     loading={isSubmitting}
                     sx={{
-                      py: 1.75,
-                      borderRadius: 2,
-                      fontWeight: 700,
-                      fontSize: '1rem',
+                      py: '12px',
+                      px: '20px',
+                      borderRadius: '100px',
+                      fontWeight: 600,
+                      fontSize: '16px',
                       textTransform: 'none',
-                      background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.primary.main} 100%)`,
-                      boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      bgcolor: 'common.white',
+                      color: 'common.black',
+                      border: '2px solid transparent',
                       '&:hover': {
-                        boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-                        transform: 'translateY(-2px)',
+                        bgcolor: 'rgba(255, 255, 255, 0.15)',
+                        color: 'common.white',
+                        borderColor: 'common.white',
                       },
-                      '&:active': {
-                        transform: 'translateY(0)',
-                      },
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transition: '0.3s ease',
                     }}
                   >
                     Бүртгэл үүсгэх
@@ -552,7 +720,7 @@ export default function RegisterCoverView() {
                     variant="body2"
                     align="center"
                     sx={{
-                      color: 'text.secondary',
+                      color: alpha(theme.palette.common.white, 0.7),
                       mt: 0.5,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     }}
@@ -562,11 +730,11 @@ export default function RegisterCoverView() {
                       component={RouterLink}
                       href={paths.loginCover}
                       sx={{
-                        color: 'primary.main',
+                        color: 'common.white',
                         fontWeight: 700,
-                        textDecoration: 'none',
+                        textDecoration: 'underline',
                         '&:hover': {
-                          textDecoration: 'underline',
+                          opacity: 0.8,
                         },
                       }}
                     >
@@ -578,82 +746,6 @@ export default function RegisterCoverView() {
             </Stack>
           </Box>
         </Card>
-      </Box>
-
-      {/* Right Side - Visual */}
-      <Box
-        sx={{
-          display: { xs: 'none', lg: 'flex' },
-          flex: 1,
-          position: 'relative',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          zIndex: 3,
-        }}
-      >
-        <Stack spacing={4} alignItems="center" sx={{ position: 'relative', zIndex: 2 }}>
-          <Box
-            sx={{
-              width: 200,
-              height: 200,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${alpha(
-                theme.palette.common.white,
-                0.2
-              )} 0%, ${alpha(theme.palette.common.white, 0.05)} 100%)`,
-              backdropFilter: 'blur(20px)',
-              border: `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              animation: 'pulse 3s ease-in-out infinite',
-              '@keyframes pulse': {
-                '0%, 100%': {
-                  transform: 'scale(1)',
-                  opacity: 1,
-                },
-                '50%': {
-                  transform: 'scale(1.1)',
-                  opacity: 0.8,
-                },
-              },
-            }}
-          >
-            <Iconify
-              icon="carbon:user-multiple"
-              sx={{
-                width: 100,
-                height: 100,
-                color: 'common.white',
-                filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))',
-              }}
-            />
-          </Box>
-          <Typography
-            variant="h2"
-            sx={{
-              color: 'common.white',
-              fontWeight: 900,
-              textAlign: 'center',
-              textShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`,
-              px: 4,
-            }}
-          >
-            Бүртгэл үүсгэх
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: alpha(theme.palette.common.white, 0.9),
-              textAlign: 'center',
-              fontWeight: 400,
-              px: 4,
-            }}
-          >
-            Шинэ бүртгэл үүсгэж, аялал эхлүүлэх
-          </Typography>
-        </Stack>
       </Box>
 
       {/* Terms and Privacy Dialog */}

@@ -241,9 +241,6 @@ export default function PremiumPaymentView() {
       const result = await response.json();
 
       if (result.success) {
-        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', {
-          variant: 'success',
-        });
         router.push('/webtoon');
         window.location.reload();
       } else {
@@ -283,9 +280,6 @@ export default function PremiumPaymentView() {
       if (result.success) {
         // Refresh user data to update premium status
         await checkUser();
-        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.', {
-          variant: 'success',
-        });
         setTimeout(() => {
           router.push('/webtoon');
         }, 2000);

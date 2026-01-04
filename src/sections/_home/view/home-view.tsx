@@ -5,15 +5,14 @@ import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import { alpha, useTheme } from '@mui/material/styles';
 
 import ScrollProgress from 'src/components/scroll-progress';
 
 import HomeWebtoonHotSection from '../home-webtoon-hot-section';
 import HomeWebtoonFinished from '../home-webtoon-finished';
-import HomeWebtoonStats from '../home-webtoon-stats';
 import HomeWebtoonFeatured from '../home-webtoon-featured';
 import HomeWebtoonTrending from '../home-webtoon-trending';
-import HomeWebtoonNewsletter from '../home-webtoon-newsletter';
 import HomeWebtoonCategories from '../home-webtoon-categories';
 
 // ----------------------------------------------------------------------
@@ -69,6 +68,8 @@ export default function HomeView() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 10);
 
+  const theme = useTheme();
+
   if (loading) {
     return (
       <Box
@@ -85,14 +86,35 @@ export default function HomeView() {
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        position: 'relative',
+        background: `linear-gradient(to bottom, 
+          ${theme.palette.background.default} 0%, 
+          ${alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.08 : 0.04)} 25%, 
+          ${alpha(theme.palette.secondary.main, theme.palette.mode === 'light' ? 0.08 : 0.04)} 50%, 
+          ${alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.08 : 0.04)} 75%, 
+          ${theme.palette.background.default} 100%)`,
+        // Add subtle background decoration
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `radial-gradient(circle at 20% 30%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                      radial-gradient(circle at 80% 70%, ${alpha(theme.palette.secondary.main, 0.05)} 0%, transparent 50%)`,
+          pointerEvents: 'none',
+          zIndex: 0,
+        },
+      }}
+    >
       <ScrollProgress scrollYProgress={scrollYProgress} />
 
       {/* Hot Section - 3 Large Featured Comics */}
       <HomeWebtoonHotSection data={hotComics} />
 
-      {/* Finished Books/Comics Section */}
-      <HomeWebtoonFinished data={finishedComics} />
 
       {/* Featured Webtoons */}
       <HomeWebtoonFeatured data={featuredComics} />
@@ -108,10 +130,8 @@ export default function HomeView() {
       {/* New Releases */}
       <HomeWebtoonTrending title="Шинэ гарсан" data={newComics} type="new" />
 
-      <HomeWebtoonStats comics={comics} />
-
-      {/* Newsletter */}
-      <HomeWebtoonNewsletter />
-    </>
+      {/* Finished Books/Comics Section */}
+      <HomeWebtoonFinished data={finishedComics} />
+    </Box>
   );
 }

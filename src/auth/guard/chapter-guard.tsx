@@ -131,10 +131,10 @@ export default function ChapterGuard({ children }: Props) {
         <Button
           variant="contained"
           color="primary"
-          href={paths.loginBackground}
+          href={paths.loginCover}
           onClick={(e) => {
             e.preventDefault();
-            router.push(paths.loginBackground);
+            router.push(paths.loginCover);
           }}
         >
           Нэвтрэх

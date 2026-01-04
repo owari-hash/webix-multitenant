@@ -142,7 +142,7 @@ export default function PremiumPaymentDialog({ open, onClose, onSuccess }: Props
       const result = await response.json();
 
       if (result.success) {
-        alert('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.');
+        // alert('Төлбөр амжилттай төлөгдлөө! Premium эрх идэвхжлээ.');
         if (onSuccess) onSuccess();
         onClose();
         // Reload to update auth state

@@ -91,7 +91,7 @@ export default function QPayPaymentStatus({
               clearInterval(intervalRef.current);
               intervalRef.current = null;
             }
-            enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
+            // enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
             // Call onPaymentComplete to update premium status
             if (onPaymentComplete) {
               await onPaymentComplete();
@@ -131,7 +131,7 @@ export default function QPayPaymentStatus({
       setStatus(result.status);
 
       if (result.status === 'PAID') {
-        enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
+        // enqueueSnackbar('Төлбөр амжилттай төлөгдлөө!', { variant: 'success' });
         // Call onPaymentComplete to update premium status
         if (onPaymentComplete) {
           await onPaymentComplete();
@@ -374,7 +374,7 @@ export default function QPayPaymentStatus({
               sx={{ color: 'success.main', mb: 1 }}
             />
             <Typography variant="h6" color="success.main">
-              Төлбөр амжилттай төлөгдлөө!
+              {/* Төлбөр амжилттай төлөгдлөө! */}
             </Typography>
           </Box>
         )}

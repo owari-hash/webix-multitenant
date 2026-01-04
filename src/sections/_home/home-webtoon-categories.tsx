@@ -58,23 +58,8 @@ export default function HomeWebtoonCategories() {
     <Box
       sx={{
         position: 'relative',
-        bgcolor: 'background.neutral',
         py: { xs: 8, md: 12 },
         overflow: 'hidden',
-        // Subtle gradient background
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `linear-gradient(135deg,
-            ${alpha(theme.palette.primary.main, 0.02)} 0%,
-            ${alpha(theme.palette.secondary.main, 0.02)} 50%,
-            transparent 100%)`,
-          pointerEvents: 'none',
-        },
       }}
     >
       <Container component={MotionViewport} maxWidth="lg">

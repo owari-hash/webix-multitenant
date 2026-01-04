@@ -117,6 +117,12 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
       elevation={0}
       sx={{
         boxShadow: 'none',
+        bgcolor: 'transparent',
+        color: 'text.primary',
+        transition: theme.transitions.create(['background-color', 'color', 'height'], {
+          easing: theme.transitions.easing.easeInOut,
+          duration: theme.transitions.duration.shorter,
+        }),
       }}
     >
       <Toolbar
@@ -238,19 +244,13 @@ export default function HeaderWebtoon({ headerOnDark }: Props) {
             sx={{
               lineHeight: 0,
               position: 'relative',
-              ...(headerOnDark && {
-                // Make logo white when on dark background
+              // Logo visibility management
+              ...((headerOnDark || theme.palette.mode === 'dark') && {
                 filter: 'brightness(0) invert(1)',
-                '& img': {
-                  filter: 'brightness(0) invert(1)',
-                },
               }),
-              ...(offset && {
-                // Remove filter when scrolled
+              // When scrolled and in light mode, ensure filter is removed
+              ...(offset && theme.palette.mode === 'light' && {
                 filter: 'none',
-                '& img': {
-                  filter: 'none',
-                },
               }),
             }}
           >

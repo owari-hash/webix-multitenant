@@ -76,7 +76,7 @@ export default function RegisterBackgroundView() {
         {`Already have an account? `}
         <Link
           component={RouterLink}
-          href={paths.loginBackground}
+          href={paths.loginCover}
           variant="subtitle2"
           color="primary"
         >

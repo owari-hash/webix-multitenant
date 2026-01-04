@@ -21,57 +21,47 @@ import Iconify from 'src/components/iconify';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { RouterLink } from 'src/routes/components';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import { useSnackbar } from 'src/components/snackbar';
+import TermsPrivacyDialog from 'src/components/dialog/terms-privacy-dialog';
 
 // ----------------------------------------------------------------------
 
 export default function LoginCoverView() {
   const theme = useTheme();
   const passwordShow = useBoolean();
+  const termsDialogOpen = useBoolean();
+  const { enqueueSnackbar } = useSnackbar();
   const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
+  const [organizationName, setOrganizationName] = useState<string>('');
 
   useEffect(() => {
-    const fetchOrganizationLogo = async () => {
+    const fetchOrgData = async () => {
       try {
-        const response = await fetch('/api2/organizations/logo', {
-          method: 'GET',
-        });
-
-        if (!response.ok) {
-          console.error('Failed to fetch logo:', response.status);
-          return;
+        // Fetch Logo
+        const logoResponse = await fetch('/api2/organizations/logo');
+        if (logoResponse.ok) {
+          const logoResult = await logoResponse.json();
+          if (logoResult.success && logoResult.data?.logo) {
+            setOrganizationLogo(logoResult.data.logo);
+          }
         }
 
-        const result = await response.json();
-
-        // API returns: { success: true, data: { logo: "data:image/png;base64,..." } }
-        if (result.success && result.data?.logo) {
-          const logoUrl = result.data.logo;
-
-          // Logo is already a complete data URI, use it directly
-          if (typeof logoUrl === 'string' && logoUrl.startsWith('data:')) {
-            console.log(
-              'Setting logo URL, length:',
-              logoUrl.length,
-              'First 100 chars:',
-              logoUrl.substring(0, 100)
-            );
-            setOrganizationLogo(logoUrl);
-          } else {
-            console.log(
-              'Logo URL is not a valid data URI:',
-              typeof logoUrl,
-              logoUrl?.substring(0, 50)
-            );
+        // Fetch License/Name
+        const licenseResponse = await fetch('/api2/organizations/license');
+        if (licenseResponse.ok) {
+          const licenseResult = await licenseResponse.json();
+          if (licenseResult.success && licenseResult.data?.displayName) {
+            setOrganizationName(licenseResult.data.displayName);
+          } else if (licenseResult.success && licenseResult.data?.name) {
+            setOrganizationName(licenseResult.data.name);
           }
-        } else {
-          console.log('No logo in response:', result);
         }
       } catch (error) {
-        console.error('Failed to fetch organization logo:', error);
+        console.error('Failed to fetch organization data:', error);
       }
     };
 
-    fetchOrganizationLogo();
+    fetchOrgData();
   }, []);
 
   const LoginSchema = Yup.object().shape({
@@ -124,12 +114,18 @@ export default function LoginCoverView() {
           window.location.href = '/';
         }
       } else {
-        console.error('Нэвтрэхэд алдаа:', result.error || result.message);
-        alert(result.error || result.message || 'Нэвтрэхэд алдаа гарлаа');
+        const errorMessage = result.error || result.message;
+        const displayMessage =
+          errorMessage === 'Invalid credentials - user not found'
+            ? 'Нэвтрэх мэдээлэл буруу эсвэл хэрэглэгч олдсонгүй'
+            : errorMessage || 'Нэвтрэхэд алдаа гарлаа';
+
+        enqueueSnackbar(displayMessage, {
+          variant: 'error',
+        });
       }
     } catch (error) {
-      console.error('Нэвтрэх алдаа:', error);
-      alert('Сүлжээний алдаа. Дахин оролдоно уу.');
+      enqueueSnackbar('Сүлжээний алдаа. Дахин оролдоно уу.', { variant: 'error' });
     }
   });
 
@@ -253,176 +249,186 @@ export default function LoginCoverView() {
           },
         }}
       />
-      {/* Left Side - Visual */}
+      {/* Left Side - Hero Content */}
       <Box
         sx={{
           display: { xs: 'none', lg: 'flex' },
-          flex: 1,
-          position: 'relative',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flex: '1 1 55%',
+          p: 8,
           zIndex: 3,
+          position: 'relative',
         }}
       >
-        <Stack spacing={4} alignItems="center" sx={{ position: 'relative', zIndex: 2 }}>
+        <Link
+          component={RouterLink}
+          href="/"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4,
+            textDecoration: 'none',
+            '&:hover': {
+              opacity: 0.8,
+            },
+            transition: 'opacity 0.2s ease',
+          }}
+        >
           <Box
             sx={{
-              width: 200,
-              height: 200,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${alpha(
-                theme.palette.common.white,
-                0.2
-              )} 0%, ${alpha(theme.palette.common.white, 0.05)} 100%)`,
-              backdropFilter: 'blur(20px)',
-              border: `2px solid ${alpha(theme.palette.common.white, 0.3)}`,
+              p: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              animation: 'pulse 3s ease-in-out infinite',
-              '@keyframes pulse': {
-                '0%, 100%': {
-                  transform: 'scale(1)',
-                  opacity: 1,
-                },
-                '50%': {
-                  transform: 'scale(1.1)',
-                  opacity: 0.8,
-                },
-              },
             }}
           >
             {organizationLogo ? (
               <Box
                 component="img"
                 src={organizationLogo}
-                alt="Organization Logo"
-                onError={(e) => {
-                  console.error('Logo image failed to load:', e);
-                  setOrganizationLogo(null);
-                }}
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  console.log('Logo image loaded successfully', {
-                    naturalWidth: img.naturalWidth,
-                    naturalHeight: img.naturalHeight,
-                    width: img.width,
-                    height: img.height,
-                    srcLength: img.src.length,
-                    complete: img.complete,
-                  });
-                  // Check if image has content by creating a canvas
-                  const canvas = document.createElement('canvas');
-                  canvas.width = img.naturalWidth;
-                  canvas.height = img.naturalHeight;
-                  const ctx = canvas.getContext('2d');
-                  if (ctx) {
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const hasContent = imageData.data.some(
-                      (pixel, index) => index % 4 === 3 && pixel > 0
-                    );
-                    console.log('Image has content:', hasContent);
-                  }
-                }}
-                sx={{
-                  width: 240,
-                  height: 240,
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                  borderRadius: '50%',
-                }}
+                alt="Logo"
+                sx={{ width: 48, height: 48, borderRadius: '12px', objectFit: 'cover' }}
               />
             ) : (
-              <Logo sx={{ width: 120, filter: 'brightness(0) invert(1)' }} />
+              <Logo sx={{ width: 48, filter: 'brightness(0) invert(1)' }} />
             )}
           </Box>
+          <Typography variant="h5" sx={{ color: 'common.white', fontWeight: 800, letterSpacing: -1 }}>
+            {organizationName || 'Байгууллагын нэр'}
+          </Typography>
+        </Link>
+
+        <Box sx={{ maxWidth: 700 }}>
           <Typography
-            variant="h2"
+            variant="h1"
             sx={{
               color: 'common.white',
               fontWeight: 900,
-              textAlign: 'center',
-              textShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`,
-              px: 4,
+              fontSize: { lg: '4.5rem', xl: '5.5rem' },
+              lineHeight: 1,
+              mb: 3,
+              letterSpacing: -2,
             }}
           >
-            Сайн байна уу
+            Унших бүрт <br />
+            <Box component="span" sx={{ 
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>шинэ ертөнц</Box>
           </Typography>
           <Typography
-            variant="h6"
+            variant="h5"
             sx={{
-              color: alpha(theme.palette.common.white, 0.9),
-              textAlign: 'center',
+              color: alpha('#fff', 0.6),
               fontWeight: 400,
-              px: 4,
+              lineHeight: 1.6,
+              maxWidth: 500,
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              pl: 3,
             }}
           >
-            Бүртгэлдээ нэвтэрж, үргэлжлүүлэх
+            Монголын хамгийн том вебтүүн платформд нэгдэж, адал явдалаар дүүрэн ертөнцөөр аялаарай.
           </Typography>
-        </Stack>
+        </Box>
+
+        <Box>
+          <Stack direction="row" spacing={3} alignItems="center">
+            <Typography variant="caption" sx={{ color: alpha('#fff', 0.3) }}>
+              © 2026 Webix
+            </Typography>
+            <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: alpha('#fff', 0.2) }} />
+            <Link
+              component={RouterLink}
+              href={paths.support}
+              sx={{
+                color: alpha('#fff', 0.5),
+                fontSize: '0.75rem',
+                textDecoration: 'none',
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              Тусламж
+            </Link>
+            <Link
+              component="button"
+              onClick={termsDialogOpen.onTrue}
+              sx={{
+                color: alpha('#fff', 0.5),
+                fontSize: '0.75rem',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                border: 'none',
+                bgcolor: 'transparent',
+                p: 0,
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              Нууцлал
+            </Link>
+          </Stack>
+        </Box>
       </Box>
 
-      {/* Right Side - Form */}
+      {/* Right Side - Form Container */}
       <Box
         sx={{
-          width: { xs: '100%', lg: '50%' },
+          width: { xs: '100%', lg: '45%' },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
           zIndex: 3,
-          py: { xs: 3, sm: 4 },
-          px: { xs: 2, sm: 4 },
+          p: { xs: 2, md: 4, lg: 6 },
         }}
       >
         <Card
           sx={{
             width: '100%',
-            maxWidth: 480,
-            p: { xs: 3, sm: 4, md: 5 },
-            borderRadius: 4,
-            bgcolor: alpha(theme.palette.background.paper, 0.95),
-            backdropFilter: 'blur(20px)',
-            boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.3)}`,
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            maxWidth: 400,
+            p: '40px',
+            borderRadius: '16px', // Slightly softer rounding for modern look
+            bgcolor: 'transparent',
+            backgroundClip: 'padding-box',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             position: 'relative',
             overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            },
           }}
         >
           <Stack spacing={4}>
             {/* Header */}
             <Stack spacing={1} alignItems="center">
               <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 2 }}>
-                <Logo />
+                {organizationLogo ? (
+                  <Link
+                    component={RouterLink}
+                    href="/"
+                    sx={{ display: 'inline-flex' }}
+                  >
+                    <Box
+                      component="img"
+                      src={organizationLogo}
+                      alt="Logo"
+                      sx={{ width: 48, height: 48, borderRadius: '12px', objectFit: 'cover' }}
+                    />
+                  </Link>
+                ) : (
+                  <Logo />
+                )}
               </Box>
               <Typography
                 variant="h4"
                 sx={{
                   fontWeight: 800,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: 'common.white',
                   textAlign: 'center',
                 }}
               >
                 Нэвтрэх
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-                Бүртгэлдээ нэвтрэх
               </Typography>
             </Stack>
 
@@ -433,24 +439,29 @@ export default function LoginCoverView() {
                   name="email"
                   label="Имэйл хаяг"
                   placeholder="name@example.com"
+                  variant="standard"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      bgcolor: alpha(theme.palette.grey[500], 0.04),
-                      transition: 'all 0.3s ease',
-                      '& fieldset': {
-                        borderColor: alpha(theme.palette.grey[500], 0.2),
-                      },
-                      '&:hover fieldset': {
-                        borderColor: alpha(theme.palette.primary.main, 0.4),
-                      },
+                    '& .MuiInput-underline:before': {
+                      borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                    },
+                    '& .MuiInput-underline:after': {
+                      borderBottomColor: 'common.white',
+                    },
+                    '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                      borderBottomColor: 'common.white',
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'common.white',
                       '&.Mui-focused': {
-                        bgcolor: 'background.paper',
-                        '& fieldset': {
-                          borderWidth: 2,
-                          borderColor: theme.palette.primary.main,
-                        },
-                        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                        color: 'common.white',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'common.white',
+                      '&:-webkit-autofill': {
+                        WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                        WebkitTextFillColor: '#fff !important',
+                        transition: 'background-color 5000s ease-in-out 0s',
                       },
                     },
                   }}
@@ -461,24 +472,29 @@ export default function LoginCoverView() {
                   label="Нууц үг"
                   type={passwordShow.value ? 'text' : 'password'}
                   placeholder="••••••••"
+                  variant="standard"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      bgcolor: alpha(theme.palette.grey[500], 0.04),
-                      transition: 'all 0.3s ease',
-                      '& fieldset': {
-                        borderColor: alpha(theme.palette.grey[500], 0.2),
-                      },
-                      '&:hover fieldset': {
-                        borderColor: alpha(theme.palette.primary.main, 0.4),
-                      },
+                    '& .MuiInput-underline:before': {
+                      borderBottomColor: alpha(theme.palette.common.white, 0.5),
+                    },
+                    '& .MuiInput-underline:after': {
+                      borderBottomColor: 'common.white',
+                    },
+                    '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                      borderBottomColor: 'common.white',
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'common.white',
                       '&.Mui-focused': {
-                        bgcolor: 'background.paper',
-                        '& fieldset': {
-                          borderWidth: 2,
-                          borderColor: theme.palette.primary.main,
-                        },
-                        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
+                        color: 'common.white',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'common.white',
+                      '&:-webkit-autofill': {
+                        WebkitBoxShadow: '0 0 0 100px transparent inset !important',
+                        WebkitTextFillColor: '#fff !important',
+                        transition: 'background-color 5000s ease-in-out 0s',
                       },
                     },
                   }}
@@ -511,11 +527,11 @@ export default function LoginCoverView() {
                     variant="body2"
                     underline="hover"
                     sx={{
-                      color: 'text.secondary',
+                      color: alpha(theme.palette.common.white, 0.7),
                       fontWeight: 500,
                       fontSize: '0.875rem',
                       '&:hover': {
-                        color: 'primary.main',
+                        color: 'common.white',
                       },
                       transition: 'color 0.2s ease',
                     }}
@@ -531,37 +547,45 @@ export default function LoginCoverView() {
                   variant="contained"
                   loading={isSubmitting}
                   sx={{
-                    py: 1.75,
-                    borderRadius: 2,
-                    fontWeight: 700,
-                    fontSize: '1rem',
+                    py: '12px',
+                    px: '20px',
+                    borderRadius: '100px',
+                    fontWeight: 600,
+                    fontSize: '16px',
                     textTransform: 'none',
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    bgcolor: 'common.white',
+                    color: 'common.black',
+                    border: '2px solid transparent',
                     '&:hover': {
-                      boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.4)}`,
-                      transform: 'translateY(-2px)',
+                      bgcolor: 'rgba(255, 255, 255, 0.15)',
+                      color: 'common.white',
+                      borderColor: 'common.white',
                     },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: '0.3s ease',
                   }}
                 >
                   Нэвтрэх
                 </LoadingButton>
 
-                <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mt: 1 }}>
+                <Typography
+                  variant="body2"
+                  align="center"
+                  sx={{
+                    color: alpha(theme.palette.common.white, 0.7),
+                    mt: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  }}
+                >
                   Бүртгэл байхгүй юу?{' '}
                   <Link
                     component={RouterLink}
                     href={paths.registerCover}
                     sx={{
-                      color: 'primary.main',
+                      color: 'common.white',
                       fontWeight: 700,
-                      textDecoration: 'none',
+                      textDecoration: 'underline',
                       '&:hover': {
-                        textDecoration: 'underline',
+                        opacity: 0.8,
                       },
                     }}
                   >
@@ -573,6 +597,13 @@ export default function LoginCoverView() {
           </Stack>
         </Card>
       </Box>
+
+      {/* Terms and Privacy Dialog */}
+      <TermsPrivacyDialog
+        open={termsDialogOpen.value}
+        onClose={termsDialogOpen.onFalse}
+        onAccept={termsDialogOpen.onFalse}
+      />
     </Box>
   );
 }
